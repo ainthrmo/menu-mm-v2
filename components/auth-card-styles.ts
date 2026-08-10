@@ -1,12 +1,11 @@
-/** Shared class names for branded auth forms */
 export const authCardClass =
-  "border-[#E7E5E4] bg-[#FDFBF7] shadow-sm rounded-2xl";
+  "border-[#E5E5E5] bg-white shadow-sm rounded-2xl";
 
 export const authInputClass =
-  "bg-white border-[#E7E5E4] rounded-xl min-h-[44px] focus-visible:ring-[#0B7A5F] focus-visible:border-[#0B7A5F]";
+  "bg-white border-[#E5E5E5] text-[#111111] rounded-xl min-h-[44px] focus-visible:ring-[#1E45FB] focus-visible:border-[#1E45FB]";
 
 export const authButtonClass =
-  "w-full min-h-11 bg-[#0B7A5F] hover:bg-[#09634d] text-white font-semibold rounded-xl";
+  "w-full min-h-11 bg-[#1E45FB] hover:bg-[#1737C9] text-white font-semibold rounded-xl transition-colors shadow-sm";
 
 export const authLinkClass =
-  "text-[#0B7A5F] font-medium hover:underline underline-offset-4";
+  "text-[#1E45FB] font-semibold hover:underline underline-offset-4";

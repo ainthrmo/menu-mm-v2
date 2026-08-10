@@ -56,30 +56,30 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      className="w-full border-t border-black/5 bg-white"
+      className="w-full border-t border-[#E5E5E5] bg-white"
       aria-labelledby="faq-heading"
     >
       <div className="mx-auto w-full max-w-4xl px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold tracking-wide text-[#0B7A5F]">
+          <p className="mb-3 text-sm font-semibold tracking-wide text-[#1E45FB]">
             FAQ
           </p>
 
           <h2
             id="faq-heading"
-            className="text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-[#111111] sm:text-4xl"
           >
             Frequently asked questions
           </h2>
 
-          <p className="mt-4 text-base leading-7 text-neutral-600 sm:text-lg">
-            Everything you need to know about Mee Nhuu.
+          <p className="mt-4 text-base leading-7 text-[#666666] sm:text-lg">
+            Everything you need to know about Menuu-QR.
           </p>
         </div>
 
         {/* FAQ list */}
-        <div className="mt-10 overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+        <div className="mt-10 overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
 
@@ -88,7 +88,7 @@ export default function FAQ() {
                 key={faq.question}
                 className={
                   index !== faqs.length - 1
-                    ? "border-b border-neutral-200"
+                    ? "border-b border-[#E5E5E5]"
                     : ""
                 }
               >
@@ -98,15 +98,15 @@ export default function FAQ() {
                   onClick={() => toggleFAQ(index)}
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${index}`}
-                  className="flex w-full items-center justify-between gap-6 px-5 py-5 text-left transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0B7A5F] sm:px-6"
+                  className="flex w-full items-center justify-between gap-6 px-5 py-5 text-left transition-colors hover:bg-[#F5F5F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E45FB] sm:px-6"
                 >
-                  <span className="text-sm font-semibold leading-6 text-neutral-900 sm:text-base">
+                  <span className="text-sm font-semibold leading-6 text-[#111111] sm:text-base">
                     {faq.question}
                   </span>
 
                   <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-neutral-500 transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
+                    className={`h-5 w-5 shrink-0 text-[#666666] transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-[#1E45FB]" : ""
                     }`}
                     aria-hidden="true"
                   />
@@ -121,7 +121,7 @@ export default function FAQ() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-5 pr-12 text-sm leading-6 text-neutral-600 sm:px-6 sm:pb-6 sm:text-base sm:leading-7">
+                    <p className="px-5 pb-5 pr-12 text-sm leading-6 text-[#666666] sm:px-6 sm:pb-6 sm:text-base sm:leading-7">
                       {faq.answer}
                     </p>
                   </div>
@@ -133,13 +133,13 @@ export default function FAQ() {
 
         {/* Bottom CTA */}
         <div className="mt-10 text-center">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-[#666666]">
             Still have questions?
           </p>
 
           <a
             href="#contact"
-            className="mt-2 inline-flex items-center font-semibold text-[#0B7A5F] transition-colors hover:text-[#09654F]"
+            className="mt-2 inline-flex items-center font-semibold text-[#1E45FB] transition-colors hover:text-[#1737C9]"
           >
             Get in touch
             <span aria-hidden="true" className="ml-1">

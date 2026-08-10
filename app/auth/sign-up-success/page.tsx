@@ -14,15 +14,15 @@ export default function Page() {
     <AuthPageShell subtitle="One more step before you can sign in">
       <Card className={authCardClass}>
         <CardHeader>
-          <CardTitle className="text-2xl text-[#1C1917]">
+          <CardTitle className="text-2xl text-[#111111]">
             Check your email
           </CardTitle>
-          <CardDescription className="text-[#78716C]">
+          <CardDescription className="text-[#666666]">
             Confirm your account to get started
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-[#78716C]">
+          <p className="text-sm text-[#666666]">
             You&apos;ve successfully signed up. Please check your email to
             confirm your account before signing in.
           </p>

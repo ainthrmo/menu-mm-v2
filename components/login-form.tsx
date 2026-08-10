@@ -52,8 +52,8 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className={authCardClass}>
         <CardHeader>
-          <CardTitle className="text-2xl text-[#1C1917]">Login</CardTitle>
-          <CardDescription className="text-[#78716C]">
+          <CardTitle className="text-2xl text-[#111111]">Login</CardTitle>
+          <CardDescription className="text-[#666666]">
             Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
@@ -61,7 +61,7 @@ export function LoginForm({
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-5">
               <div className="grid gap-2">
-                <Label htmlFor="email" className="text-[#1C1917]">Email</Label>
+                <Label htmlFor="email" className="text-[#111111]">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -74,7 +74,7 @@ export function LoginForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password" className="text-[#1C1917]">Password</Label>
+                  <Label htmlFor="password" className="text-[#111111]">Password</Label>
                   <Link
                     href="/auth/forgot-password"
                     className={cn("ml-auto inline-block text-sm", authLinkClass)}
@@ -100,7 +100,7 @@ export function LoginForm({
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm text-[#78716C]">
+            <div className="mt-4 text-center text-sm text-[#666666]">
               Don&apos;t have an account?{" "}
               <Link href="/auth/sign-up" className={authLinkClass}>
                 Sign up

@@ -50,11 +50,11 @@ export function ForgotPasswordForm({
       {success ? (
         <Card className={authCardClass}>
           <CardHeader>
-            <CardTitle className="text-2xl text-[#1C1917]">Check your email</CardTitle>
-            <CardDescription className="text-[#78716C]">Password reset instructions sent</CardDescription>
+            <CardTitle className="text-2xl text-[#111111]">Check your email</CardTitle>
+            <CardDescription className="text-[#666666]">Password reset instructions sent</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[#78716C]">
+            <p className="text-sm text-[#666666]">
               If you registered using your email and password, you will receive
               a password reset email.
             </p>
@@ -66,8 +66,8 @@ export function ForgotPasswordForm({
       ) : (
         <Card className={authCardClass}>
           <CardHeader>
-            <CardTitle className="text-2xl text-[#1C1917]">Reset your password</CardTitle>
-            <CardDescription className="text-[#78716C]">
+            <CardTitle className="text-2xl text-[#111111]">Reset your password</CardTitle>
+            <CardDescription className="text-[#666666]">
               Enter your email and we&apos;ll send you a reset link
             </CardDescription>
           </CardHeader>
@@ -75,7 +75,7 @@ export function ForgotPasswordForm({
             <form onSubmit={handleForgotPassword}>
               <div className="flex flex-col gap-5">
                 <div className="grid gap-2">
-                  <Label htmlFor="email" className="text-[#1C1917]">Email</Label>
+                  <Label htmlFor="email" className="text-[#111111]">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -95,7 +95,7 @@ export function ForgotPasswordForm({
                   {isLoading ? "Sending..." : "Send reset email"}
                 </Button>
               </div>
-              <div className="mt-4 text-center text-sm text-[#78716C]">
+              <div className="mt-4 text-center text-sm text-[#666666]">
                 Remember your password?{" "}
                 <Link href="/auth/login" className={authLinkClass}>
                   Login
