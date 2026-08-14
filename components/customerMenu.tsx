@@ -10,6 +10,11 @@ import {
   Search,
   UtensilsCrossed,
   ArrowLeft,
+  ShoppingBag,
+  Plus,
+  Minus,
+  Trash2,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -33,6 +38,11 @@ interface StoreProfile {
   [key: string]: string | null | undefined;
 }
 
+interface CartItem {
+  item: MenuItem;
+  quantity: number;
+}
+
 export default function CustomerMenu() {
   const supabase = createClient();
 
@@ -44,6 +54,11 @@ export default function CustomerMenu() {
 
   const [loading, setLoading] = useState(true);
 
+  // Cart state
+  const [cart, setCart] = useState<{ [id: string]: CartItem }>({});
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [currentRestaurantId, setCurrentRestaurantId] = useState<string | null>(null);
+
   // null = category selection screen
   // category name = menu items for that category
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
@@ -54,31 +69,101 @@ export default function CustomerMenu() {
     const fetchData = async () => {
       setLoading(true);
 
-      const { data: profileData } = await supabase
-        .from("store_profile")
-        .select("*")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .single();
+      let targetRestaurantId: string | null = null;
 
-      if (profileData) {
-        setStoreProfile(profileData);
+      // 1. Check URL query string for restaurantId
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        targetRestaurantId = urlParams.get("restaurantId");
       }
 
-      const { data: catData } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
+      // 2. If no restaurantId in URL, check if an authenticated user is logged in
+      if (!targetRestaurantId) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (catData) {
-        setCategories(catData);
+        if (user) {
+          const { data: userRest } = await supabase
+            .from("restaurants")
+            .select("id")
+            .eq("owner_id", user.id)
+            .maybeSingle();
+
+          if (userRest) {
+            targetRestaurantId = userRest.id;
+          }
+        }
       }
 
-      const { data } = await supabase.from("menu_items").select("*");
+      // 3. Fallback: If still no restaurantId, query the first restaurant dynamically from DB
+      if (!targetRestaurantId) {
+        const { data: firstRest } = await supabase
+          .from("restaurants")
+          .select("id")
+          .limit(1)
+          .maybeSingle();
 
-      if (data) {
-        setMenuItems(
-          data.filter((item) => item.is_available !== false)
-        );
+        if (firstRest) {
+          targetRestaurantId = firstRest.id;
+        }
+      }
+
+      if (targetRestaurantId) {
+        setCurrentRestaurantId(targetRestaurantId);
+        if (typeof window !== "undefined") {
+          const savedCart = sessionStorage.getItem(`menu_cart_${targetRestaurantId}`);
+          if (savedCart) {
+            try {
+              setCart(JSON.parse(savedCart));
+            } catch {
+              setCart({});
+            }
+          } else {
+            setCart({});
+          }
+        }
+
+        const { data: profileData } = await supabase
+          .from("store_profile")
+          .select("*")
+          .eq("restaurant_id", targetRestaurantId)
+          .maybeSingle();
+
+        if (profileData) {
+          setStoreProfile(profileData);
+        } else {
+          const { data: restInfo } = await supabase
+            .from("restaurants")
+            .select("name")
+            .eq("id", targetRestaurantId)
+            .maybeSingle();
+
+          if (restInfo) {
+            setStoreProfile({ store_name: restInfo.name });
+          }
+        }
+
+        const { data: catData } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("restaurant_id", targetRestaurantId)
+          .order("name");
+
+        if (catData) {
+          setCategories(catData);
+        }
+
+        const { data: menuData } = await supabase
+          .from("menu_items")
+          .select("*")
+          .eq("restaurant_id", targetRestaurantId);
+
+        if (menuData) {
+          setMenuItems(
+            menuData.filter((item) => item.is_available !== false)
+          );
+        }
       }
 
       setLoading(false);
@@ -86,6 +171,57 @@ export default function CustomerMenu() {
 
     fetchData();
   }, [supabase]);
+
+  const updateCart = (newCart: { [id: string]: CartItem }) => {
+    setCart(newCart);
+    if (currentRestaurantId && typeof window !== "undefined") {
+      sessionStorage.setItem(`menu_cart_${currentRestaurantId}`, JSON.stringify(newCart));
+    }
+  };
+
+  const handleAddToCart = (item: MenuItem) => {
+    const existing = cart[item.id];
+    const newQty = existing ? existing.quantity + 1 : 1;
+    const newCart = {
+      ...cart,
+      [item.id]: { item, quantity: newQty },
+    };
+    updateCart(newCart);
+  };
+
+  const handleUpdateQuantity = (itemId: string, delta: number) => {
+    const existing = cart[itemId];
+    if (!existing) return;
+
+    const newQty = existing.quantity + delta;
+    const newCart = { ...cart };
+
+    if (newQty <= 0) {
+      delete newCart[itemId];
+    } else {
+      newCart[itemId] = { ...existing, quantity: newQty };
+    }
+
+    updateCart(newCart);
+  };
+
+  const handleRemoveFromCart = (itemId: string) => {
+    const newCart = { ...cart };
+    delete newCart[itemId];
+    updateCart(newCart);
+  };
+
+  const cartList = useMemo(() => Object.values(cart), [cart]);
+
+  const totalCartItems = useMemo(
+    () => cartList.reduce((sum, ci) => sum + ci.quantity, 0),
+    [cartList]
+  );
+
+  const totalCartPrice = useMemo(
+    () => cartList.reduce((sum, ci) => sum + ci.item.price * ci.quantity, 0),
+    [cartList]
+  );
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -316,7 +452,7 @@ export default function CustomerMenu() {
           MAIN
       ====================================================== */}
 
-      <main className="mx-auto w-full max-w-xl px-4 pb-20 pt-8">
+      <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-8">
         {loading ? (
           <div className="flex min-h-[40vh] items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B7A5F]" />
@@ -380,6 +516,9 @@ export default function CustomerMenu() {
                       <MenuItemCard
                         key={item.id}
                         item={item}
+                        cartQuantity={cart[item.id]?.quantity || 0}
+                        onAddToCart={handleAddToCart}
+                        onUpdateQuantity={handleUpdateQuantity}
                       />
                     ))}
                   </div>
@@ -525,6 +664,9 @@ export default function CustomerMenu() {
                       <MenuItemCard
                         key={item.id}
                         item={item}
+                        cartQuantity={cart[item.id]?.quantity || 0}
+                        onAddToCart={handleAddToCart}
+                        onUpdateQuantity={handleUpdateQuantity}
                       />
                     ))}
                   </div>
@@ -540,6 +682,128 @@ export default function CustomerMenu() {
           </>
         )}
       </main>
+
+      {/* Floating Order Cart Bar */}
+      {totalCartItems > 0 && (
+        <div className="fixed bottom-4 inset-x-4 z-40 max-w-xl mx-auto">
+          <div className="bg-[#171717] text-white rounded-2xl p-3.5 shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="relative bg-[#0B7A5F] p-2.5 rounded-xl text-white">
+                <ShoppingBag className="w-5 h-5" />
+                <span className="absolute -top-1.5 -right-1.5 bg-[#CDF22B] text-[#171717] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#171717]">
+                  {totalCartItems}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-white/70 font-medium">Your Order</p>
+                <p className="text-sm font-bold text-white">{formatMMK(totalCartPrice)}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="bg-[#0B7A5F] text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#09634d] transition-colors flex items-center gap-1.5"
+            >
+              View Cart
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Sheet / Modal */}
+      {isCartOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setIsCartOpen(false)}
+        >
+          <div
+            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-5 sm:p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cart Header */}
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-[#0B7A5F]" />
+                <h2 className="text-lg font-bold text-[#171717]">Your Order</h2>
+                <span className="text-xs font-semibold text-[#737373] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
+                  {totalCartItems} {totalCartItems === 1 ? "item" : "items"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-[#F5F5F5] text-[#737373] hover:text-[#171717]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Cart Items List */}
+            <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+              {cartList.map(({ item, quantity }) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 p-3 bg-[#F8F7F4] border border-[#E8E6E1] rounded-2xl"
+                >
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-[#171717] truncate">{item.name}</h4>
+                    <p className="text-xs text-[#737373] mt-0.5">
+                      {formatMMK(item.price)} x {quantity} = <span className="font-bold text-[#0B7A5F]">{formatMMK(item.price * quantity)}</span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 bg-white border border-[#E5E5E5] rounded-xl px-2 py-1 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateQuantity(item.id, -1)}
+                        className="w-5 h-5 rounded-lg hover:bg-[#F5F5F5] flex items-center justify-center text-[#171717]"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-xs font-bold text-[#171717] min-w-[14px] text-center">
+                        {quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateQuantity(item.id, 1)}
+                        className="w-5 h-5 rounded-lg bg-[#0B7A5F] text-white flex items-center justify-center hover:bg-[#09634d]"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="p-1.5 text-[#A3A3A3] hover:text-rose-600 transition-colors"
+                      title="Remove item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Cart Footer */}
+            <div className="border-t border-[#E5E5E5] pt-4 shrink-0 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-[#171717]">Total Price</span>
+                <span className="text-lg font-bold text-[#0B7A5F]">{formatMMK(totalCartPrice)}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(false)}
+                className="w-full bg-[#171717] text-[#FFFFFF] font-bold py-3 rounded-xl text-xs hover:bg-black transition-colors"
+              >
+                Close Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =====================================================
           FOOTER
@@ -585,7 +849,17 @@ export default function CustomerMenu() {
    MENU ITEM CARD
 =========================================================== */
 
-function MenuItemCard({ item }: { item: MenuItem }) {
+function MenuItemCard({
+  item,
+  cartQuantity,
+  onAddToCart,
+  onUpdateQuantity,
+}: {
+  item: MenuItem;
+  cartQuantity: number;
+  onAddToCart: (item: MenuItem) => void;
+  onUpdateQuantity: (itemId: string, delta: number) => void;
+}) {
   return (
     <article className="group overflow-hidden rounded-3xl border border-[#E8E6E1] bg-white shadow-[0_4px_18px_rgba(0,0,0,0.04)] transition-all duration-300 sm:hover:-translate-y-0.5 sm:hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
       <div className="flex min-h-[112px]">
@@ -609,20 +883,56 @@ function MenuItemCard({ item }: { item: MenuItem }) {
         </div>
 
         {/* Content */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center p-4">
-          <h3 className="text-sm font-bold leading-snug text-[#171717] sm:text-base">
-            {item.name}
-          </h3>
+        <div className="flex min-w-0 flex-1 flex-col justify-between p-4">
+          <div>
+            <h3 className="text-sm font-bold leading-snug text-[#171717] sm:text-base">
+              {item.name}
+            </h3>
 
-          {item.description && (
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#737373]">
-              {item.description}
+            {item.description && (
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#737373]">
+                {item.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#F5F5F5]">
+            <p className="text-sm font-bold text-[#0B7A5F]">
+              {formatMMK(item.price)}
             </p>
-          )}
 
-          <p className="mt-2 text-sm font-bold text-[#0B7A5F]">
-            {formatMMK(item.price)}
-          </p>
+            {cartQuantity > 0 ? (
+              <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-full px-2 py-1 border border-[#E5E5E5]">
+                <button
+                  type="button"
+                  onClick={() => onUpdateQuantity(item.id, -1)}
+                  className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#171717] hover:bg-[#E5E5E5] transition-colors shadow-2xs"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className="text-xs font-bold text-[#171717] min-w-[16px] text-center">
+                  {cartQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onUpdateQuantity(item.id, 1)}
+                  className="w-6 h-6 rounded-full bg-[#0B7A5F] text-white flex items-center justify-center hover:bg-[#09634d] transition-colors shadow-2xs"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onAddToCart(item)}
+                className="inline-flex items-center gap-1.5 bg-[#0B7A5F] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#09634d] transition-all shadow-xs active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </article>

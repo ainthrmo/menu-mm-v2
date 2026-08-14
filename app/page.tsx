@@ -43,22 +43,22 @@ const features = [
 
 const steps = [
   {
-    number: "01",
+    number: "အဆင့် ၁",
     title: "Create your menu",
     description:
-      "Add your restaurant information, categories, dishes, prices, and images.",
+      "ဆိုင်၏ logo, menu များကို ထည့်သွင်းပါ။",
   },
   {
-    number: "02",
+    number: "အဆင့် ၂",
     title: "Get your QR code",
     description:
-      "Connect your digital menu to a QR code and place it where customers can scan it.",
+      "QR code အားdownload ပြုလုပ်ပြီး customerများ မြင်သာသောနေရာတွင်ထားပါ။",
   },
   {
-    number: "03",
+    number: "အဆင့် ၃",
     title: "Customers browse",
     description:
-      "Customers scan with their phone camera and instantly see your menu.",
+      "customer များ phone ဖြင့်scan ဖတ်ပြီး အသင့်အသုံးပြုနိုင်ပါပြီ။",
   },
 ];
 
@@ -268,9 +268,9 @@ export default function LandingPage() {
 
               <Reveal delay={100}>
                 <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-[#111111] sm:text-5xl lg:text-7xl">
-                  Your restaurant menu,
+                  Serve better with our,
                   <span className="block text-[#1E45FB]">
-                    made digital.
+                    Digital QR Menu.
                   </span>
                 </h1>
               </Reveal>
@@ -409,7 +409,7 @@ export default function LandingPage() {
                 </p>
 
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                  From menu to table in three steps.
+                  Online menu ကနေ စားပွဲပေါ်‌ရောက်ဖို့ အဆင့်၃ဆင့်ပဲလိုပါတယ်။
                 </h2>
 
                 <p className="mt-4 text-[#666666]">
@@ -600,38 +600,104 @@ export default function LandingPage() {
             PRICING
         ====================================================== */}
 
-        <section
+        {/* =====================================================
+            PRICING
+        ====================================================== */}
+
+<section
           id="pricing"
-          className="border-t border-[#E5E5E5] px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
+          className="border-t border-[#E5E5E5] px-4 py-20 sm:px-6 sm:py-24 lg:px-8 bg-[#F5F5F5]/30"
         >
-          <Reveal>
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm font-bold text-[#1E45FB]">
-                PRICING
-              </p>
-
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                Simple pricing for restaurants.
-              </h2>
-
-              <p className="mt-4 text-[#666666]">
-                We&apos;re keeping our pricing simple while we build the first
-                version of Menuu-QR.
-              </p>
-
-              <div className="mt-8 rounded-2xl border border-[#E5E5E5] bg-[#F5F5F5] p-8 shadow-xs">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#CDF22B] text-[#111111]">
-                  <Zap className="h-6 w-6" />
-                </div>
-                <p className="mt-4 text-base font-bold text-[#111111]">
-                  Pricing plans coming soon.
+          <div className="mx-auto max-w-7xl">
+            <Reveal>
+              <div className="mx-auto max-w-3xl text-center">
+                <p className="text-sm font-bold text-[#1E45FB]">
+                  PRICING
                 </p>
-                <p className="mt-1 text-sm text-[#666666]">
-                  We&apos;re keeping Menuu-QR simple while we build.
+
+                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
+                  Simple, Transparent Pricing.
+                </h2>
+
+                <p className="mt-4 text-[#666666]">
+                  Choose the right plan for your restaurant business. Scale as you grow.
                 </p>
               </div>
+            </Reveal>
+
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {[
+                {
+                  name: "Free",
+                  price: "$0",
+                  period: "forever",
+                  description: "For small local shops starting out with QR menus.",
+                  features: ["Basic QR Menu", "Table Management", "Up to 20 Menu Items", "Standard Support"],
+                  buttonText: "Get Started Free",
+                  popular: false,
+                },
+                {
+                  name: "Pro",
+                  price: "$19",
+                  period: "per month",
+                  description: "For growing restaurants that need more space and features.",
+                  features: ["Advanced QR Menu", "Table Management", "Up to 100 Menu Items", "Custom Branding", "Priority Support"],
+                  buttonText: "Choose Pro",
+                  popular: true,
+                },
+                {
+                  name: "Business",
+                  price: "$49",
+                  period: "per month",
+                  description: "For large establishments with unlimited requirements.",
+                  features: ["Unlimited Menu Items", "Multi-location Support", "Advanced Analytics", "Dedicated Support", "Custom Domain Support"],
+                  buttonText: "Choose Business",
+                  popular: false,
+                },
+              ].map((plan, index) => (
+                <Reveal key={plan.name} delay={index * 100}>
+                  <div className={`relative flex flex-col justify-between h-full p-8 rounded-3xl border ${plan.popular ? 'border-[#1E45FB] bg-white shadow-xl ring-2 ring-[#1E45FB]/20' : 'border-[#E5E5E5] bg-white shadow-xs'} transition-all duration-300 hover:-translate-y-1`}>
+                    {plan.popular && (
+                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#1E45FB] text-white text-xs font-semibold rounded-full uppercase tracking-wider">
+                        Most Popular
+                      </span>
+                    )}
+                    <div>
+                      <h3 className="text-xl font-bold text-[#111111]">{plan.name}</h3>
+                      <p className="text-xs text-[#666666] mt-1">{plan.description}</p>
+                      
+                      <div className="my-6 flex items-baseline gap-1">
+                        <span className="text-4xl font-extrabold text-[#111111]">{plan.price}</span>
+                        <span className="text-xs text-[#666666]">/ {plan.period}</span>
+                      </div>
+
+                      <ul className="space-y-3 text-sm text-[#444444] mb-8">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-center gap-2.5">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#CDF22B] text-[#111111] shrink-0">
+                              <Check className="h-3 w-3 stroke-[3]" />
+                            </span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Link
+                      href="/auth/sign-up"
+                      className={`w-full py-3 px-4 rounded-xl text-sm font-semibold text-center transition-all duration-200 ${
+                        plan.popular
+                          ? 'bg-[#1E45FB] text-white hover:bg-[#1737C9] shadow-md hover:shadow-lg'
+                          : 'bg-[#F5F5F5] text-[#111111] hover:bg-[#E5E5E5]'
+                      }`}
+                    >
+                      {plan.buttonText}
+                    </Link>
+                  </div>
+                </Reveal>
+              ))}
             </div>
-          </Reveal>
+          </div>
         </section>
 
         <FAQ />

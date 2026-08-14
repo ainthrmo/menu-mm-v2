@@ -5,9 +5,9 @@ import AdminDashboard from "@/components/AdminDashboard";
 export const instant = false;
 export default async function ProtectedPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (error || !data?.claims) {
+  if (error || !user) {
     redirect("/auth/login");
   }
 

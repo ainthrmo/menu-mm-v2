@@ -34,7 +34,7 @@ export default function OnboardingPage() {
 
       if (insertError) throw insertError;
 
-      // 3. Success -> Redirect back to dashboard
+      // 3. Success -> Redirect back to dashboard (PostgreSQL trigger on_restaurant_created_subscription automatically provisions initial FREE subscription)
       router.push("/protected");
       router.refresh();
     } catch (err: any) {
