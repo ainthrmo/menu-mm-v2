@@ -48,6 +48,8 @@ export interface AdminMenuItem {
   price: number;
   is_available: boolean;
   image: string;
+  description?: string;
+  is_popular?: boolean;
 }
 
 export interface Category {
@@ -107,6 +109,8 @@ export const AdminDashboard: React.FC = () => {
   const [newItemName, setNewItemName] = useState("");
   const [newItemCategory, setNewItemCategory] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
+  const [newItemDescription, setNewItemDescription] = useState("");
+  const [newItemIsPopular, setNewItemIsPopular] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -321,6 +325,8 @@ export const AdminDashboard: React.FC = () => {
     setNewItemName("");
     if (categories.length > 0) setNewItemCategory(categories[0].name);
     setNewItemPrice("");
+    setNewItemDescription("");
+    setNewItemIsPopular(false);
     setImageFile(null);
     setImagePreview(null);
     setFormError(null);
@@ -332,6 +338,8 @@ export const AdminDashboard: React.FC = () => {
     setNewItemName(item.name);
     setNewItemCategory(item.category);
     setNewItemPrice(item.price.toString());
+    setNewItemDescription(item.description || "");
+    setNewItemIsPopular(Boolean(item.is_popular));
     setImageFile(null);
     setImagePreview(item.image);
     setFormError(null);
@@ -534,15 +542,19 @@ export const AdminDashboard: React.FC = () => {
       if (publicUrlData?.publicUrl) imageUrl = publicUrlData.publicUrl;
     }
 
+    const dishPayload = {
+      name: newItemName,
+      category: newItemCategory,
+      price: parseFloat(newItemPrice),
+      image: imageUrl,
+      description: isFreePlan ? null : (newItemDescription.trim() || null),
+      is_popular: isFreePlan ? false : newItemIsPopular,
+    };
+
     if (editingItem) {
       const { data, error } = await supabase
         .from("menu_items")
-        .update({
-          name: newItemName,
-          category: newItemCategory,
-          price: parseFloat(newItemPrice),
-          image: imageUrl,
-        })
+        .update(dishPayload)
         .eq("id", editingItem.id)
         .select();
 
@@ -563,11 +575,8 @@ export const AdminDashboard: React.FC = () => {
         .from("menu_items")
         .insert([
           {
-            name: newItemName,
-            category: newItemCategory,
-            price: parseFloat(newItemPrice),
+            ...dishPayload,
             is_available: true,
-            image: imageUrl,
             restaurant_id: restaurantId,
           },
         ])
@@ -867,10 +876,20 @@ export const AdminDashboard: React.FC = () => {
 
                       <div className="flex-1 min-w-0 p-3.5 flex flex-col justify-between">
                         <div>
-                          <span className="text-[10px] font-bold text-[#1E45FB] tracking-wider uppercase">
-                            {item.category}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-bold text-[#1E45FB] tracking-wider uppercase">
+                              {item.category}
+                            </span>
+                            {item.is_popular && (
+                              <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-500/10 text-amber-600 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                                Popular
+                              </span>
+                            )}
+                          </div>
                           <h3 className="text-sm font-bold text-[#111111] truncate mt-0.5">{item.name}</h3>
+                          {item.description && (
+                            <p className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">{item.description}</p>
+                          )}
                           <p className="text-sm font-bold text-[#1E45FB] mt-1">
                             {formatMMK(item.price)}
                           </p>
@@ -1409,14 +1428,14 @@ export const AdminDashboard: React.FC = () => {
       {/* Dish Add/Edit Modal */}
       {isDishModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           onClick={() => setIsDishModalOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl"
+            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 sticky top-0 bg-white z-10 -mt-6 -mx-6 px-6 pt-6">
               <h2 className="text-base font-bold text-[#111111]">
                 {editingItem ? "Edit Dish" : "Add New Dish"}
               </h2>
@@ -1501,10 +1520,82 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Dish Description (Pro Feature) */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-[#111111]">
+                    Dish Description
+                  </label>
+                  {isFreePlan ? (
+                    <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Pro Feature
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-[#666666]">Optional</span>
+                  )}
+                </div>
+                {isFreePlan ? (
+                  <div className="relative">
+                    <textarea
+                      disabled
+                      rows={2}
+                      placeholder="Upgrade to Pro to add dish descriptions for customers..."
+                      className="w-full bg-[#F5F5F5] border border-[#E5E5E5] text-[#888888] rounded-xl px-3.5 py-2.5 text-xs resize-none cursor-not-allowed"
+                    />
+                  </div>
+                ) : (
+                  <textarea
+                    rows={2}
+                    value={newItemDescription}
+                    onChange={(e) => setNewItemDescription(e.target.value)}
+                    placeholder="e.g. Traditional fish broth with rice noodles, lemongrass, and fresh herbs."
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none"
+                  />
+                )}
+              </div>
+
+              {/* Popular / Featured Item Toggle (Pro Feature) */}
+              <div>
+                <div className="flex items-center justify-between p-3 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA]">
+                  <div className="space-y-0.5 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <label htmlFor="dish-popular-toggle" className="text-xs font-bold text-[#111111] cursor-pointer">
+                        Feature as Popular Dish
+                      </label>
+                      {isFreePlan && (
+                        <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" /> Pro
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#666666]">
+                      Showcase this dish in the Popular & Spotlight section of your menu.
+                    </p>
+                  </div>
+
+                  {isFreePlan ? (
+                    <input
+                      type="checkbox"
+                      disabled
+                      checked={false}
+                      className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] cursor-not-allowed opacity-50 shrink-0"
+                    />
+                  ) : (
+                    <input
+                      type="checkbox"
+                      id="dish-popular-toggle"
+                      checked={newItemIsPopular}
+                      onChange={(e) => setNewItemIsPopular(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] focus:ring-[#1E45FB] cursor-pointer accent-[#1E45FB] shrink-0"
+                    />
+                  )}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] disabled:opacity-50 transition-all shadow-xs"
+                className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {editingItem ? "Update Changes" : "Save to Supabase"}
