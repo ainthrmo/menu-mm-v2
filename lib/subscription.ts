@@ -56,51 +56,85 @@ export const DEFAULT_BUSINESS_PLAN: Plan = {
 /**
  * Fetches the subscription & plan details for a specific restaurant ID.
  * Multi-tenant safe: strictly queried by restaurant_id.
+ *
+ * Two-path resolution:
+ *  1. Authenticated path — direct table query returns full subscription row
+ *     (billing dates, Stripe IDs, etc.). Used by admin dashboard.
+ *  2. Anonymous path — RLS blocks the table query for unauthenticated
+ *     customer QR-scan views. Falls back to the `get_restaurant_plan_id`
+ *     SECURITY DEFINER RPC which returns only the plan_id TEXT value,
+ *     exposing nothing else from the subscriptions row.
  */
 export async function getRestaurantSubscription(
   supabase: SupabaseClient,
   restaurantId: string
 ): Promise<{ subscription: Subscription | null; plan: Plan }> {
   try {
+    // ── Path 1: authenticated (admin dashboard, logged-in owner) ──────────
+    // Returns the full subscription row including billing fields.
     const { data, error } = await supabase
       .from("subscriptions")
       .select("*, plans(*)")
       .eq("restaurant_id", restaurantId)
       .maybeSingle();
 
-    if (error || !data) {
+    if (!error && data) {
+      const rawPlan = data.plans;
+      const plan: Plan = rawPlan
+        ? {
+            id: rawPlan.id,
+            name: rawPlan.name,
+            price_usd: Number(rawPlan.price_usd || 0),
+            price_mmk: Number(rawPlan.price_mmk || 0),
+            billing_interval: rawPlan.billing_interval || "monthly",
+            max_menu_items: Number(rawPlan.max_menu_items ?? 20),
+            features: Array.isArray(rawPlan.features) ? rawPlan.features : [],
+          }
+        : data.plan_id === "pro"
+        ? DEFAULT_PRO_PLAN
+        : data.plan_id === "business"
+        ? DEFAULT_BUSINESS_PLAN
+        : DEFAULT_FREE_PLAN;
+
+      return { subscription: data as Subscription, plan };
+    }
+
+    // ── Path 2: anonymous (customer QR scan) ──────────────────────────────
+    // RLS on subscriptions blocks unauthenticated reads. Call the
+    // SECURITY DEFINER RPC which returns only plan_id — no subscription
+    // row data is exposed. Existing RLS policies are not changed.
+    const { data: planId, error: rpcError } = await supabase
+      .rpc("get_restaurant_plan_id", { p_restaurant_id: restaurantId });
+
+    if (!rpcError && planId) {
+      const plan: Plan =
+        planId === "pro"
+          ? DEFAULT_PRO_PLAN
+          : planId === "business"
+          ? DEFAULT_BUSINESS_PLAN
+          : DEFAULT_FREE_PLAN;
+
       return {
         subscription: {
-          id: `temp-${restaurantId}`,
+          id: `rpc-${restaurantId}`,
           restaurant_id: restaurantId,
-          plan_id: "free",
+          plan_id: planId as string,
           status: "active",
-          plans: DEFAULT_FREE_PLAN,
         },
-        plan: DEFAULT_FREE_PLAN,
+        plan,
       };
     }
 
-    const rawPlan = data.plans;
-    const plan: Plan = rawPlan
-      ? {
-          id: rawPlan.id,
-          name: rawPlan.name,
-          price_usd: Number(rawPlan.price_usd || 0),
-          price_mmk: Number(rawPlan.price_mmk || 0),
-          billing_interval: rawPlan.billing_interval || "monthly",
-          max_menu_items: Number(rawPlan.max_menu_items ?? 20),
-          features: Array.isArray(rawPlan.features) ? rawPlan.features : [],
-        }
-      : data.plan_id === "pro"
-      ? DEFAULT_PRO_PLAN
-      : data.plan_id === "business"
-      ? DEFAULT_BUSINESS_PLAN
-      : DEFAULT_FREE_PLAN;
-
+    // ── Fallback: no subscription row found → free plan ───────────────────
     return {
-      subscription: data as Subscription,
-      plan,
+      subscription: {
+        id: `temp-${restaurantId}`,
+        restaurant_id: restaurantId,
+        plan_id: "free",
+        status: "active",
+        plans: DEFAULT_FREE_PLAN,
+      },
+      plan: DEFAULT_FREE_PLAN,
     };
   } catch (err) {
     console.warn("Failed to fetch restaurant subscription, using default free plan:", err);
