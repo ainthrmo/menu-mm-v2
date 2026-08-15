@@ -181,26 +181,32 @@ export default function CustomerMenu() {
           }
         }
 
-        const { plan: currentPlan } = await getRestaurantSubscription(supabase, targetRestaurantId);
-        setPlan(currentPlan);
+        // Fire all 4 independent data fetches in parallel — each is
+        // isolated by restaurant_id and does not depend on the others.
+        const [
+          { plan: currentPlan },
+          { data: profileData },
+          { data: catData },
+          { data: menuData },
+        ] = await Promise.all([
+          getRestaurantSubscription(supabase, targetRestaurantId),
+          supabase.from("store_profile").select("*").eq("restaurant_id", targetRestaurantId).maybeSingle(),
+          supabase.from("categories").select("*").eq("restaurant_id", targetRestaurantId).order("name"),
+          supabase.from("menu_items").select("*").eq("restaurant_id", targetRestaurantId),
+        ]);
 
-        const { data: profileData } = await supabase
-          .from("store_profile").select("*").eq("restaurant_id", targetRestaurantId).maybeSingle();
+        setPlan(currentPlan);
 
         if (profileData) {
           setStoreProfile(profileData);
         } else {
+          // Fallback: fetch restaurant name only if no store_profile row exists.
           const { data: restInfo } = await supabase
             .from("restaurants").select("name").eq("id", targetRestaurantId).maybeSingle();
           if (restInfo) setStoreProfile({ store_name: restInfo.name });
         }
 
-        const { data: catData } = await supabase
-          .from("categories").select("*").eq("restaurant_id", targetRestaurantId).order("name");
         if (catData) setCategories(catData);
-
-        const { data: menuData } = await supabase
-          .from("menu_items").select("*").eq("restaurant_id", targetRestaurantId);
         if (menuData)
           setMenuItems(menuData.filter((item) => item.is_available !== false));
       }
@@ -603,7 +609,7 @@ export default function CustomerMenu() {
                       </span>
                     </div>
 
-                    <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+                    <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1 min-h-[260px]">
                       {spotlightItems.map((item) => {
                         const parsed = parseBilingualText(item.name, item.name_mm);
                         return (
