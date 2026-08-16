@@ -9,9 +9,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Mee Nhuu — Digital QR Menu",
+  title: "Menuu-QR — Digital QR Menu for Myanmar Restaurants",
   description:
-    "Create and manage your restaurant's digital menu with QR codes.",
+    "Replace expensive printed menus with a digital QR menu. Update prices anytime — your QR code never changes. Free plan available. Built for Myanmar restaurants, cafés, and tea shops.",
 };
 
 const geistSans = Geist({

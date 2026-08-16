@@ -1,894 +1,901 @@
-"use client";
-
-import FAQ from "@/components/landing/FAQ";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  Menu as MenuIcon,
   QrCode,
   Smartphone,
   UtensilsCrossed,
-  X,
   Zap,
+  ImageIcon,
+  Search,
+  Palette,
+  Share2,
+  X,
+  ShoppingBag,
+  Star,
 } from "lucide-react";
+import LandingNavbar from "@/components/landing/LandingNavbar";
+import PricingSection from "@/components/landing/PricingSection";
+import FAQ from "@/components/landing/FAQ";
 
-const features = [
+/* ─────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────── */
+
+const FEATURES = [
   {
-    icon: UtensilsCrossed,
-    title: "Simple menu management",
+    icon: Zap,
+    title: "Instant menu updates",
     description:
-      "Add dishes, organize categories, update prices, and keep your menu current.",
+      "Change prices, add dishes, or remove items any time. Your live menu reflects the change immediately — no reprinting ever.",
+    accent: true,
   },
   {
     icon: Smartphone,
-    title: "Built for phones",
+    title: "Mobile-first customer menu",
     description:
-      "Give customers a clean menu experience designed for the device in their hands.",
+      "Your customers get a fast, clean menu experience designed for the phone already in their hand.",
+    accent: false,
+  },
+  {
+    icon: ImageIcon,
+    title: "Food photos per dish",
+    description:
+      "Upload a photo for every item on your menu. Customers see exactly what they are ordering.",
+    accent: false,
+  },
+  {
+    icon: Search,
+    title: "Search & categories",
+    description:
+      "Customers can search for any dish or jump straight to a category. No more endless scrolling.",
+    accent: true,
+  },
+  {
+    icon: Palette,
+    title: "Your restaurant's look",
+    description:
+      "Set your logo, cover image, brand color, and social links. Your menu feels like your restaurant.",
+    accent: false,
   },
   {
     icon: QrCode,
-    title: "QR-ready",
+    title: "QR code download",
     description:
-      "Connect your digital menu to QR codes that customers can scan at their table.",
-  },
-  {
-    icon: Zap,
-    title: "Instant updates",
-    description:
-      "Change your menu whenever you need. No reprinting required.",
+      "One QR code, linked to your live menu forever. Download, print, and place it anywhere.",
+    accent: true,
   },
 ];
 
-const steps = [
+const STEPS = [
   {
-    number: "အဆင့် ၁",
-    title: "Create your menu",
+    number: "01",
+    titleEn: "Create your menu",
+    titleMM: "Menu ဖန်တီးပါ",
     description:
-      "ဆိုင်၏ logo, menu များကို ထည့်သွင်းပါ။",
+      "Add your restaurant name, logo, categories, and all your dishes with photos and prices.",
   },
   {
-    number: "အဆင့် ၂",
-    title: "Get your QR code",
+    number: "02",
+    titleEn: "Download your QR code",
+    titleMM: "QR Code ရယူပါ",
     description:
-      "QR code အားdownload ပြုလုပ်ပြီး customerများ မြင်သာသောနေရာတွင်ထားပါ။",
+      "Your unique QR code is ready instantly. Print it and place it on tables, counters, or doors.",
   },
   {
-    number: "အဆင့် ၃",
-    title: "Customers browse",
+    number: "03",
+    titleEn: "Update anytime",
+    titleMM: "အချိန်မရွေး ပြင်ဆင်ပါ",
     description:
-      "customer များ phone ဖြင့်scan ဖတ်ပြီး အသင့်အသုံးပြုနိုင်ပါပြီ။",
+      "Price changed? New dish? Log in, update in seconds. Your QR code stays the same forever.",
   },
 ];
 
-function Reveal({
-  children,
-  className = "",
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  return (
-    <div
-      className={`reveal ${className}`}
-      style={{ "--delay": `${delay}ms` } as React.CSSProperties}
-    >
-      {children}
-    </div>
-  );
-}
+/* ─────────────────────────────────────────────
+   PAGE (Server Component)
+───────────────────────────────────────────── */
 
 export default function LandingPage() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    handleScroll();
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  const closeMenu = () => setIsOpen(false);
-
   return (
     <div className="min-h-screen bg-white text-[#111111]">
-      {/* =====================================================
-          NAVBAR
-      ====================================================== */}
-
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "border-b border-[#E5E5E5] bg-white/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] backdrop-blur-xl"
-            : "bg-white"
-        }`}
-      >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="group flex items-center gap-2 font-bold text-[#111111]"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E45FB] text-white shadow-xs transition-transform duration-300 group-hover:scale-105">
-              <UtensilsCrossed className="h-4 w-4" />
-            </span>
-
-            <span>Menuu-QR</span>
-          </Link>
-
-          {/* Desktop navigation */}
-          <div className="hidden items-center gap-8 md:flex">
-            <Link
-              href="#product"
-              className="text-sm font-medium text-[#666666] transition-colors hover:text-[#111111]"
-            >
-              Product
-            </Link>
-
-            <Link
-              href="#how-it-works"
-              className="text-sm font-medium text-[#666666] transition-colors hover:text-[#111111]"
-            >
-              How it works
-            </Link>
-
-            <Link
-              href="#pricing"
-              className="text-sm font-medium text-[#666666] transition-colors hover:text-[#111111]"
-            >
-              Pricing
-            </Link>
-          </div>
-
-          {/* Desktop actions */}
-          <div className="hidden items-center gap-3 md:flex">
-            <Link
-              href="/auth/login"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-[#666666] transition-colors hover:text-[#111111]"
-            >
-              Login
-            </Link>
-
-            <Link
-              href="/auth/sign-up"
-              className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#1E45FB] px-4 py-2 text-sm font-semibold text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1737C9] hover:shadow-md active:translate-y-0"
-            >
-              Get started
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111] md:hidden"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isOpen}
-          >
-            {isOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <MenuIcon className="h-5 w-5" />
-            )}
-          </button>
-        </nav>
-
-        {/* Mobile navigation */}
-        {isOpen && (
-          <div className="border-t border-[#E5E5E5] bg-white/95 px-4 py-5 backdrop-blur-xl md:hidden">
-            <div className="mx-auto flex max-w-7xl flex-col gap-1">
-              <Link
-                href="#product"
-                onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111]"
-              >
-                Product
-              </Link>
-
-              <Link
-                href="#how-it-works"
-                onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111]"
-              >
-                How it works
-              </Link>
-
-              <Link
-                href="#pricing"
-                onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111]"
-              >
-                Pricing
-              </Link>
-
-              <div className="mt-3 border-t border-[#E5E5E5] pt-4">
-                <Link
-                  href="/auth/login"
-                  onClick={closeMenu}
-                  className="flex min-h-11 items-center justify-center rounded-xl border border-[#E5E5E5] bg-white text-sm font-medium text-[#666666]"
-                >
-                  Login
-                </Link>
-
-                <Link
-                  href="/auth/sign-up"
-                  onClick={closeMenu}
-                  className="group mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1E45FB] text-sm font-semibold text-white"
-                >
-                  Get started
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
+      {/* ── NAVBAR (client — needs scroll + mobile state) ── */}
+      <LandingNavbar />
 
       <main>
-        {/* =====================================================
+        {/* ══════════════════════════════════════════════════
             HERO
-        ====================================================== */}
-
-        <section className="relative overflow-hidden px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
-          {/* Playful background accents */}
+        ══════════════════════════════════════════════════ */}
+        <section className="relative overflow-hidden bg-white px-4 pb-20 pt-16 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8 lg:pt-24">
+          {/* Subtle background texture */}
           <div
-            className="hero-glow pointer-events-none absolute left-1/2 top-[-180px] h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-[#1E45FB]/12 blur-3xl"
-            aria-hidden="true"
-          />
-          <div
-            className="hero-orb hero-orb-yellow pointer-events-none absolute right-[8%] top-24 hidden h-24 w-24 rounded-full bg-[#CDF22B]/35 blur-2xl sm:block"
-            aria-hidden="true"
-          />
-          <div
-            className="hero-orb hero-orb-orange pointer-events-none absolute left-[7%] top-72 hidden h-16 w-16 rounded-full bg-[#1E45FB]/15 blur-xl sm:block"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(30,69,251,0.08),transparent)]"
             aria-hidden="true"
           />
 
           <div className="relative mx-auto max-w-7xl">
             <div className="mx-auto max-w-4xl text-center">
-              <Reveal delay={0}>
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-[#F5F5F5] px-3.5 py-1.5 text-xs font-semibold text-[#111111] shadow-xs backdrop-blur-md">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#1E45FB]" />
-                  Digital menus for restaurants
-                  <span className="ml-1 h-2 w-2 rounded-full bg-[#CDF22B]" />
-                </div>
-              </Reveal>
+              {/* Eyebrow */}
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#111111] shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-[#1E45FB]" />
+                QR Digital Menu for Myanmar Restaurants
+              </div>
 
-              <Reveal delay={100}>
-                <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-[#111111] sm:text-5xl lg:text-7xl">
-                  Serve better with our,
-                  <span className="block text-[#1E45FB]">
-                    Digital QR Menu.
+              {/* Headline */}
+              <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-[#111111] sm:text-5xl lg:text-[5rem]">
+                Update your menu once.
+                <span className="block text-[#1E45FB]">
+                  Customers always see
+                  <br className="hidden sm:block" /> the latest.
+                </span>
+              </h1>
+
+              {/* Sub */}
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#555555] sm:text-lg sm:leading-8">
+                Menuu-QR lets Myanmar restaurants replace expensive printed menus
+                with a digital QR menu that customers scan with their phone.
+                Change prices anytime — your QR code never changes.
+              </p>
+
+              {/* CTAs */}
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href="/auth/sign-up"
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1E45FB] px-8 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1737C9] hover:shadow-lg active:translate-y-0 sm:w-auto"
+                >
+                  Start for free
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+                <Link
+                  href="#how-it-works"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#E5E5E5] bg-white px-8 text-sm font-semibold text-[#111111] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#CCCCCC] hover:shadow-md active:translate-y-0 sm:w-auto"
+                >
+                  See how it works
+                </Link>
+              </div>
+
+              {/* Trust strip */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-[#888888]">
+                {[
+                  "Free forever plan",
+                  "No credit card required",
+                  "Ready in 5 minutes",
+                ].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-[#1E45FB]" />
+                    {t}
                   </span>
-                </h1>
-              </Reveal>
-
-              <Reveal delay={200}>
-                <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#666666] sm:text-lg">
-                  Create a beautiful digital menu, connect it to a QR code,
-                  and give your customers a better way to browse your food.
-                </p>
-              </Reveal>
-
-              <Reveal delay={300}>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                  <Link
-                    href="/auth/sign-up"
-                    className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1E45FB] px-6 text-sm font-semibold text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1737C9] hover:shadow-lg active:translate-y-0 sm:w-auto"
-                  >
-                    Get started
-                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link
-                    href="#how-it-works"
-                    className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#E5E5E5] bg-white px-6 text-sm font-semibold text-[#111111] shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F5F5] hover:shadow-md sm:w-auto"
-                  >
-                    See how it works
-                  </Link>
-                </div>
-              </Reveal>
+                ))}
+              </div>
             </div>
 
-            {/* Product preview */}
-            <Reveal delay={450} className="mx-auto mt-12 max-w-5xl sm:mt-16">
-              <div className="glass-frame rounded-2xl p-2 sm:rounded-3xl sm:p-3">
-                <div className="overflow-hidden rounded-xl border border-white/10 bg-neutral-900 shadow-2xl sm:rounded-2xl">
-                  {/* Browser bar */}
-                  <div className="flex h-10 items-center gap-2 border-b border-white/10 px-4">
-                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
+            {/* ── Hero Visual: Phone mockup ── */}
+            <div className="mx-auto mt-16 max-w-sm sm:mt-20">
+              <div className="relative mx-auto w-[260px] sm:w-[280px]">
+                {/* Phone shell */}
+                <div className="relative overflow-hidden rounded-[2.5rem] border-[6px] border-[#111111] bg-[#111111] shadow-[0_32px_80px_rgba(0,0,0,0.28)]">
+                  {/* Notch */}
+                  <div className="absolute left-1/2 top-3 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#111111]" />
 
-                    <div className="ml-3 hidden h-6 flex-1 rounded-md bg-neutral-950 sm:block" />
-                  </div>
-
-                  {/* Mockup */}
-                  <div className="grid min-h-[280px] grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
-                    {/* Admin */}
-                    <div className="hidden border-r border-white/10 bg-neutral-950 p-6 lg:block">
-                      <div className="mb-8 flex items-center gap-2 text-sm font-semibold text-stone-100">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1E45FB] text-white">
-                          <UtensilsCrossed className="h-3.5 w-3.5" />
-                        </span>
-                        Menuu-QR
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="rounded-lg bg-white/10 px-3 py-2 text-xs text-stone-100">
-                          Dashboard
+                  {/* Screen */}
+                  <div className="relative h-[520px] overflow-hidden bg-white">
+                    {/* Restaurant header */}
+                    <div className="bg-[#1E45FB] px-4 pb-5 pt-10 text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                          <UtensilsCrossed className="h-5 w-5 text-white" />
                         </div>
-
-                        <div className="px-3 py-2 text-xs text-stone-500">
-                          Menu
-                        </div>
-
-                        <div className="px-3 py-2 text-xs text-stone-500">
-                          QR Codes
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Customer menu */}
-                    <div className="bg-neutral-950 p-5 sm:p-8">
-                      <div className="mx-auto max-w-md">
-                        <div className="mb-6 text-center">
-                          <p className="text-xs font-medium uppercase tracking-widest text-stone-500">
-                            Your restaurant
+                        <div>
+                          <p className="text-[10px] font-medium text-blue-200">
+                            ကြへいらっしゃ Café
                           </p>
-
-                          <h2 className="mt-2 text-2xl font-bold text-stone-100">
-                            Today&apos;s Menu
-                          </h2>
-                        </div>
-
-                        <div className="space-y-3">
-                          {[
-                            ["Classic Noodles", "4,500 MMK"],
-                            ["Chicken Rice", "5,000 MMK"],
-                            ["Iced Coffee", "2,500 MMK"],
-                          ].map(([name, price], index) => (
-                            <div
-                              key={name}
-                              className={`preview-card-${index} flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4`}
-                            >
-                              <div>
-                                <p className="text-sm font-medium text-stone-100">
-                                  {name}
-                                </p>
-
-                                <p className="mt-1 text-xs text-stone-500">
-                                  Freshly prepared
-                                </p>
-                              </div>
-
-                              <span className="text-sm font-bold text-[#CDF22B]">
-                                {price}
-                              </span>
-                            </div>
-                          ))}
+                          <p className="text-sm font-bold leading-tight">
+                            Golden Spoon
+                          </p>
                         </div>
                       </div>
                     </div>
+
+                    {/* Search bar */}
+                    <div className="border-b border-[#F0F0F0] bg-white px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-lg bg-[#F5F5F5] px-3 py-2">
+                        <Search className="h-3.5 w-3.5 text-[#AAAAAA]" />
+                        <span className="text-[11px] text-[#AAAAAA]">
+                          Search dishes…
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Category tabs */}
+                    <div className="flex gap-2 overflow-x-auto border-b border-[#F0F0F0] bg-white px-3 py-2 scrollbar-hide">
+                      {["All", "Noodles", "Rice", "Drinks", "Desserts"].map(
+                        (cat, i) => (
+                          <span
+                            key={cat}
+                            className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold ${
+                              i === 0
+                                ? "bg-[#1E45FB] text-white"
+                                : "bg-[#F5F5F5] text-[#666666]"
+                            }`}
+                          >
+                            {cat}
+                          </span>
+                        )
+                      )}
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="space-y-0 overflow-hidden">
+                      {[
+                        {
+                          name: "Mohinga",
+                          nameMM: "မုန့်ဟင်းခါး",
+                          price: "2,500",
+                          color: "#FEF3C7",
+                          popular: true,
+                        },
+                        {
+                          name: "Shan Noodles",
+                          nameMM: "ရှမ်းခေါက်ဆွဲ",
+                          price: "3,000",
+                          color: "#DBEAFE",
+                          popular: false,
+                        },
+                        {
+                          name: "Iced Coffee",
+                          nameMM: "အေးသောကော်ဖီ",
+                          price: "1,500",
+                          color: "#D1FAE5",
+                          popular: false,
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center gap-3 border-b border-[#F5F5F5] bg-white px-3 py-2.5"
+                        >
+                          <div
+                            className="h-12 w-12 shrink-0 rounded-xl"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="truncate text-[11px] font-bold text-[#111111]">
+                                {item.name}
+                              </p>
+                              {item.popular && (
+                                <span className="flex items-center gap-0.5 rounded-full bg-[#CDF22B] px-1.5 py-0.5 text-[9px] font-bold text-[#111111]">
+                                  <Star className="h-2 w-2" />
+                                  Popular
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#888888]">
+                              {item.nameMM}
+                            </p>
+                            <p className="mt-0.5 text-[11px] font-bold text-[#1E45FB]">
+                              {item.price} MMK
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1E45FB] text-white"
+                            aria-label={`Add ${item.name} to cart`}
+                          >
+                            <span className="text-sm leading-none">+</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Floating cart */}
+                    <div className="absolute bottom-4 left-3 right-3">
+                      <div className="flex items-center justify-between rounded-xl bg-[#111111] px-4 py-2.5 shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="h-4 w-4 text-[#CDF22B]" />
+                          <span className="text-[11px] font-semibold text-white">
+                            2 items
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-bold text-[#CDF22B]">
+                          5,500 MMK
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating badge — QR */}
+                <div className="absolute -right-10 top-20 flex items-center gap-2 rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-lg">
+                  <QrCode className="h-5 w-5 text-[#1E45FB]" />
+                  <div>
+                    <p className="text-[10px] font-bold text-[#111111]">
+                      Scan & browse
+                    </p>
+                    <p className="text-[9px] text-[#888888]">No app needed</p>
+                  </div>
+                </div>
+
+                {/* Floating badge — update */}
+                <div className="absolute -left-10 bottom-32 flex items-center gap-2 rounded-xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-lg">
+                  <Zap className="h-5 w-5 text-[#CDF22B]" />
+                  <div>
+                    <p className="text-[10px] font-bold text-[#111111]">
+                      Live updates
+                    </p>
+                    <p className="text-[9px] text-[#888888]">Instant</p>
                   </div>
                 </div>
               </div>
-
-              <p className="mt-4 text-center text-xs text-[#888888]">
-                A simple experience for restaurant owners and their customers.
-              </p>
-            </Reveal>
+            </div>
           </div>
         </section>
 
-        {/* =====================================================
-            HOW IT WORKS
-        ====================================================== */}
+        {/* ══════════════════════════════════════════════════
+            PROBLEM vs SOLUTION
+        ══════════════════════════════════════════════════ */}
+        <section className="border-t border-[#E5E5E5] bg-[#F8F8F8] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-xl text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
+                The Problem
+              </p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
+                Printed menus cost more than you think
+              </h2>
+              <p className="mt-4 text-[#666666]">
+                Every time a price changes or a dish goes out of stock, you pay
+                again to reprint. Menuu-QR eliminates that cycle.
+              </p>
+            </div>
 
+            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:max-w-4xl lg:mx-auto">
+              {/* Old way */}
+              <div className="rounded-3xl border border-[#FFCCCC] bg-white p-8">
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+                    <X className="h-5 w-5 text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#111111]">
+                    The old way
+                  </h3>
+                </div>
+                <ul className="space-y-4">
+                  {[
+                    "Design & print menus (again)",
+                    "Price changed? Print everything again",
+                    "Dish unavailable? Scratch it out by hand",
+                    "Menus wear out — replace them",
+                    "Customers see outdated information",
+                  ].map((pain) => (
+                    <li
+                      key={pain}
+                      className="flex items-start gap-3 text-sm text-[#555555]"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100">
+                        <X className="h-3 w-3 stroke-[3] text-red-500" />
+                      </span>
+                      {pain}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* New way */}
+              <div className="rounded-3xl border border-[#1E45FB]/20 bg-[#1E45FB] p-8">
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                    <Check className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">
+                    With Menuu-QR
+                  </h3>
+                </div>
+                <ul className="space-y-4">
+                  {[
+                    "Create your menu once, online",
+                    "Update prices in seconds — for free",
+                    "Dishes instantly appear or disappear",
+                    "Your QR code never changes",
+                    "Customers always see live, accurate prices",
+                  ].map((win) => (
+                    <li
+                      key={win}
+                      className="flex items-start gap-3 text-sm text-blue-100"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#CDF22B]">
+                        <Check className="h-3 w-3 stroke-[3] text-[#111111]" />
+                      </span>
+                      {win}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════
+            HOW IT WORKS
+        ══════════════════════════════════════════════════ */}
         <section
           id="how-it-works"
-          className="border-t border-[#E5E5E5] bg-[#F5F5F5]/40 px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
+          className="border-t border-[#E5E5E5] bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
         >
           <div className="mx-auto max-w-7xl">
-            <Reveal>
-              <div className="max-w-2xl">
-                <p className="text-sm font-bold text-[#1E45FB]">
-                  HOW IT WORKS
-                </p>
+            <div className="mx-auto max-w-xl text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
+                How it works
+              </p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
+                အဆင့် ၃ ဆင့်သာ လိုပါသည်
+              </h2>
+              <p className="mt-4 text-[#666666]">
+                From zero to a live digital menu in under 5 minutes.
+              </p>
+            </div>
 
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                  Online menu ကနေ စားပွဲပေါ်‌ရောက်ဖို့ အဆင့်၃ဆင့်ပဲလိုပါတယ်။
-                </h2>
+            <div className="mt-14 grid gap-6 md:grid-cols-3">
+              {STEPS.map((step, i) => (
+                <article
+                  key={step.number}
+                  className="group relative rounded-3xl border border-[#E5E5E5] bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#1E45FB]/30 hover:shadow-xl"
+                >
+                  {/* Connector line */}
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute right-0 top-12 hidden h-0.5 w-8 translate-x-full bg-[#E5E5E5] md:block" />
+                  )}
 
-                <p className="mt-4 text-[#666666]">
-                  Keep the setup simple. Manage your menu online and let
-                  customers access it from their phones.
-                </p>
-              </div>
-            </Reveal>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#1E45FB] text-sm font-extrabold text-white">
+                    {step.number}
+                  </span>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {steps.map((step, index) => (
-                <Reveal key={step.number} delay={index * 100}>
-                  <article className="group rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-[#1E45FB]/30 hover:shadow-md sm:p-6">
-                    <span
-                      className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2.5 text-xs font-bold ${
-                        index % 2 === 0
-                          ? "bg-[#CDF22B] text-[#111111]"
-                          : "bg-[#1E45FB]/10 text-[#1E45FB]"
-                      }`}
-                    >
-                      {step.number}
-                    </span>
-
-                    <h3 className="mt-5 text-xl font-bold text-[#111111]">
-                      {step.title}
-                    </h3>
-
-                    <p className="mt-2 text-sm leading-6 text-[#666666]">
-                      {step.description}
-                    </p>
-                  </article>
-                </Reveal>
+                  <h3 className="mt-5 text-xl font-extrabold text-[#111111]">
+                    {step.titleEn}
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-[#1E45FB]">
+                    {step.titleMM}
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-[#666666]">
+                    {step.description}
+                  </p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* =====================================================
-            PRODUCT / FEATURES
-        ====================================================== */}
-
+        {/* ══════════════════════════════════════════════════
+            FEATURES
+        ══════════════════════════════════════════════════ */}
         <section
-          id="product"
-          className="border-t border-[#E5E5E5] px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
+          id="features"
+          className="border-t border-[#E5E5E5] bg-[#F8F8F8] px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
         >
           <div className="mx-auto max-w-7xl">
-            <Reveal>
-              <div className="mx-auto max-w-2xl text-center">
-                <p className="text-sm font-bold text-[#1E45FB]">
-                  THE PRODUCT
-                </p>
+            <div className="mx-auto max-w-xl text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
+                Features
+              </p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
+                Everything your restaurant needs
+              </h2>
+              <p className="mt-4 text-[#666666]">
+                No complicated setup. No technical knowledge needed. Just the
+                tools that help your restaurant run better.
+              </p>
+            </div>
 
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                  Everything you need for a digital menu.
-                </h2>
-
-                <p className="mt-4 text-[#666666]">
-                  No complicated setup. Just the tools your restaurant needs.
-                </p>
-              </div>
-            </Reveal>
-
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature, index) => {
+            <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((feature) => {
                 const Icon = feature.icon;
-
                 return (
-                  <Reveal key={feature.title} delay={index * 80}>
-                    <article className="group h-full rounded-2xl border border-[#E5E5E5] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#1E45FB]/30 hover:shadow-lg">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105 ${
-                          index % 2 === 0
-                            ? "bg-[#1E45FB]/10 text-[#1E45FB]"
-                            : "bg-[#CDF22B] text-[#111111]"
+                  <article
+                    key={feature.title}
+                    className={`group rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
+                      feature.accent
+                        ? "border-[#1E45FB]/20 bg-[#1E45FB] text-white"
+                        : "border-[#E5E5E5] bg-white text-[#111111]"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                        feature.accent
+                          ? "bg-white/20"
+                          : "bg-[#1E45FB]/10"
+                      }`}
+                    >
+                      <Icon
+                        className={`h-6 w-6 ${
+                          feature.accent ? "text-white" : "text-[#1E45FB]"
                         }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </div>
+                      />
+                    </div>
 
-                      <h3 className="mt-5 font-bold text-[#111111]">
-                        {feature.title}
-                      </h3>
+                    <h3
+                      className={`mt-5 text-lg font-extrabold ${
+                        feature.accent ? "text-white" : "text-[#111111]"
+                      }`}
+                    >
+                      {feature.title}
+                    </h3>
 
-                      <p className="mt-2 text-sm leading-6 text-[#666666]">
-                        {feature.description}
-                      </p>
-                    </article>
-                  </Reveal>
+                    <p
+                      className={`mt-2 text-sm leading-7 ${
+                        feature.accent ? "text-blue-200" : "text-[#666666]"
+                      }`}
+                    >
+                      {feature.description}
+                    </p>
+                  </article>
                 );
               })}
             </div>
           </div>
         </section>
 
-        {/* =====================================================
-            SIMPLE VALUE SECTION
-        ====================================================== */}
+        {/* ══════════════════════════════════════════════════
+            PRODUCT PREVIEW
+        ══════════════════════════════════════════════════ */}
+        <section className="border-t border-[#E5E5E5] bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-xl text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
+                The Product
+              </p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
+                Built for restaurant owners, <br className="hidden sm:block" />
+                loved by their customers
+              </h2>
+              <p className="mt-4 text-[#666666]">
+                A simple dashboard for you. A beautiful menu for them.
+              </p>
+            </div>
 
-        <section className="border-t border-[#E5E5E5] bg-[#F5F5F5]/40 px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
-            <Reveal>
-              <div>
-                <p className="text-sm font-bold text-[#1E45FB]">
-                  LESS WORK
+            <div className="mt-14 grid gap-8 lg:grid-cols-2">
+              {/* Dashboard panel */}
+              <div className="rounded-3xl border border-[#E5E5E5] bg-[#F8F8F8] p-6 sm:p-8">
+                <p className="mb-5 text-xs font-bold uppercase tracking-widest text-[#888888]">
+                  Owner Dashboard
                 </p>
-
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                  Change your menu without printing it again.
-                </h2>
-
-                <p className="mt-5 max-w-xl leading-7 text-[#666666]">
-                  When a dish changes, a price changes, or something goes out
-                  of stock, update your digital menu instead of replacing
-                  printed menus around the restaurant.
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  {[
-                    "Update dishes and prices",
-                    "Organize menu categories",
-                    "Upload food images",
-                    "Keep one menu available everywhere",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 text-sm font-medium text-[#111111]"
-                    >
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#CDF22B] text-[#111111]">
-                        <Check className="h-3.5 w-3.5 stroke-[3]" />
+                <div className="overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white shadow-sm">
+                  {/* Top bar */}
+                  <div className="flex items-center justify-between border-b border-[#E5E5E5] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1E45FB]">
+                        <UtensilsCrossed className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span className="text-sm font-bold text-[#111111]">
+                        Menuu-QR
                       </span>
-
-                      {item}
                     </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={150}>
-              <div className="glass-frame rounded-3xl p-2 sm:p-3">
-                <div className="rounded-2xl border border-white/10 bg-neutral-950 p-6 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                    <div>
-                      <p className="text-xs text-stone-500">MENU</p>
-
-                      <p className="mt-1 font-semibold text-stone-100">
-                        Restaurant Menu
-                      </p>
-                    </div>
-
-                    <span className="rounded-full bg-[#CDF22B] px-2.5 py-1 text-xs font-bold text-[#111111]">
-                      Published
+                    <span className="rounded-full bg-[#CDF22B] px-2.5 py-1 text-[10px] font-bold text-[#111111]">
+                      Pro
                     </span>
                   </div>
 
-                  <div className="mt-6 space-y-3">
-                    {[
-                      ["Main Dishes", "8 items"],
-                      ["Drinks", "6 items"],
-                      ["Desserts", "4 items"],
-                    ].map(([name, count], index) => (
-                      <div
-                        key={name}
-                        className="value-card rounded-xl border border-white/5 bg-white/[0.03] p-4 transition-transform duration-300 hover:translate-x-1"
-                        style={{
-                          animationDelay: `${index * 100}ms`,
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-stone-200">
-                            {name}
-                          </span>
+                  {/* Sidebar + content */}
+                  <div className="flex">
+                    {/* Sidebar */}
+                    <div className="hidden w-36 shrink-0 border-r border-[#E5E5E5] bg-[#FAFAFA] p-3 sm:block">
+                      {[
+                        { label: "Dashboard", active: false },
+                        { label: "Menu", active: true },
+                        { label: "QR Codes", active: false },
+                        { label: "Settings", active: false },
+                      ].map(({ label, active }) => (
+                        <div
+                          key={label}
+                          className={`mb-1 rounded-lg px-3 py-2 text-xs font-medium ${
+                            active
+                              ? "bg-[#1E45FB] text-white"
+                              : "text-[#666666]"
+                          }`}
+                        >
+                          {label}
+                        </div>
+                      ))}
+                    </div>
 
-                          <span className="text-xs text-stone-500">
-                            {count}
-                          </span>
+                    {/* Content area */}
+                    <div className="flex-1 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-xs font-semibold text-[#111111]">
+                          Menu Items
+                        </p>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 rounded-lg bg-[#1E45FB] px-2.5 py-1.5 text-[10px] font-semibold text-white"
+                        >
+                          + Add dish
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {[
+                          { name: "Mohinga", cat: "Noodles", price: "2,500", available: true },
+                          { name: "Shan Noodles", cat: "Noodles", price: "3,000", available: true },
+                          { name: "Iced Coffee", cat: "Drinks", price: "1,500", available: false },
+                        ].map((item) => (
+                          <div
+                            key={item.name}
+                            className="flex items-center justify-between rounded-xl border border-[#F0F0F0] bg-[#FAFAFA] px-3 py-2.5"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="h-8 w-8 rounded-lg bg-[#E5E5E5]" />
+                              <div>
+                                <p className="text-[11px] font-semibold text-[#111111]">
+                                  {item.name}
+                                </p>
+                                <p className="text-[10px] text-[#888888]">
+                                  {item.cat}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-bold text-[#111111]">
+                                {item.price} MMK
+                              </span>
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  item.available ? "bg-green-400" : "bg-[#CCCCCC]"
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-4 text-center text-xs text-[#888888]">
+                  Manage everything from your browser — no tech knowledge needed
+                </p>
+              </div>
+
+              {/* Customer menu panel */}
+              <div className="rounded-3xl border border-[#E5E5E5] bg-[#F8F8F8] p-6 sm:p-8">
+                <p className="mb-5 text-xs font-bold uppercase tracking-widest text-[#888888]">
+                  Customer Experience
+                </p>
+                <div className="overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white shadow-sm">
+                  {/* Restaurant header */}
+                  <div className="bg-[#1E45FB] px-5 py-5 text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20">
+                        <UtensilsCrossed className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-blue-200">Yangon, Myanmar</p>
+                        <p className="font-bold">Golden Spoon</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Search */}
+                  <div className="border-b border-[#F0F0F0] px-4 py-2.5">
+                    <div className="flex items-center gap-2 rounded-xl bg-[#F5F5F5] px-3 py-2">
+                      <Search className="h-4 w-4 text-[#AAAAAA]" />
+                      <span className="text-xs text-[#AAAAAA]">
+                        Search your favourite dish…
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Category tabs */}
+                  <div className="flex gap-2 overflow-x-auto border-b border-[#F0F0F0] px-4 py-2.5 scrollbar-hide">
+                    {["All", "Noodles", "Rice", "Drinks"].map((cat, i) => (
+                      <span
+                        key={cat}
+                        className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+                          i === 0
+                            ? "bg-[#1E45FB] text-white"
+                            : "bg-[#F5F5F5] text-[#666666]"
+                        }`}
+                      >
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Items grid */}
+                  <div className="grid grid-cols-2 gap-3 p-4">
+                    {[
+                      { name: "Mohinga", price: "2,500", color: "#FEF3C7", popular: true },
+                      { name: "Shan Noodles", price: "3,000", color: "#DBEAFE", popular: false },
+                      { name: "Iced Coffee", price: "1,500", color: "#D1FAE5", popular: false },
+                      { name: "Tea Leaf Salad", price: "2,000", color: "#FCE7F3", popular: true },
+                    ].map((item) => (
+                      <div
+                        key={item.name}
+                        className="overflow-hidden rounded-xl border border-[#F0F0F0]"
+                      >
+                        <div
+                          className="h-20 w-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div className="p-2">
+                          <div className="flex items-start justify-between gap-1">
+                            <p className="text-[11px] font-bold leading-tight text-[#111111]">
+                              {item.name}
+                            </p>
+                            {item.popular && (
+                              <Star className="h-3 w-3 shrink-0 text-[#F59E0B]" />
+                            )}
+                          </div>
+                          <p className="mt-1 text-[11px] font-bold text-[#1E45FB]">
+                            {item.price} MMK
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* =====================================================
-            PRICING
-        ====================================================== */}
-
-        {/* =====================================================
-            PRICING
-        ====================================================== */}
-
-<section
-          id="pricing"
-          className="border-t border-[#E5E5E5] px-4 py-20 sm:px-6 sm:py-24 lg:px-8 bg-[#F5F5F5]/30"
-        >
-          <div className="mx-auto max-w-7xl">
-            <Reveal>
-              <div className="mx-auto max-w-3xl text-center">
-                <p className="text-sm font-bold text-[#1E45FB]">
-                  PRICING
-                </p>
-
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-                  Simple, Transparent Pricing.
-                </h2>
-
-                <p className="mt-4 text-[#666666]">
-                  Choose the right plan for your restaurant business. Scale as you grow.
+                <p className="mt-4 text-center text-xs text-[#888888]">
+                  What customers see when they scan your QR code
                 </p>
               </div>
-            </Reveal>
-
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {[
-                {
-                  name: "Free",
-                  price: "$0",
-                  period: "forever",
-                  description: "For small local shops starting out with QR menus.",
-                  features: ["Basic QR Menu", "Table Management", "Up to 20 Menu Items", "Standard Support"],
-                  buttonText: "Get Started Free",
-                  popular: false,
-                },
-                {
-                  name: "Pro",
-                  price: "$19",
-                  period: "per month",
-                  description: "For growing restaurants that need more space and features.",
-                  features: ["Advanced QR Menu", "Table Management", "Up to 100 Menu Items", "Custom Branding", "Priority Support"],
-                  buttonText: "Choose Pro",
-                  popular: true,
-                },
-                {
-                  name: "Business",
-                  price: "$49",
-                  period: "per month",
-                  description: "For large establishments with unlimited requirements.",
-                  features: ["Unlimited Menu Items", "Multi-location Support", "Advanced Analytics", "Dedicated Support", "Custom Domain Support"],
-                  buttonText: "Choose Business",
-                  popular: false,
-                },
-              ].map((plan, index) => (
-                <Reveal key={plan.name} delay={index * 100}>
-                  <div className={`relative flex flex-col justify-between h-full p-8 rounded-3xl border ${plan.popular ? 'border-[#1E45FB] bg-white shadow-xl ring-2 ring-[#1E45FB]/20' : 'border-[#E5E5E5] bg-white shadow-xs'} transition-all duration-300 hover:-translate-y-1`}>
-                    {plan.popular && (
-                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#1E45FB] text-white text-xs font-semibold rounded-full uppercase tracking-wider">
-                        Most Popular
-                      </span>
-                    )}
-                    <div>
-                      <h3 className="text-xl font-bold text-[#111111]">{plan.name}</h3>
-                      <p className="text-xs text-[#666666] mt-1">{plan.description}</p>
-                      
-                      <div className="my-6 flex items-baseline gap-1">
-                        <span className="text-4xl font-extrabold text-[#111111]">{plan.price}</span>
-                        <span className="text-xs text-[#666666]">/ {plan.period}</span>
-                      </div>
-
-                      <ul className="space-y-3 text-sm text-[#444444] mb-8">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2.5">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#CDF22B] text-[#111111] shrink-0">
-                              <Check className="h-3 w-3 stroke-[3]" />
-                            </span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <Link
-                      href="/auth/sign-up"
-                      className={`w-full py-3 px-4 rounded-xl text-sm font-semibold text-center transition-all duration-200 ${
-                        plan.popular
-                          ? 'bg-[#1E45FB] text-white hover:bg-[#1737C9] shadow-md hover:shadow-lg'
-                          : 'bg-[#F5F5F5] text-[#111111] hover:bg-[#E5E5E5]'
-                      }`}
-                    >
-                      {plan.buttonText}
-                    </Link>
-                  </div>
-                </Reveal>
-              ))}
             </div>
           </div>
         </section>
 
+        {/* ══════════════════════════════════════════════════
+            PRICING (client — has toggle)
+        ══════════════════════════════════════════════════ */}
+        <PricingSection />
+
+        {/* ══════════════════════════════════════════════════
+            FAQ (client — has accordion)
+        ══════════════════════════════════════════════════ */}
         <FAQ />
 
-        {/* =====================================================
+        {/* ══════════════════════════════════════════════════
             FINAL CTA
-        ====================================================== */}
+        ══════════════════════════════════════════════════ */}
+        <section className="border-t border-[#E5E5E5] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-[2.5rem] bg-[#111111] px-6 py-16 text-center sm:px-12 sm:py-20">
+            {/* Accent dot */}
+            <div
+              className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#1E45FB]/30 blur-3xl"
+              aria-hidden="true"
+            />
 
-        <section className="px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <Reveal>
-            <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-[#E5E5E5] bg-[#111111] px-6 py-14 text-center shadow-xl sm:px-12 sm:py-20">
-              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#1E45FB]/30 blur-2xl" aria-hidden="true" />
-              <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[#CDF22B]/20 blur-2xl" aria-hidden="true" />
-              <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <div className="relative">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#CDF22B]" />
+                Free plan available now
+              </div>
+
+              <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
                 Ready to put your menu online?
               </h2>
 
-              <p className="mx-auto mt-4 max-w-xl text-stone-400">
-                Create your digital menu and give your customers a simpler way
-                to browse.
+              <p className="mx-auto mt-5 max-w-xl text-base text-[#999999]">
+                Thousands of restaurants waste money reprinting menus. Yours
+                doesn&apos;t have to. Get started in 5 minutes — no credit card
+                required.
               </p>
 
-              <Link
-                href="/auth/sign-up"
-                className="group mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#CDF22B] px-8 text-sm font-bold text-[#111111] shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B8DA20] hover:shadow-lg active:translate-y-0"
-              >
-                Get started
-                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </Link>
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href="/auth/sign-up"
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#CDF22B] px-8 text-sm font-bold text-[#111111] shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B8DA20] hover:shadow-lg active:translate-y-0 sm:w-auto"
+                >
+                  Start for free — no card needed
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+                <Link
+                  href="#pricing"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-white/20 px-8 text-sm font-semibold text-white transition-all duration-200 hover:border-white/40 hover:bg-white/5 sm:w-auto"
+                >
+                  See pricing
+                </Link>
+              </div>
             </div>
-          </Reveal>
+          </div>
         </section>
       </main>
 
-      {/* =====================================================
+      {/* ══════════════════════════════════════════════════
           FOOTER
-      ====================================================== */}
+      ══════════════════════════════════════════════════ */}
+      <footer className="border-t border-[#E5E5E5] bg-white px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Brand */}
+            <div className="lg:col-span-2">
+              <Link
+                href="/"
+                className="flex items-center gap-2.5 font-extrabold text-[#111111]"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E45FB] text-white">
+                  <UtensilsCrossed className="h-4 w-4" />
+                </span>
+                <span className="tracking-tight">Menuu-QR</span>
+              </Link>
+              <p className="mt-3 max-w-xs text-sm leading-6 text-[#666666]">
+                Digital QR menus for Myanmar restaurants. Update once, customers
+                always see the latest.
+              </p>
+              <div className="mt-5 flex gap-3">
+                <Link
+                  href={process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E5E5] text-[#666666] transition-colors hover:border-[#1E45FB] hover:text-[#1E45FB]"
+                  aria-label="Facebook"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E5E5] text-[#666666] transition-colors hover:border-[#1E45FB] hover:text-[#1E45FB]"
+                  aria-label="Viber"
+                >
+                  <Smartphone className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
 
-      <footer className="border-t border-[#E5E5E5] bg-white px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-bold text-[#111111]"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1E45FB] text-white">
-              <UtensilsCrossed className="h-3.5 w-3.5" />
-            </span>
+            {/* Product links */}
+            <div>
+              <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#111111]">
+                Product
+              </p>
+              <ul className="space-y-3 text-sm text-[#666666]">
+                {[
+                  ["Features", "#features"],
+                  ["How it works", "#how-it-works"],
+                  ["Pricing", "#pricing"],
+                  ["FAQ", "#faq"],
+                ].map(([label, href]) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="transition-colors hover:text-[#111111]"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            Menuu-QR
-          </Link>
-
-          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#666666]">
-            <Link href="#product" className="hover:text-[#111111]">
-              Product
-            </Link>
-
-            <Link href="#how-it-works" className="hover:text-[#111111]">
-              How it works
-            </Link>
-
-            <Link href="#pricing" className="hover:text-[#111111]">
-              Pricing
-            </Link>
-
-            <Link href="/auth/login" className="hover:text-[#111111]">
-              Login
-            </Link>
+            {/* Account & Legal links */}
+            <div>
+              <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#111111]">
+                Account
+              </p>
+              <ul className="space-y-3 text-sm text-[#666666]">
+                {[
+                  ["Login", "/auth/login"],
+                  ["Sign up free", "/auth/sign-up"],
+                  ["Privacy Policy", "/privacy"],
+                  ["Terms of Service", "/terms"],
+                ].map(([label, href]) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="transition-colors hover:text-[#111111]"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <p className="text-sm text-[#888888]">© 2026 Menuu-QR</p>
+          {/* Bottom bar */}
+          <div className="mt-12 flex flex-col gap-3 border-t border-[#E5E5E5] pt-8 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[#888888]">
+              © 2026 Menuu-QR. All rights reserved.
+            </p>
+            <p className="text-sm text-[#888888]">
+              Made for Myanmar restaurants 🍜
+            </p>
+          </div>
         </div>
       </footer>
-
-      {/* =====================================================
-          ANIMATION STYLES
-      ====================================================== */}
-
-      <style jsx global>{`
-        .reveal {
-          opacity: 0;
-          transform: translateY(24px);
-          animation: reveal-up 700ms cubic-bezier(0.22, 1, 0.36, 1)
-            forwards;
-          animation-delay: var(--delay, 0ms);
-        }
-
-        .hero-glow {
-          animation: glow-float 10s ease-in-out infinite;
-        }
-
-        .glass-frame {
-          border: 1px solid rgba(255, 255, 255, 0.7);
-          background: rgba(255, 255, 255, 0.42);
-          box-shadow:
-            0 24px 70px rgba(28, 25, 23, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
-        }
-
-        .preview-card-0 {
-          animation: card-reveal 700ms 650ms
-            cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .preview-card-1 {
-          animation: card-reveal 700ms 760ms
-            cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .preview-card-2 {
-          animation: card-reveal 700ms 870ms
-            cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .hero-orb-yellow {
-          animation: orb-float 8s ease-in-out infinite;
-        }
-
-        .hero-orb-orange {
-          animation: orb-float 7s ease-in-out infinite reverse;
-        }
-
-        @keyframes orb-float {
-          0%,
-          100% {
-            transform: translate3d(0, 0, 0);
-          }
-
-          50% {
-            transform: translate3d(0, 14px, 0) scale(1.08);
-          }
-        }
-
-        @keyframes reveal-up {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes card-reveal {
-          from {
-            opacity: 0;
-            transform: translateY(12px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes glow-float {
-          0%,
-          100% {
-            transform: translateX(-50%) translateY(0) scale(1);
-          }
-
-          50% {
-            transform: translateX(-50%) translateY(25px) scale(1.04);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          *,
-          *::before,
-          *::after {
-            scroll-behavior: auto !important;
-            animation-duration: 0.01ms !important;
-            animation-delay: 0ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-
-          .reveal {
-            opacity: 1;
-            transform: none;
-          }
-
-          .hero-orb-yellow,
-          .hero-orb-orange {
-            animation: none;
-          }
-        }
-      `}</style>
     </div>
   );
 }

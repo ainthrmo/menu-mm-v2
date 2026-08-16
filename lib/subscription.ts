@@ -30,27 +30,27 @@ export const DEFAULT_FREE_PLAN: Plan = {
   price_mmk: 0,
   billing_interval: "forever",
   max_menu_items: 20,
-  features: ["Basic QR Menu", "Table Management", "Up to 20 Menu Items", "Standard Support"],
+  features: ["Up to 20 Menu Items", "QR Code Generation", "Category Management", "Basic Customization", "Mobile Menu"],
 };
 
 export const DEFAULT_PRO_PLAN: Plan = {
   id: "pro",
   name: "Pro",
-  price_usd: 19,
-  price_mmk: 65000,
+  price_usd: 0,
+  price_mmk: 5000,
   billing_interval: "monthly",
-  max_menu_items: 100,
-  features: ["Advanced QR Menu", "Table Management", "Up to 100 Menu Items", "Custom Branding", "Priority Support"],
+  max_menu_items: 2147483647, // unlimited — matches dashboard's >= 2000000000 "Unlimited" display check
+  features: ["Unlimited Menu Items", "Food Photos", "Full Customization", "Custom Theme Color", "Bilingual Menu", "Social Links", "Cart", "Mark Popular Items"],
 };
 
 export const DEFAULT_BUSINESS_PLAN: Plan = {
   id: "business",
   name: "Business",
-  price_usd: 49,
-  price_mmk: 165000,
+  price_usd: 0,
+  price_mmk: 0,
   billing_interval: "monthly",
   max_menu_items: 2147483647,
-  features: ["Unlimited Menu Items", "Multi-location Support", "Advanced Analytics", "Dedicated Support", "Custom Domain Support"],
+  features: ["Coming Soon"],
 };
 
 /**

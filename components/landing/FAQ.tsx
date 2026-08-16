@@ -2,126 +2,114 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import Link from "next/link";
 
 const faqs = [
   {
-    question: "What is Mee Nhuu?",
+    question: "What is Menuu-QR?",
     answer:
-      "Mee Nhuu is a digital menu platform for restaurants and cafés. It lets you create a modern online menu that customers can access by scanning a QR code.",
+      "Menuu-QR is a digital QR menu platform built for Myanmar restaurants, cafés, and tea shops. It lets you create a professional online menu that your customers can access instantly by scanning a QR code — no app download needed.",
   },
   {
-    question: "Do I need a website to use Mee Nhuu?",
+    question: "How does a QR menu work?",
     answer:
-      "No. Mee Nhuu provides your digital menu page, so you don't need to build or maintain a separate website.",
+      "You create your menu in your Menuu-QR dashboard, then download your QR code. Display it on your tables, counter, or entrance. When customers scan it with their phone camera, your full menu opens immediately in their browser.",
   },
   {
-    question: "How do customers access my menu?",
+    question: "Do my customers need to download an app?",
     answer:
-      "Customers simply scan your restaurant's QR code with their phone camera. Your digital menu opens instantly in their browser.",
+      "No. Your digital menu opens directly in the customer's phone browser. No app, no account, no extra steps. They scan and see your menu instantly.",
   },
   {
-    question: "Can I update my menu myself?",
+    question: "Can I update my menu after publishing?",
     answer:
-      "Yes. You can log in to your dashboard and update menu items, prices, categories, images, and other information whenever you need.",
+      "Yes — this is exactly what Menuu-QR is built for. Log in to your dashboard, make any changes (update prices, add dishes, remove items, upload photos), and your live menu updates immediately. Your QR code stays the same forever — no reprinting required.",
   },
   {
-    question: "Can I use Burmese and English?",
+    question: "Can I write my menu in Myanmar (Burmese)?",
     answer:
-      "Yes. Mee Nhuu is designed to support both Burmese and English menus, making it easier to serve different customers.",
+      "Yes. Menuu-QR supports both Burmese and English. You can add dish names and descriptions in both languages. Customers on the Pro plan can switch between languages on the menu.",
   },
   {
-    question: "Do I need technical knowledge?",
+    question: "How do I get my QR code?",
     answer:
-      "No. The dashboard is designed for restaurant owners and staff. You can manage your menu without knowing how to code.",
+      "After setting up your menu, go to the QR Codes section in your dashboard. Your unique QR code is ready to download as an image. Print it, laminate it, and place it anywhere in your restaurant.",
   },
   {
-    question: "Can Mee Nhuu generate my QR code?",
+    question: "How much does it cost and how do I pay?",
     answer:
-      "Yes. Mee Nhuu can generate a QR code linked directly to your digital menu. You can then print it and place it on tables, counters, or other locations.",
+      "The Free plan is always free with up to 20 menu items. The Pro plan costs 30,000 MMK for 6 months or 50,000 MMK for 1 year (saving 10,000 MMK). Payment details are confirmed at checkout. We are working on making payment as easy as possible for Myanmar restaurants.",
   },
   {
-    question: "How much does Mee Nhuu cost?",
+    question: "What happens if I stay on the Free plan?",
     answer:
-      "Mee Nhuu is designed to be simple and affordable for local restaurants and cafés. Pricing and available plans will be shown when you are ready to get started.",
+      "You can use Menuu-QR on the Free plan for as long as you like. You get a working QR menu, up to 20 menu items, categories, basic customization, and QR code download. Upgrade to Pro any time you want food photos, bilingual support, and unlimited items.",
   },
 ];
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const toggleFAQ = (index: number) => {
-    setOpenIndex((current) => (current === index ? null : index));
-  };
-
   return (
     <section
       id="faq"
-      className="w-full border-t border-[#E5E5E5] bg-white"
+      className="border-t border-[#E5E5E5] bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
       aria-labelledby="faq-heading"
     >
-      <div className="mx-auto w-full max-w-4xl px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
+      <div className="mx-auto max-w-3xl">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold tracking-wide text-[#1E45FB]">
+        <div className="text-center">
+          <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
             FAQ
           </p>
-
           <h2
             id="faq-heading"
-            className="text-3xl font-bold tracking-tight text-[#111111] sm:text-4xl"
+            className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl"
           >
             Frequently asked questions
           </h2>
-
-          <p className="mt-4 text-base leading-7 text-[#666666] sm:text-lg">
+          <p className="mt-4 text-[#666666]">
             Everything you need to know about Menuu-QR.
           </p>
         </div>
 
         {/* FAQ list */}
-        <div className="mt-10 overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white">
+        <div className="mt-12 overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
-
             return (
               <div
                 key={faq.question}
-                className={
-                  index !== faqs.length - 1
-                    ? "border-b border-[#E5E5E5]"
-                    : ""
-                }
+                className={index !== faqs.length - 1 ? "border-b border-[#E5E5E5]" : ""}
               >
                 <button
-                id={`faq-question-${index}`}
-                type="button"
-                  onClick={() => toggleFAQ(index)}
+                  id={`faq-btn-${index}`}
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
                   aria-expanded={isOpen}
-                  aria-controls={`faq-answer-${index}`}
-                  className="flex w-full items-center justify-between gap-6 px-5 py-5 text-left transition-colors hover:bg-[#F5F5F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E45FB] sm:px-6"
+                  aria-controls={`faq-panel-${index}`}
+                  className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left transition-colors hover:bg-[#F8F8F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E45FB]"
                 >
                   <span className="text-sm font-semibold leading-6 text-[#111111] sm:text-base">
                     {faq.question}
                   </span>
-
                   <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-[#666666] transition-transform duration-200 ${
+                    className={`h-5 w-5 shrink-0 text-[#888888] transition-transform duration-200 ${
                       isOpen ? "rotate-180 text-[#1E45FB]" : ""
                     }`}
                     aria-hidden="true"
                   />
                 </button>
-
                 <div
-                  id={`faq-answer-${index}`}
+                  id={`faq-panel-${index}`}
                   role="region"
-                  aria-labelledby={`faq-question-${index}`}
+                  aria-labelledby={`faq-btn-${index}`}
                   className={`grid transition-[grid-template-rows] duration-200 ease-out ${
                     isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-5 pr-12 text-sm leading-6 text-[#666666] sm:px-6 sm:pb-6 sm:text-base sm:leading-7">
+                    <p className="px-6 pb-6 pr-14 text-sm leading-7 text-[#666666] sm:text-base">
                       {faq.answer}
                     </p>
                   </div>
@@ -132,20 +120,31 @@ export default function FAQ() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-10 text-center">
-          <p className="text-sm text-[#666666]">
+        <div className="mt-10 rounded-2xl border border-[#E5E5E5] bg-[#F8F8F8] p-6 text-center">
+          <p className="text-sm font-semibold text-[#111111]">
             Still have questions?
           </p>
-
-          <a
-            href="#contact"
-            className="mt-2 inline-flex items-center font-semibold text-[#1E45FB] transition-colors hover:text-[#1737C9]"
-          >
-            Get in touch
-            <span aria-hidden="true" className="ml-1">
-              →
-            </span>
-          </a>
+          <p className="mt-1 text-sm text-[#666666]">
+            Reach us on{" "}
+            <Link
+              href={process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#1E45FB] hover:underline"
+            >
+              Facebook
+            </Link>{" "}
+            or{" "}
+            <Link
+              href={process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#1E45FB] hover:underline"
+            >
+              Viber
+            </Link>{" "}
+            — we reply quickly.
+          </p>
         </div>
       </div>
     </section>
