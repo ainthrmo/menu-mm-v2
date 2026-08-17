@@ -17,7 +17,7 @@ export function AuthPageShell({ children, subtitle }: AuthPageShellProps) {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1E45FB] text-white shadow-sm">
             <UtensilsCrossed className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="text-lg font-bold tracking-tight">Menuu-QR</span>
+          <span className="text-lg font-bold tracking-tight">Menuu</span>
         </Link>
         {subtitle && (
           <p className="text-xs text-[#666666] mt-2">{subtitle}</p>

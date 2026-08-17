@@ -66,7 +66,7 @@ export default function LandingNavbar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E45FB] text-white shadow-sm">
             <UtensilsCrossed className="h-4 w-4" />
           </span>
-          <span className="tracking-tight">Menuu-QR</span>
+          <span className="tracking-tight">Menuu</span>
         </Link>
 
         {/* Desktop nav */}

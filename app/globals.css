@@ -135,7 +135,7 @@
   }
 
   html {
-    font-family: var(--font-sans);
+    font-family: var(--font-geist-sans), "Pyidaungsu", "Noto Sans Myanmar", "Padauk", "Myanmar Text", system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -147,5 +147,52 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  @keyframes scanLaser {
+    0% {
+      top: 0%;
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      top: 96%;
+      opacity: 0;
+    }
+  }
+
+  @keyframes ambientFloat {
+    0%, 100% {
+      transform: translateY(0px) rotate(4deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(3deg);
+    }
+  }
+
+  @keyframes qrStandFloat {
+    0%, 100% {
+      transform: translateY(0px) rotate(-6deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(-4deg);
+    }
+  }
+
+  .animate-scan-laser {
+    animation: scanLaser 2.4s ease-in-out infinite;
+  }
+
+  .animate-ambient-phone {
+    animation: ambientFloat 6s ease-in-out infinite;
+  }
+
+  .animate-qr-stand {
+    animation: qrStandFloat 5s ease-in-out infinite;
   }
 }

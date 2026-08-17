@@ -655,7 +655,7 @@ export const AdminDashboard: React.FC = () => {
               )}
               <div>
                 <h1 className="text-sm font-bold text-[#111111] tracking-tight">{storeName}</h1>
-                <p className="text-[11px] text-[#666666] font-medium">Menuu-QR Admin</p>
+                <p className="text-[11px] text-[#666666] font-medium">Menuu Admin</p>
               </div>
             </div>
             <button
@@ -1631,7 +1631,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <h2 className="text-xl font-bold text-[#111111]">Upgrade to Pro</h2>
               <p className="text-sm text-[#666666] leading-relaxed">
-                Contact Menuu-QR to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#111111]">{storeName}</span>.
+                Contact Menuu to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#111111]">{storeName}</span>.
               </p>
             </div>
 
@@ -1659,7 +1659,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="text-sm font-bold text-[#111111] group-hover:text-[#7360F2] transition-colors">
                       Viber
                     </div>
-                    <div className="text-xs text-[#666666]">Contact Menuu-QR on Viber</div>
+                    <div className="text-xs text-[#666666]">Contact Menuu on Viber</div>
                   </div>
                 </div>
                 <ExternalLink className="w-4 h-4 text-[#888888] group-hover:text-[#7360F2] transition-colors" />
