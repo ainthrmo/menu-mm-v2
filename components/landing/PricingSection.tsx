@@ -3,35 +3,37 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type BillingPeriod = "6months" | "yearly";
 
-const FREE_FEATURES = [
-  "Up to 20 menu items",
-  "QR code generation & download",
-  "Category management",
-  "Basic store customization",
-  "Mobile-optimized customer menu",
-];
-
-const PRO_FEATURES = [
-  "Unlimited menu items",
-  "Food photos per dish",
-  "Full store customization",
-  "Custom theme color & branding",
-  "Bilingual menu (English + Myanmar)",
-  "Social links on customer menu",
-  "Cart for customers",
-  "Mark popular items",
-];
-
 export default function PricingSection() {
   const [billing, setBilling] = useState<BillingPeriod>("yearly");
+  const { t } = useLanguage();
 
   const proPrice = billing === "yearly" ? "50,000" : "30,000";
-  const proPeriod = billing === "yearly" ? "per year" : "per 6 months";
-  const proMonthly = billing === "yearly" ? "≈ 4,167" : "5,000";
+  const proPeriod = billing === "yearly" ? t.pricing.proPerYear : t.pricing.proPer6Months;
+  const proMonthly = billing === "yearly" ? t.pricing.proMonthlyYear : t.pricing.proMonthly6;
   const proSaving = billing === "yearly";
+
+  const FREE_FEATURES = [
+    t.pricing.freeFeat1,
+    t.pricing.freeFeat2,
+    t.pricing.freeFeat3,
+    t.pricing.freeFeat4,
+    t.pricing.freeFeat5,
+  ];
+
+  const PRO_FEATURES = [
+    t.pricing.proFeat1,
+    t.pricing.proFeat2,
+    t.pricing.proFeat3,
+    t.pricing.proFeat4,
+    t.pricing.proFeat5,
+    t.pricing.proFeat6,
+    t.pricing.proFeat7,
+    t.pricing.proFeat8,
+  ];
 
   return (
     <section
@@ -42,13 +44,13 @@ export default function PricingSection() {
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
-            Pricing
+            {t.pricing.eyebrow}
           </p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl">
-            Simple pricing for Myanmar restaurants
+            {t.pricing.title}
           </h2>
           <p className="mt-4 text-[#666666]">
-            Start free. Upgrade when you&apos;re ready.
+            {t.pricing.description}
           </p>
         </div>
 
@@ -63,7 +65,7 @@ export default function PricingSection() {
                 : "text-[#666666] hover:text-[#111111]"
             }`}
           >
-            6 Months
+            {t.pricing.btn6Months}
           </button>
           <button
             type="button"
@@ -74,9 +76,9 @@ export default function PricingSection() {
                 : "text-[#666666] hover:text-[#111111]"
             }`}
           >
-            1 Year
+            {t.pricing.btn1Year}
             <span className="rounded-full bg-[#CDF22B] px-2 py-0.5 text-[10px] font-bold text-[#111111]">
-              Save 10,000 MMK
+              {t.pricing.saveBadge}
             </span>
           </button>
         </div>
@@ -86,9 +88,9 @@ export default function PricingSection() {
           {/* Free Plan */}
           <div className="flex flex-col rounded-3xl border border-[#E5E5E5] bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
             <div>
-              <h3 className="text-lg font-bold text-[#111111]">Free</h3>
+              <h3 className="text-lg font-bold text-[#111111]">{t.pricing.freeTitle}</h3>
               <p className="mt-1 text-xs text-[#666666]">
-                Try Menuu-QR with no commitment.
+                {t.pricing.freeDesc}
               </p>
               <div className="my-6 flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold text-[#111111]">
@@ -97,11 +99,11 @@ export default function PricingSection() {
                 <span className="text-sm font-semibold text-[#666666]">
                   MMK
                 </span>
-                <span className="ml-1 text-xs text-[#888888]">/ forever</span>
+                <span className="ml-1 text-xs text-[#888888]">{t.pricing.freeForever}</span>
               </div>
               <ul className="space-y-3">
-                {FREE_FEATURES.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[#444444]">
+                {FREE_FEATURES.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm text-[#444444]">
                     <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E5E5E5]">
                       <Check className="h-2.5 w-2.5 stroke-[3] text-[#666666]" />
                     </span>
@@ -114,7 +116,7 @@ export default function PricingSection() {
               href="/auth/sign-up"
               className="mt-8 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#F5F5F5] text-sm font-semibold text-[#111111] transition-colors hover:bg-[#E5E5E5]"
             >
-              Start for free
+              {t.pricing.startFree}
             </Link>
           </div>
 
@@ -122,12 +124,12 @@ export default function PricingSection() {
           <div className="relative flex flex-col rounded-3xl border-2 border-[#1E45FB] bg-white p-8 shadow-xl ring-4 ring-[#1E45FB]/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-[#1E45FB] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white">
               <Sparkles className="h-3 w-3" />
-              Most Popular
+              {t.pricing.proBadge}
             </span>
             <div>
-              <h3 className="text-lg font-bold text-[#111111]">Pro</h3>
+              <h3 className="text-lg font-bold text-[#111111]">{t.pricing.proTitle}</h3>
               <p className="mt-1 text-xs text-[#666666]">
-                Everything your restaurant needs.
+                {t.pricing.proDesc}
               </p>
               <div className="my-6">
                 <div className="flex items-baseline gap-1">
@@ -142,17 +144,17 @@ export default function PricingSection() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-[#888888]">
-                  ≈ {proMonthly} MMK per month
+                  {proMonthly}
                 </p>
                 {proSaving && (
                   <p className="mt-1.5 text-xs font-semibold text-[#1E45FB]">
-                    You save 10,000 MMK vs 6-month plan
+                    {t.pricing.proSave}
                   </p>
                 )}
               </div>
               <ul className="space-y-3">
-                {PRO_FEATURES.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[#444444]">
+                {PRO_FEATURES.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm text-[#444444]">
                     <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#CDF22B]">
                       <Check className="h-2.5 w-2.5 stroke-[3] text-[#111111]" />
                     </span>
@@ -165,7 +167,7 @@ export default function PricingSection() {
               href="/auth/sign-up"
               className="mt-8 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#1E45FB] text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#1737C9] hover:shadow-lg"
             >
-              Get Pro
+              {t.pricing.getPro}
             </Link>
           </div>
 
@@ -173,13 +175,13 @@ export default function PricingSection() {
           <div className="flex flex-col rounded-3xl border border-[#E5E5E5] bg-white p-8 shadow-sm opacity-70">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-[#111111]">Business</h3>
+                <h3 className="text-lg font-bold text-[#111111]">{t.pricing.bizTitle}</h3>
                 <span className="rounded-full border border-[#E5E5E5] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#888888]">
-                  Coming Soon
+                  {t.pricing.bizBadge}
                 </span>
               </div>
               <p className="mt-1 text-xs text-[#666666]">
-                Advanced features for growing businesses.
+                {t.pricing.bizDesc}
               </p>
               <div className="my-6">
                 <span className="text-2xl font-bold text-[#888888]">
@@ -187,8 +189,7 @@ export default function PricingSection() {
                 </span>
               </div>
               <p className="text-sm text-[#888888]">
-                We&apos;re building more powerful features for larger
-                restaurant operations. Be the first to know when it launches.
+                {t.pricing.bizFooter}
               </p>
             </div>
             <button
@@ -196,19 +197,19 @@ export default function PricingSection() {
               disabled
               className="mt-8 flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-xl border border-[#E5E5E5] bg-[#F5F5F5] text-sm font-semibold text-[#AAAAAA]"
             >
-              Notify me when ready
+              {t.pricing.notify}
             </button>
           </div>
         </div>
 
         {/* Footer note */}
         <p className="mt-10 text-center text-sm text-[#888888]">
-          All plans include a QR menu for your restaurant.{" "}
+          {t.pricing.footerNote1}{" "}
           <Link
             href="#faq"
             className="font-semibold text-[#1E45FB] hover:underline"
           >
-            See FAQ for payment details →
+            {t.pricing.footerNote2}
           </Link>
         </p>
       </div>

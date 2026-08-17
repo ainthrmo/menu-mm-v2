@@ -17,6 +17,7 @@ import {
   Grid2X2,
   List,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -129,6 +130,7 @@ export default function CustomerMenu() {
 
   // Navigation & layout
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewLayout, setViewLayout] = useState<ViewLayout>("list");
   const [langMode, setLangMode] = useState<LanguageMode>("all");
   const [activeModalItem, setActiveModalItem] = useState<MenuItem | null>(null);
@@ -510,7 +512,7 @@ export default function CustomerMenu() {
       {/* ====================================================
           STICKY CATEGORY TABS  (hidden while searching)
       ==================================================== */}
-      {!isSearching && !loading && groupedSections.length > 1 && (
+      {!isSearching && !loading && groupedSections.length > 1 && !isPro && (
         <div className="sticky top-[52px] z-30 border-b border-[#EAE8E3] bg-white/97 backdrop-blur-md">
           <div
             ref={tabsRef}
@@ -594,7 +596,7 @@ export default function CustomerMenu() {
               ------------------------------------------------ */
               <div className="space-y-7 pt-1">
                 {/* PRO ONLY: spotlight carousel */}
-                {isPro && spotlightItems.length > 0 && (
+                {isPro && !selectedCategory && spotlightItems.length > 0 && (
                   <section aria-label="Popular dishes">
                     <div className="mb-3 flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4" style={{ color: "var(--theme)" }} />
@@ -681,6 +683,86 @@ export default function CustomerMenu() {
                 {/* All category sections */}
                 {groupedSections.length === 0 ? (
                   <EmptyState message="Menu is empty" sub="Items will appear once added." />
+                ) : isPro ? (
+                  selectedCategory ? (
+                    <div className="space-y-4">
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className="flex items-center gap-1.5 text-sm font-bold text-[#525252] hover:text-[#171717] transition-colors mb-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        All Categories
+                      </button>
+                      {groupedSections
+                        .filter((s) => s.name === selectedCategory)
+                        .map((section) => (
+                          <section
+                            key={section.name}
+                            aria-labelledby={`cat-${section.name}`}
+                          >
+                            <div className="mb-3 flex items-baseline justify-between">
+                              <h2
+                                id={`cat-${section.name}`}
+                                className="text-[15px] font-bold tracking-tight text-[#171717]"
+                              >
+                                {section.name}
+                              </h2>
+                              <span className="text-[11px] font-medium text-[#A3A3A3]">
+                                {section.items.length} {section.items.length === 1 ? "item" : "items"}
+                              </span>
+                            </div>
+
+                            <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
+                              {section.items.map((item) => (
+                                <MenuItemCard
+                                  key={item.id}
+                                  item={item}
+                                  isPro={isPro}
+                                  layout={viewLayout}
+                                  langMode={langMode}
+                                  cartQuantity={cart[item.id]?.quantity || 0}
+                                  onAddToCart={() => handleAddToCart(item)}
+                                  onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
+                                  onOpenDetail={() => setActiveModalItem(item)}
+                                />
+                              ))}
+                            </div>
+                          </section>
+                        ))}
+                    </div>
+                  ) : (
+                    <section aria-label="Menu Categories">
+                      <h2 className="text-[15px] font-bold tracking-tight text-[#171717] mb-3">Categories</h2>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {groupedSections.map((section) => (
+                          <div
+                            key={section.name}
+                            onClick={() => setSelectedCategory(section.name)}
+                            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col"
+                          >
+                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#ECE8E1]">
+                              {section.coverImage ? (
+                                <img
+                                  src={section.coverImage}
+                                  alt={section.name}
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <UtensilsCrossed className="h-6 w-6 text-[#A8A29E]" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3 text-center border-t border-[#F5F4F0] flex flex-col flex-1 justify-center">
+                              <h3 className="text-[13px] font-bold text-[#171717] line-clamp-1">{section.name}</h3>
+                              <p className="text-[10px] font-medium text-[#737373] mt-0.5">{section.items.length} items</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )
                 ) : (
                   groupedSections.map((section) => (
                     <section
@@ -700,18 +782,17 @@ export default function CustomerMenu() {
                         </span>
                       </div>
 
-                      <div className={isPro && viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
+                      <div className="space-y-2.5">
                         {section.items.map((item) => (
                           <MenuItemCard
                             key={item.id}
                             item={item}
                             isPro={isPro}
-                            layout={isPro ? viewLayout : "list"}
+                            layout="list"
                             langMode={langMode}
                             cartQuantity={cart[item.id]?.quantity || 0}
                             onAddToCart={() => handleAddToCart(item)}
                             onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
-                            onOpenDetail={isPro ? () => setActiveModalItem(item) : undefined}
                           />
                         ))}
                       </div>

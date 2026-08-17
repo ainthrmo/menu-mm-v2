@@ -3,52 +3,22 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
-
-const faqs = [
-  {
-    question: "What is Menuu-QR?",
-    answer:
-      "Menuu-QR is a digital QR menu platform built for Myanmar restaurants, cafés, and tea shops. It lets you create a professional online menu that your customers can access instantly by scanning a QR code — no app download needed.",
-  },
-  {
-    question: "How does a QR menu work?",
-    answer:
-      "You create your menu in your Menuu-QR dashboard, then download your QR code. Display it on your tables, counter, or entrance. When customers scan it with their phone camera, your full menu opens immediately in their browser.",
-  },
-  {
-    question: "Do my customers need to download an app?",
-    answer:
-      "No. Your digital menu opens directly in the customer's phone browser. No app, no account, no extra steps. They scan and see your menu instantly.",
-  },
-  {
-    question: "Can I update my menu after publishing?",
-    answer:
-      "Yes — this is exactly what Menuu-QR is built for. Log in to your dashboard, make any changes (update prices, add dishes, remove items, upload photos), and your live menu updates immediately. Your QR code stays the same forever — no reprinting required.",
-  },
-  {
-    question: "Can I write my menu in Myanmar (Burmese)?",
-    answer:
-      "Yes. Menuu-QR supports both Burmese and English. You can add dish names and descriptions in both languages. Customers on the Pro plan can switch between languages on the menu.",
-  },
-  {
-    question: "How do I get my QR code?",
-    answer:
-      "After setting up your menu, go to the QR Codes section in your dashboard. Your unique QR code is ready to download as an image. Print it, laminate it, and place it anywhere in your restaurant.",
-  },
-  {
-    question: "How much does it cost and how do I pay?",
-    answer:
-      "The Free plan is always free with up to 20 menu items. The Pro plan costs 30,000 MMK for 6 months or 50,000 MMK for 1 year (saving 10,000 MMK). Payment details are confirmed at checkout. We are working on making payment as easy as possible for Myanmar restaurants.",
-  },
-  {
-    question: "What happens if I stay on the Free plan?",
-    answer:
-      "You can use Menuu-QR on the Free plan for as long as you like. You get a working QR menu, up to 20 menu items, categories, basic customization, and QR code download. Upgrade to Pro any time you want food photos, bilingual support, and unlimited items.",
-  },
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { t } = useLanguage();
+
+  const faqs = [
+    { question: t.faq.q1, answer: t.faq.a1 },
+    { question: t.faq.q2, answer: t.faq.a2 },
+    { question: t.faq.q3, answer: t.faq.a3 },
+    { question: t.faq.q4, answer: t.faq.a4 },
+    { question: t.faq.q5, answer: t.faq.a5 },
+    { question: t.faq.q6, answer: t.faq.a6 },
+    { question: t.faq.q7, answer: t.faq.a7 },
+    { question: t.faq.q8, answer: t.faq.a8 },
+  ];
 
   return (
     <section
@@ -60,16 +30,16 @@ export default function FAQ() {
         {/* Header */}
         <div className="text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-[#1E45FB]">
-            FAQ
+            {t.faq.eyebrow}
           </p>
           <h2
             id="faq-heading"
             className="mt-3 text-3xl font-extrabold tracking-tight text-[#111111] sm:text-4xl"
           >
-            Frequently asked questions
+            {t.faq.title}
           </h2>
           <p className="mt-4 text-[#666666]">
-            Everything you need to know about Menuu-QR.
+            {t.faq.description}
           </p>
         </div>
 
@@ -79,7 +49,7 @@ export default function FAQ() {
             const isOpen = openIndex === index;
             return (
               <div
-                key={faq.question}
+                key={index}
                 className={index !== faqs.length - 1 ? "border-b border-[#E5E5E5]" : ""}
               >
                 <button
@@ -122,28 +92,28 @@ export default function FAQ() {
         {/* Bottom CTA */}
         <div className="mt-10 rounded-2xl border border-[#E5E5E5] bg-[#F8F8F8] p-6 text-center">
           <p className="text-sm font-semibold text-[#111111]">
-            Still have questions?
+            {t.faq.stillQuestions}
           </p>
           <p className="mt-1 text-sm text-[#666666]">
-            Reach us on{" "}
+            {t.faq.reachUs}{" "}
             <Link
               href={process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-[#1E45FB] hover:underline"
             >
-              Facebook
+              {t.faq.facebook}
             </Link>{" "}
-            or{" "}
+            {t.faq.or}{" "}
             <Link
               href={process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-[#1E45FB] hover:underline"
             >
-              Viber
+              {t.faq.viber}
             </Link>{" "}
-            — we reply quickly.
+            {t.faq.replyQuickly}
           </p>
         </div>
       </div>
