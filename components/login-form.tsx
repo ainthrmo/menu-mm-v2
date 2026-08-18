@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -24,6 +25,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +36,9 @@ export function LoginForm({
       const res = await loginAction({ email, password });
       if (res?.error) {
         setError(res.error);
+      } else if (res?.success) {
+        router.push(res.redirectUrl || "/protected");
+        router.refresh();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");

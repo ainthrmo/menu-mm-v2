@@ -53,10 +53,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If the user IS logged in and trying to visit login/signup pages, optionally redirect to dashboard
-  if (user && pathname.startsWith("/auth/login")) {
+  // If the user IS logged in and trying to visit login/signup pages, redirect appropriately
+  if (user && (pathname === "/auth/login" || pathname === "/auth/sign-up")) {
+    const { data: restaurant } = await supabase
+      .from("restaurants")
+      .select("id")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
     const url = request.nextUrl.clone();
-    url.pathname = "/protected"; // သို့မဟုတ် Restaurant Dashboard သို့
+    url.pathname = restaurant ? "/protected" : "/protected/onboarding";
     return NextResponse.redirect(url);
   }
 

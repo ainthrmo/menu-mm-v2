@@ -11,5 +11,15 @@ export default async function ProtectedPage() {
     redirect("/auth/login");
   }
 
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("id")
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!restaurant) {
+    redirect("/protected/onboarding");
+  }
+
   return <AdminDashboard />;
 }

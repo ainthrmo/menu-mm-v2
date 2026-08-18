@@ -1,11 +1,23 @@
 import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
-  const supabaseUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/supabase-proxy`
-      : (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nkaunvzoebkuzktrmaft.supabase.co");
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rYXVudnpvZWJrdXprdHJtYWZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDg4NTMsImV4cCI6MjEwMTYyNDg1M30.8nSjdgC_SRIpzt16h7W8WkGtlNmO3TqMFjvrhI5yzI4";
+  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nkaunvzoebkuzktrmaft.supabase.co";
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    "";
+
+  if (!envUrl || !supabaseAnonKey) {
+    // eslint-disable-next-line no-console
+    console.warn("Supabase client created without NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY set.");
+  }
+
+  // If in browser and pointing to default .supabase.co (blocked by Myanmar ISPs),
+  // route through local Next.js rewrite proxy (/supabase-proxy)
+  let supabaseUrl = envUrl;
+  if (typeof window !== "undefined" && envUrl.includes("supabase.co")) {
+    supabaseUrl = `${window.location.origin}/supabase-proxy`;
+  }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
-}
+}
