@@ -123,106 +123,142 @@ export const AdminDashboard: React.FC = () => {
 
     let activeRestaurantId = "";
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      // Use getSession() instead of getUser() — getSession reads from local
+      // storage/cookies and requires no network round-trip, so it cannot hang.
+      // getUser() makes a live server call to re-validate the JWT which stalls
+      // indefinitely when the Supabase connection is slow or not yet warmed up.
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (!user) {
-      // Session expired or auth failed on the client — redirect to login
-      router.push("/auth/login");
-      return;
-    }
-
-    // 1. Find restaurant owned by current authenticated user
-    const { data: userRest } = await supabase
-      .from("restaurants")
-      .select("*")
-      .eq("owner_id", user.id)
-      .maybeSingle();
-
-    if (userRest) {
-      activeRestaurantId = userRest.id;
-      setStoreName(userRest.name || "My Restaurant");
-    } else {
-      // Redirect user to onboarding flow if no restaurant owned yet
-      router.push("/protected/onboarding");
-      return;
-    }
-
-    setRestaurantId(activeRestaurantId);
-
-    // Fetch multi-tenant subscription for the active restaurant
-    const { subscription: sub, plan: currentPlan } = await getRestaurantSubscription(
-      supabase,
-      activeRestaurantId
-    );
-    setSubscription(sub);
-    setPlan(currentPlan);
-    setStorePlan(currentPlan.name);
-
-    const { data: profileData, error: profileFetchError } = await supabase
-      .from("store_profile")
-      .select("*")
-      .eq("restaurant_id", activeRestaurantId)
-      .maybeSingle();
-
-    if (profileFetchError || !profileData) {
-      setProfileError(true);
-    } else {
-      if (profileData.store_name) {
-        setStoreName(profileData.store_name);
+      if (sessionError) {
+        console.error("AUTH SESSION ERROR:", sessionError.message);
+        router.push("/auth/login");
+        return;
       }
-      setLogoUrl(profileData.logo_url || null);
-      setStoreProfile(profileData);
-      if (!sub) {
-        setStorePlan(profileData.subscription_plan || "Free");
+
+      if (!session) {
+        // No local session — redirect to login
+        console.warn("AdminDashboard: no active session, redirecting to login.");
+        router.push("/auth/login");
+        return;
       }
-      
-      setSocialFacebook(profileData.social_facebook || "");
-      setSocialInstagram(profileData.social_instagram || "");
-      setSocialTiktok(profileData.social_tiktok || "");
-      setSocialMessenger(profileData.social_messenger || "");
-      setSocialPhone(profileData.social_phone || "");
-    }
 
-    const { data: catData, error: catFetchError } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("restaurant_id", activeRestaurantId)
-      .order("name");
+      const userId = session.user.id;
 
-    if (catFetchError) {
-      console.error("CATEGORIES FETCH ERROR:", {
-        message: catFetchError.message,
-        details: catFetchError.details,
-        hint: catFetchError.hint,
-        code: catFetchError.code,
-      });
-    } else if (catData) {
-      setCategories(catData);
-      if (catData.length > 0) {
-        setNewItemCategory(catData[0].name);
+      // 1. Find restaurant owned by current authenticated user
+      const { data: userRest, error: restError } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("owner_id", userId)
+        .maybeSingle();
+
+      if (restError) {
+        console.error("RESTAURANT FETCH ERROR:", {
+          message: restError.message,
+          details: restError.details,
+          hint: restError.hint,
+          code: restError.code,
+        });
+        return;
       }
+
+      if (userRest) {
+        activeRestaurantId = userRest.id;
+        setStoreName(userRest.name || "My Restaurant");
+      } else {
+        // Redirect user to onboarding flow if no restaurant owned yet
+        console.warn("AdminDashboard: no restaurant found for user, redirecting to onboarding.");
+        router.push("/protected/onboarding");
+        return;
+      }
+
+      setRestaurantId(activeRestaurantId);
+
+      // Fetch multi-tenant subscription for the active restaurant
+      const { subscription: sub, plan: currentPlan } = await getRestaurantSubscription(
+        supabase,
+        activeRestaurantId
+      );
+      setSubscription(sub);
+      setPlan(currentPlan);
+      setStorePlan(currentPlan.name);
+
+      const { data: profileData, error: profileFetchError } = await supabase
+        .from("store_profile")
+        .select("*")
+        .eq("restaurant_id", activeRestaurantId)
+        .maybeSingle();
+
+      if (profileFetchError) {
+        console.error("STORE PROFILE FETCH ERROR:", {
+          message: profileFetchError.message,
+          details: profileFetchError.details,
+          hint: profileFetchError.hint,
+          code: profileFetchError.code,
+        });
+        setProfileError(true);
+      } else if (!profileData) {
+        console.warn("AdminDashboard: store_profile not found for restaurant_id:", activeRestaurantId);
+        setProfileError(true);
+      } else {
+        if (profileData.store_name) {
+          setStoreName(profileData.store_name);
+        }
+        setLogoUrl(profileData.logo_url || null);
+        setStoreProfile(profileData);
+        if (!sub) {
+          setStorePlan(profileData.subscription_plan || "Free");
+        }
+
+        setSocialFacebook(profileData.social_facebook || "");
+        setSocialInstagram(profileData.social_instagram || "");
+        setSocialTiktok(profileData.social_tiktok || "");
+        setSocialMessenger(profileData.social_messenger || "");
+        setSocialPhone(profileData.social_phone || "");
+      }
+
+      const { data: catData, error: catFetchError } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("restaurant_id", activeRestaurantId)
+        .order("name");
+
+      if (catFetchError) {
+        console.error("CATEGORIES FETCH ERROR:", {
+          message: catFetchError.message,
+          details: catFetchError.details,
+          hint: catFetchError.hint,
+          code: catFetchError.code,
+        });
+      } else if (catData) {
+        setCategories(catData);
+        if (catData.length > 0) {
+          setNewItemCategory(catData[0].name);
+        }
+      }
+
+      const { data: menuData, error: menuFetchError } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("restaurant_id", activeRestaurantId)
+        .order("created_at", { ascending: false });
+
+      if (menuFetchError) {
+        console.error("MENU FETCH ERROR:", {
+          message: menuFetchError.message,
+          details: menuFetchError.details,
+          hint: menuFetchError.hint,
+          code: menuFetchError.code,
+        });
+      } else if (menuData) {
+        setMenuItems(menuData);
+      }
+    } catch (err) {
+      console.error("AdminDashboard fetchData unexpected error:", err);
+    } finally {
+      // Always clear the loading state — the dashboard can never get stuck forever.
+      setLoading(false);
     }
-
-    const { data: menuData, error: menuFetchError } = await supabase
-      .from("menu_items")
-      .select("*")
-      .eq("restaurant_id", activeRestaurantId)
-      .order("created_at", { ascending: false });
-
-    if (menuFetchError) {
-      console.error("MENU FETCH ERROR:", {
-        message: menuFetchError.message,
-        details: menuFetchError.details,
-        hint: menuFetchError.hint,
-        code: menuFetchError.code,
-      });
-    } else if (menuData) {
-      setMenuItems(menuData);
-    }
-
-    setLoading(false);
   };
 
   const menuUrl =
