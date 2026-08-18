@@ -127,22 +127,26 @@ export const AdminDashboard: React.FC = () => {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (user) {
-      // 1. Find restaurant owned by current authenticated user
-      const { data: userRest } = await supabase
-        .from("restaurants")
-        .select("*")
-        .eq("owner_id", user.id)
-        .maybeSingle();
+    if (!user) {
+      // Session expired or auth failed on the client — redirect to login
+      router.push("/auth/login");
+      return;
+    }
 
-      if (userRest) {
-        activeRestaurantId = userRest.id;
-        setStoreName(userRest.name || "My Restaurant");
-      } else {
-        // Redirect user to onboarding flow if no restaurant owned yet
-        router.push("/protected/onboarding");
-        return;
-      }
+    // 1. Find restaurant owned by current authenticated user
+    const { data: userRest } = await supabase
+      .from("restaurants")
+      .select("*")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (userRest) {
+      activeRestaurantId = userRest.id;
+      setStoreName(userRest.name || "My Restaurant");
+    } else {
+      // Redirect user to onboarding flow if no restaurant owned yet
+      router.push("/protected/onboarding");
+      return;
     }
 
     setRestaurantId(activeRestaurantId);
