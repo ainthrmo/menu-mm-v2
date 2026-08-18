@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { authButtonClass, authCardClass, authInputClass, authLinkClass } from "@/components/auth-card-styles";
-import { createClient } from "@/lib/supabase/client";
+import { signUpAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +30,6 @@ export function SignUpForm({
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
@@ -41,17 +40,18 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const res = await signUpAction({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
-        },
+        origin: window.location.origin,
       });
-      if (error) throw error;
-      router.push("/auth/sign-up-success");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      if (res?.error) {
+        setError(res.error);
+      } else {
+        router.push("/auth/sign-up-success");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
