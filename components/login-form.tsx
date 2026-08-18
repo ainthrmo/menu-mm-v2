@@ -34,6 +34,9 @@ export function LoginForm({
 
     try {
       const res = await loginAction({ email, password });
+      // eslint-disable-next-line no-console
+      console.log("[LoginForm] loginAction result:", { success: !!res?.success, hasRedirectUrl: !!res?.redirectUrl, hasError: !!res?.error });
+
       if (res?.error) {
         setError(res.error);
       } else if (res?.success) {

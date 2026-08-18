@@ -12,12 +12,25 @@ export function createClient() {
     console.warn("Supabase client created without NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY set.");
   }
 
-  // If in browser and pointing to default .supabase.co (blocked by Myanmar ISPs),
-  // route through local Next.js rewrite proxy (/supabase-proxy)
-  let supabaseUrl = envUrl;
-  if (typeof window !== "undefined" && envUrl.includes("supabase.co")) {
-    supabaseUrl = `${window.location.origin}/supabase-proxy`;
-  }
-
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
-}
+  // Pass original envUrl to createBrowserClient so @supabase/ssr derives the EXACT same cookie key
+  // as createServerClient (e.g. sb-nkaunvzoebkuzktrmaft-auth-token).
+  // Use custom global.fetch to route HTTP requests through the local Next.js rewrite proxy (/supabase-proxy)
+  // for Myanmar ISP compatibility.
+  return createBrowserClient(envUrl, supabaseAnonKey, {
+    global: {
+      fetch: (input, init) => {
+        if (typeof window !== "undefined") {
+          let url = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
+          if (url.includes("supabase.co")) {
+            url = url.replace(/https:\/\/[^/]+\.supabase\.co/, `${window.location.origin}/supabase-proxy`);
+            if (input instanceof Request) {
+              return fetch(new Request(url, input), init);
+            }
+            return fetch(url, init);
+          }
+        }
+        return fetch(input, init);
+      },
+    },
+  });
+}

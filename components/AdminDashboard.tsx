@@ -130,6 +130,9 @@ export const AdminDashboard: React.FC = () => {
       // indefinitely when the Supabase connection is slow or not yet warmed up.
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
+      // eslint-disable-next-line no-console
+      console.log("[AdminDashboard] getSession result:", { hasSession: !!session, userId: session?.user?.id || null, hasError: !!sessionError });
+
       if (sessionError) {
         console.error("AUTH SESSION ERROR:", sessionError.message);
         router.push("/auth/login");
