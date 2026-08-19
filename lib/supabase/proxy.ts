@@ -11,10 +11,22 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  const pathname = request.nextUrl.pathname;
+
+  // Never process or redirect /supabase-proxy requests in middleware
+  if (pathname.startsWith("/supabase-proxy")) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nkaunvzoebkuzktrmaft.supabase.co",
     (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
     {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -47,21 +59,17 @@ export async function updateSession(request: NextRequest) {
   // redirected to /protected.
   //
   // getSession() reads the session directly from the request cookies with zero
-  // network round-trips. It is sufficient for routing decisions here because:
-  // 1. The proxy is only deciding where to route the request (not enforcing
-  //    data access control).
-  // 2. Actual security enforcement happens in the Server Components downstream
-  //    (protected/layout.tsx) which correctly uses getUser().
+  // network round-trips. autoRefreshToken is explicitly set to false above so
+  // getSession() will NEVER trigger server-to-server token refresh network requests.
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user ?? null;
-
-  const pathname = request.nextUrl.pathname;
 
   // Define public routes that do NOT require authentication
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/menu") ||
-    pathname.startsWith("/auth");
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/supabase-proxy");
 
   // If the user is NOT logged in and trying to access a protected route,
   // redirect to login. This does NOT apply to /auth/* routes — unauthenticated

@@ -15,6 +15,7 @@ import {
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react";
 import { getPublicMenuUrl } from "@/lib/store";
 import { sanitizeFilename } from "@/lib/utils";
+import { getImageUrl } from "@/lib/image-url";
 
 const QR_SIZE = 280;
 const QR_DOWNLOAD_SIZE = 1024;
@@ -268,7 +269,7 @@ export function QrCodeGenerator({
         <div className="bg-[#FDFBF7] border border-[#E7E5E4] rounded-3xl p-6 sm:p-8 flex flex-col items-center shadow-xs">
           {logoUrl && (
             <img
-              src={logoUrl}
+              src={getImageUrl(logoUrl)}
               alt=""
               className="w-12 h-12 rounded-xl object-cover border border-[#E7E5E4] mb-4"
             />

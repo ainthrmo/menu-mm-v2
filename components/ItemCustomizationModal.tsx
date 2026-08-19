@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Flame, Sparkles, ShieldAlert, Info } from 'lucide-react';
 import { formatMMK } from "@/lib/utils";
+import { getImageUrl } from "@/lib/image-url";
 export interface ModifierOption {
   id: string;
   name: string;
@@ -43,7 +44,7 @@ export const ItemCustomizationModal: React.FC<ModalProps> = ({ item, onClose }) 
         {/* Header Image & Close Button */}
         <div className="relative h-60 w-full bg-zinc-900 shrink-0">
           <img 
-            src={item.image} 
+            src={getImageUrl(item.image)} 
             alt={item.name} 
             className="w-full h-full object-cover"
           />

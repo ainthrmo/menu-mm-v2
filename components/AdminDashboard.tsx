@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
+import { getImageUrl } from "@/lib/image-url";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan, Subscription } from "@/lib/subscription";
@@ -355,7 +356,7 @@ export const AdminDashboard: React.FC = () => {
         drawExportText();
       };
       logo.crossOrigin = "anonymous";
-      logo.src = logoUrl;
+      logo.src = getImageUrl(logoUrl);
     } else {
       drawExportText();
     }
@@ -690,7 +691,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between md:justify-start gap-3">
             <div className="flex items-center gap-3">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-2xl object-cover border border-[#E5E5E5] shadow-xs" />
+                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-10 h-10 rounded-2xl object-cover border border-[#E5E5E5] shadow-xs" />
               ) : (
                 <div className="w-10 h-10 rounded-2xl bg-[#1E45FB] text-white flex items-center justify-center font-bold text-sm shadow-xs">
                   {storeName.charAt(0)}
@@ -906,7 +907,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="flex items-stretch">
                       <div className="relative w-24 sm:w-28 shrink-0">
                         <img
-                          src={item.image}
+                          src={getImageUrl(item.image)}
                           alt={item.name}
                           className="w-full h-full min-h-[96px] object-cover bg-[#F5F5F5]"
                         />
@@ -1002,7 +1003,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-12 h-12 rounded-xl bg-white p-1.5 shadow-md border border-[#E5E5E5]">
                         <img
-                          src={logoUrl}
+                          src={getImageUrl(logoUrl)}
                           alt=""
                           className="w-full h-full object-cover rounded-lg"
                         />
@@ -1014,7 +1015,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="text-center mt-5">
                   {logoUrl && (
                     <img
-                      src={logoUrl}
+                      src={getImageUrl(logoUrl)}
                       alt=""
                       className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-[#E5E5E5]"
                     />
@@ -1143,7 +1144,7 @@ export const AdminDashboard: React.FC = () => {
             {/* Store Account Summary */}
             <div className="flex items-center gap-3 p-3.5 bg-[#F5F5F5] rounded-2xl border border-[#E5E5E5]">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-12 h-12 rounded-2xl object-cover border border-[#E5E5E5]" />
+                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-12 h-12 rounded-2xl object-cover border border-[#E5E5E5]" />
               ) : (
                 <div className="w-12 h-12 rounded-2xl bg-[#1E45FB] text-white flex items-center justify-center font-bold text-base">
                   {storeName.charAt(0)}
@@ -1292,7 +1293,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                   {logoPreview || logoUrl ? (
                     <img
-                      src={logoPreview || logoUrl!}
+                      src={logoPreview || getImageUrl(logoUrl!)}
                       alt="Logo Preview"
                       className="w-20 h-20 mx-auto rounded-full object-cover border border-[#E5E5E5]"
                     />
@@ -1513,7 +1514,7 @@ export const AdminDashboard: React.FC = () => {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   {imagePreview ? (
-                    <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-[#E5E5E5]" />
+                    <img src={getImageUrl(imagePreview)} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-[#E5E5E5]" />
                   ) : (
                     <div className="space-y-1.5 py-2 text-xs text-[#666666]">
                       <Upload className="w-5 h-5 mx-auto text-[#1E45FB]" />

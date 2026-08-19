@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
+import { getImageUrl } from "@/lib/image-url";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscription";
 
 /* ===========================================================
@@ -389,7 +390,7 @@ export default function CustomerMenu() {
             {storeProfile?.logo_url ? (
               <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-[#E5E5E5] bg-white p-0.5 shadow-sm">
                 <img
-                  src={storeProfile.logo_url}
+                  src={getImageUrl(storeProfile.logo_url)}
                   alt={`${restaurantName} logo`}
                   className="h-full w-full object-cover rounded-lg"
                 />
@@ -623,7 +624,7 @@ export default function CustomerMenu() {
                             <div className="relative aspect-square w-full overflow-hidden bg-[#ECE8E1]">
                               {item.image ? (
                                 <img
-                                  src={item.image}
+                                  src={getImageUrl(item.image)}
                                   alt={item.name}
                                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                   loading="lazy"
@@ -743,7 +744,7 @@ export default function CustomerMenu() {
                             <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#ECE8E1]">
                               {section.coverImage ? (
                                 <img
-                                  src={section.coverImage}
+                                  src={getImageUrl(section.coverImage)}
                                   alt={section.name}
                                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                   loading="lazy"
@@ -1025,7 +1026,7 @@ function MenuItemCard({
         <div className="relative aspect-square w-full overflow-hidden bg-[#ECE8E1]">
           {item.image ? (
             <img
-              src={item.image}
+              src={getImageUrl(item.image)}
               alt={item.name}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
@@ -1116,7 +1117,7 @@ function MenuItemCard({
       <div className="relative h-[88px] w-[88px] sm:h-24 sm:w-24 shrink-0 overflow-hidden bg-[#ECE8E1]">
         {item.image ? (
           <img
-            src={item.image}
+            src={getImageUrl(item.image)}
             alt={item.name}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
@@ -1230,7 +1231,7 @@ function DishDetailModal({
         {/* Image */}
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#ECE8E1] shrink-0">
           {item.image ? (
-            <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+            <img src={getImageUrl(item.image)} alt={item.name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <UtensilsCrossed className="h-10 w-10 text-[#A8A29E]" />

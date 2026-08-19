@@ -37,7 +37,7 @@ export async function loginAction(formData: { email: string; password: string })
     if (res?.error) {
       // eslint-disable-next-line no-console
       console.error("[actions] signInWithPassword returned error:", res.error);
-      return { error: res.error.message || "Sign-in failed", details: res.error };
+      return { error: res.error.message || "Sign-in failed", details: String(res.error.message || res.error) };
     }
 
     const data = (res as any).data ?? {};
@@ -47,7 +47,7 @@ export async function loginAction(formData: { email: string; password: string })
     if (!user && !session) {
       // eslint-disable-next-line no-console
       console.error("[actions] signIn did not return user/session:", res);
-      return { error: "Login failed: no user session returned.", details: res };
+      return { error: "Login failed: no user session returned.", details: String(res) };
     }
 
     // Check if user already owns a restaurant
@@ -95,7 +95,7 @@ export async function signUpAction(formData: { email: string; password: string; 
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[actions] signUp returned error:", error);
-      return { error: error.message || "Sign up failed.", details: error };
+      return { error: error.message || "Sign up failed.", details: String(error.message || error) };
     }
 
     return { success: true, details: data };
@@ -126,7 +126,7 @@ export async function forgotPasswordAction(formData: { email: string; origin: st
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[actions] resetPasswordForEmail returned error:", error);
-      return { error: error.message || "Failed to send reset email.", details: error };
+      return { error: error.message || "Failed to send reset email.", details: String(error.message || error) };
     }
 
     return { success: true };
@@ -155,7 +155,7 @@ export async function updatePasswordAction(formData: { password: string }): Prom
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[actions] updateUser returned error:", error);
-      return { error: error.message || "Failed to update password.", details: error };
+      return { error: error.message || "Failed to update password.", details: String(error.message || error) };
     }
 
     return { success: true, details: data };
@@ -172,7 +172,7 @@ export async function signOutAction(): Promise<AuthResult> {
     supabase = await createClient();
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("[actions] createClient (signOut) failed:", err);
+    console.error("[actions] signOut) failed:", err);
     return { error: "Server configuration error. Check logs.", details: String(err) };
   }
 
@@ -181,7 +181,7 @@ export async function signOutAction(): Promise<AuthResult> {
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[actions] signOut returned error:", error);
-      return { error: error.message || "Failed to sign out.", details: error };
+      return { error: error.message || "Failed to sign out.", details: String(error.message || error) };
     }
     return { success: true };
   } catch (err) {

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Menuu — Digital QR Menu for Myanmar Restaurants",
   description:
-    "Replace expensive printed menus with a digital QR menu. Update prices anytime — your QR code never changes. Free plan available. Built for Myanmar restaurants, cafés, and tea shops.",
+    "Menuu helps restaurants create beautiful digital menus that customers can access instantly by scanning a QR code. Simple, fast, and modern.",
 };
 
 const geistSans = Geist({
