@@ -27,8 +27,8 @@ import {
   ShieldCheck,
   TrendingDown,
   Layers,
-  Sliders,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import FAQ from "@/components/landing/FAQ";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -36,30 +36,6 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 export default function LandingPage() {
   const { t, language } = useLanguage();
   const [billing, setBilling] = useState<"6months" | "yearly">("yearly");
-
-  // Dominant Visual Proof Interactive State
-  const [demoPrice, setDemoPrice] = useState<number>(3500);
-  const [demoAvailable, setDemoAvailable] = useState<boolean>(true);
-  const [demoLang, setDemoLang] = useState<"en" | "my">("en");
-  const [lastUpdatedField, setLastUpdatedField] = useState<string | null>(null);
-
-  const handlePriceChange = (price: number) => {
-    setDemoPrice(price);
-    setLastUpdatedField("price");
-    setTimeout(() => setLastUpdatedField(null), 1800);
-  };
-
-  const handleStatusToggle = () => {
-    setDemoAvailable(!demoAvailable);
-    setLastUpdatedField("status");
-    setTimeout(() => setLastUpdatedField(null), 1800);
-  };
-
-  const handleLangToggle = (lang: "en" | "my") => {
-    setDemoLang(lang);
-    setLastUpdatedField("lang");
-    setTimeout(() => setLastUpdatedField(null), 1800);
-  };
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] text-[#111111] font-sans selection:bg-[#CDF22B] selection:text-[#111111] overflow-x-clip">
@@ -256,7 +232,7 @@ export default function LandingPage() {
         </section>
 
         {/* =========================================================================
-            2. DOMINANT VISUAL PROOF MOMENT (High-Contrast, Full-Bleed Live Sync Studio)
+            2. DOMINANT VISUAL PROOF MOMENT (Customer-Facing QR-to-Menu Scan Flow)
             The single most visually prominent element after the hero
            ========================================================================= */}
         <section
@@ -272,293 +248,340 @@ export default function LandingPage() {
             <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#1E45FB]/20 border border-[#1E45FB]/40 px-3.5 py-1.5 text-xs font-black uppercase tracking-widest text-[#CDF22B] mb-3">
                 <Sparkles className="h-3.5 w-3.5" />
-                {t.liveProof?.eyebrow || "Live Product Proof"}
+                {t.liveProof?.eyebrow || "Customer Scan Experience"}
               </div>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-                {t.liveProof?.title || "Real dashboard edits. Instant live menu updates."}
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+                {t.liveProof?.title || "Real menu. Real scan. No app needed."}
               </h2>
               <p className="mt-3.5 text-sm sm:text-lg text-[#94A3B8] font-medium leading-relaxed">
                 {t.liveProof?.subtitle ||
-                  "See it in action: Edit dish prices, toggle sold-out statuses, or switch languages on the admin dashboard and watch the customer's phone update in real time with zero reload."}
+                  "See exactly what your diners see the moment they scan your table QR code — a lightning-fast, photo-rich digital menu in their mobile browser."}
               </p>
             </div>
 
-            {/* Interactive Simulator Shell */}
-            <div className="bg-[#111625]/90 border border-[#1E293B] rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 lg:p-10 shadow-2xl backdrop-blur-xl">
-              {/* Simulator Top Controls / Interactive Badges */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-[#1E293B]">
+            {/* Proof Shell Container */}
+            <div className="bg-[#111625]/90 border border-[#1E293B] rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 lg:p-12 shadow-2xl backdrop-blur-xl">
+              {/* Feature Highlights Top Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-[#1E293B]">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-3 w-3 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CDF22B] opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-[#CDF22B]"></span>
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
-                    {t.liveProof?.dashBadge || "Active Live Connection"}
+                    {t.liveProof?.tableBadge || "Table #04 • Mobile Browser"}
                   </span>
-                  <span className="hidden sm:inline-block text-[11px] bg-[#1E293B] text-[#94A3B8] px-2.5 py-0.5 rounded-full font-mono">
-                    latency: 120ms
+                  <span className="hidden sm:inline-block text-[11px] bg-[#1E293B] text-[#CDF22B] px-2.5 py-0.5 rounded-full font-mono">
+                    {t.liveProof?.instantBadge || "⚡ 1-Sec Instant Load"}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#94A3B8]">
-                  <span>{t.liveProof?.simNotice || "Click controls below to test live sync:"}</span>
+                <div className="flex items-center gap-3 text-xs font-semibold text-[#94A3B8]">
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-slate-300">
+                    <CheckCircle2 className="h-4 w-4 text-[#CDF22B]" />
+                    {t.liveProof?.noAppBadge || "No App Download"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-slate-300">
+                    <CheckCircle2 className="h-4 w-4 text-[#CDF22B]" />
+                    {t.liveProof?.bilingualBadge || "Burmese + English"}
+                  </span>
                 </div>
               </div>
 
-              {/* Two-Column Side-by-Side: Admin Dashboard (Left) & Customer Phone (Right) */}
-              <div className="grid lg:grid-cols-12 gap-6 lg:gap-10 items-center">
-                {/* LEFT: Admin Dashboard Quick-Editor Panel (7 cols) */}
-                <div className="lg:col-span-7 bg-[#171D30] rounded-2xl p-5 sm:p-7 border border-[#27324B]">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-lg bg-[#1E45FB] flex items-center justify-center text-white">
-                        <Sliders className="h-4 w-4" />
+              {/* Two-Column Side-by-Side: Physical QR Table Stand (Left) & Customer Phone Menu (Right) */}
+              <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                {/* LEFT: Real Scannable Table QR Stand (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left">
+                  <div className="w-full max-w-sm bg-gradient-to-b from-[#1C2337] to-[#121727] rounded-3xl p-6 sm:p-7 border border-[#273553] shadow-xl relative overflow-hidden group">
+                    {/* Glow behind the QR */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#1E45FB]/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                    {/* Table QR Card Representation */}
+                    <div className="relative bg-white text-[#111111] rounded-2xl p-5 sm:p-6 shadow-2xl border border-white/20 text-center">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                        <div className="flex items-center gap-2 text-left">
+                          <div className="h-7 w-7 rounded-lg bg-[#1E45FB] flex items-center justify-center text-white">
+                            <UtensilsCrossed className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black leading-tight text-[#111111]">
+                              {t.liveProof?.demoRestName || "Golden Spoon Cuisine"}
+                            </h4>
+                            <p className="text-[9px] text-[#888888]">Table #04 • Dine-in</p>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-wider bg-[#EEF2FF] text-[#1E45FB] px-2 py-0.5 rounded-full border border-[#1E45FB]/20">
+                          Scan QR
+                        </span>
                       </div>
-                      <div>
-                        <h4 className="text-sm sm:text-base font-bold text-white">
-                          {t.liveProof?.dashTitle || "Restaurant Admin Portal"}
-                        </h4>
-                        <p className="text-[11px] text-[#94A3B8]">
-                          Golden Spoon Café • Active Menu Editor
+
+                      {/* Scannable SVG QR Code with viewfinders */}
+                      <div className="relative mx-auto w-44 h-44 sm:w-48 sm:h-48 bg-[#FAFAFA] p-3 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden">
+                        {/* Target corner brackets */}
+                        <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 border-t-2 border-l-2 border-[#1E45FB] rounded-tl-sm"></div>
+                        <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 border-t-2 border-r-2 border-[#1E45FB] rounded-tr-sm"></div>
+                        <div className="absolute bottom-1.5 left-1.5 w-3.5 h-3.5 border-b-2 border-l-2 border-[#1E45FB] rounded-bl-sm"></div>
+                        <div className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 border-b-2 border-r-2 border-[#1E45FB] rounded-br-sm"></div>
+
+                        {/* Interactive Real QR Code */}
+                        <QRCodeSVG
+                          value="https://my-qr-saas.vercel.app/menu"
+                          size={156}
+                          level="M"
+                          includeMargin={false}
+                          className="w-full h-full"
+                        />
+
+                        {/* Subtle animated scan beam */}
+                        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#1E45FB] to-transparent shadow-[0_0_8px_#1E45FB] animate-scan-laser pointer-events-none"></div>
+                      </div>
+
+                      <div className="mt-4 pt-2">
+                        <p className="text-xs font-extrabold text-[#111111]">
+                          {t.liveProof?.scanHeadline || "Scan with your phone camera"}
+                        </p>
+                        <p className="text-[10px] text-[#666666] mt-0.5">
+                          {t.liveProof?.scanSub || "Opens instantly in Safari or Chrome"}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] uppercase font-mono font-bold bg-[#CDF22B]/10 text-[#CDF22B] border border-[#CDF22B]/30 px-2 py-0.5 rounded">
-                      EDIT MODE
-                    </span>
-                  </div>
 
-                  {/* Sample Admin Dish Card being edited (Laphet Thoke) */}
-                  <div className="bg-[#0D111E] rounded-xl p-4 sm:p-5 border border-[#222C42] space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-[#1E293B] flex items-center justify-center text-emerald-400 font-bold text-lg">
-                          🥗
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#94A3B8] font-mono">CATEGORY: SALADS / APPETIZERS</p>
-                          <h3 className="text-base sm:text-lg font-black text-white">
-                            {demoLang === "en"
-                              ? "Laphet Thoke (Tea Leaf Salad)"
-                              : "လက်ဖက်သုတ် (အကြော်စုံ)"}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Sold Out Toggle Button */}
-                      <button
-                        onClick={handleStatusToggle}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 ${
-                          demoAvailable
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
-                        }`}
+                    {/* Interactive Direct Demo Link for Desktop Users */}
+                    <div className="mt-5 text-center">
+                      <Link
+                        href="/menu"
+                        target="_blank"
+                        className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#1E45FB] hover:bg-[#1737C9] text-white text-xs font-bold transition-colors shadow-lg shadow-[#1E45FB]/25"
                       >
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            demoAvailable ? "bg-emerald-400" : "bg-rose-400"
-                          }`}
-                        />
-                        {demoAvailable
-                          ? t.liveProof?.availableNow || "In Stock"
-                          : t.liveProof?.soldOutNow || "Sold Out"}
-                      </button>
-                    </div>
-
-                    {/* Interactive Price Controls */}
-                    <div className="pt-2 border-t border-[#1E293B]">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-bold text-[#94A3B8]">
-                          {t.liveProof?.quickPriceLabel || "Adjust Price Live:"}
-                        </label>
-                        <span className="text-sm font-black text-[#CDF22B] font-mono">
-                          {demoPrice.toLocaleString()} MMK
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[3000, 3500, 4000].map((p) => (
-                          <button
-                            key={p}
-                            onClick={() => handlePriceChange(p)}
-                            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                              demoPrice === p
-                                ? "bg-[#1E45FB] text-white shadow-lg shadow-[#1E45FB]/30 border border-[#1E45FB]"
-                                : "bg-[#171D30] text-[#CBD5E1] border border-[#27324B] hover:border-[#1E45FB]/60"
-                            }`}
-                          >
-                            {p.toLocaleString()} MMK
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Language Switch for Menu Preview */}
-                    <div className="pt-2 border-t border-[#1E293B] flex items-center justify-between">
-                      <span className="text-xs text-[#94A3B8] font-medium">
-                        Bilingual Customer Display:
-                      </span>
-                      <div className="inline-flex rounded-lg bg-[#171D30] p-1 border border-[#27324B]">
-                        <button
-                          onClick={() => handleLangToggle("en")}
-                          className={`px-3 py-1 text-xs font-bold rounded ${
-                            demoLang === "en"
-                              ? "bg-[#1E45FB] text-white"
-                              : "text-[#94A3B8] hover:text-white"
-                          }`}
-                        >
-                          English
-                        </button>
-                        <button
-                          onClick={() => handleLangToggle("my")}
-                          className={`px-3 py-1 text-xs font-bold rounded ${
-                            demoLang === "my"
-                              ? "bg-[#1E45FB] text-white"
-                              : "text-[#94A3B8] hover:text-white"
-                          }`}
-                        >
-                          မြန်မာ
-                        </button>
-                      </div>
+                        <span>{t.liveProof?.openDirectly || "Open Live Demo Menu in Browser"}</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
                     </div>
                   </div>
 
-                  {/* Sync Status Banner */}
-                  <div className="mt-4 flex items-center gap-2 text-xs text-[#94A3B8] bg-[#0D111E]/60 p-2.5 rounded-lg border border-[#1E293B]">
-                    <Zap className="h-4 w-4 text-[#CDF22B] shrink-0" />
-                    <span>
-                      {t.liveProof?.priceHelp ||
-                        "Changes reflect instantly on table QR codes without reprinting."}
-                    </span>
+                  {/* 3 Micro-Steps Under QR */}
+                  <div className="mt-6 space-y-2.5 w-full max-w-sm text-left">
+                    <div className="flex items-center gap-3 text-xs text-[#CBD5E1] bg-[#141A2B] p-2.5 rounded-xl border border-[#222C42]">
+                      <span className="flex h-5 w-5 rounded-full bg-[#1E45FB] text-white font-black text-[10px] items-center justify-center shrink-0">
+                        1
+                      </span>
+                      <span>{t.liveProof?.step1 || "Scan permanent table QR code"}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-[#CBD5E1] bg-[#141A2B] p-2.5 rounded-xl border border-[#222C42]">
+                      <span className="flex h-5 w-5 rounded-full bg-[#1E45FB] text-white font-black text-[10px] items-center justify-center shrink-0">
+                        2
+                      </span>
+                      <span>{t.liveProof?.step2 || "Menu opens in < 1 second in browser"}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-[#CBD5E1] bg-[#141A2B] p-2.5 rounded-xl border border-[#222C42]">
+                      <span className="flex h-5 w-5 rounded-full bg-[#1E45FB] text-white font-black text-[10px] items-center justify-center shrink-0">
+                        3
+                      </span>
+                      <span>{t.liveProof?.step3 || "Browse dishes, photos, and order"}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* RIGHT: Real Customer Phone Screen (5 cols) */}
-                <div className="lg:col-span-5 flex justify-center">
-                  <div className="w-full max-w-[310px] bg-[#111111] rounded-[2.5rem] p-3 border-[6px] border-[#222C42] shadow-2xl relative">
-                    {/* Speaker notch */}
-                    <div className="w-16 h-3 bg-black rounded-full mx-auto mb-2"></div>
+                {/* RIGHT: Real Customer Phone Screen Mockup (7 cols) */}
+                <div className="lg:col-span-7 flex justify-center">
+                  <div className="w-full max-w-[370px] bg-[#0C0E14] rounded-[2.75rem] p-3 sm:p-3.5 border-[6px] sm:border-[8px] border-[#222D46] shadow-2xl relative">
+                    {/* Dynamic Island / Speaker */}
+                    <div className="absolute top-4 inset-x-0 flex justify-center z-30">
+                      <div className="w-20 sm:w-24 h-4 bg-black rounded-full flex items-center justify-end px-2">
+                        <div className="h-2 w-2 rounded-full bg-[#1E293B]"></div>
+                      </div>
+                    </div>
 
-                    {/* Customer Phone Screen Container */}
-                    <div className="bg-[#F8F8F8] text-[#111111] rounded-[1.8rem] overflow-hidden">
-                      {/* Customer Header */}
-                      <div className="bg-[#1E45FB] text-white p-3.5 pt-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-[#CDF22B]">
-                            {t.liveProof?.customerPhoneBadge || "Table #04 • Mobile Browser"}
-                          </span>
-                          <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                            LIVE
+                    {/* Customer Mobile Browser Container */}
+                    <div className="bg-[#F8F7F4] text-[#171717] rounded-[2rem] overflow-hidden flex flex-col h-[580px] sm:h-[620px] select-none shadow-inner relative">
+                      {/* Safari / Chrome Browser URL Bar */}
+                      <div className="bg-white px-3 pt-6 pb-2 border-b border-[#EAE8E3] shrink-0">
+                        <div className="bg-[#F0EFEB] rounded-lg py-1 px-2.5 flex items-center justify-between text-[10px] text-[#666666]">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="text-[#10B981]">🔒</span>
+                            <span className="font-mono text-[#333333] font-medium truncate">
+                              menuu.me/golden-spoon
+                            </span>
+                          </div>
+                          <span className="text-[9px] bg-white px-1.5 py-0.2 rounded text-[#888888] shrink-0 font-bold">
+                            EN / မြန်မာ
                           </span>
                         </div>
-                        <h4 className="text-sm font-black">Golden Spoon Café</h4>
                       </div>
 
-                      {/* Live Sync Alert Indicator */}
-                      {lastUpdatedField && (
-                        <div className="bg-[#CDF22B] text-[#111111] text-[10px] font-black py-1 px-3 text-center flex items-center justify-center gap-1 animate-pulse">
-                          <RefreshCw className="h-3 w-3 animate-spin" />
-                          <span>Updated in Real-Time!</span>
-                        </div>
-                      )}
-
-                      {/* Customer Dish Item Card */}
-                      <div className="p-3 space-y-2.5">
-                        <div
-                          className={`bg-white rounded-xl p-3 border transition-all duration-300 ${
-                            lastUpdatedField
-                              ? "border-[#1E45FB] shadow-md ring-2 ring-[#1E45FB]/20"
-                              : "border-[#E5E5E5]"
-                          }`}
-                        >
-                          <div className="flex gap-2.5">
-                            <div
-                              className={`h-16 w-16 rounded-lg flex items-center justify-center text-2xl relative shrink-0 ${
-                                demoAvailable ? "bg-emerald-50" : "bg-gray-200 grayscale"
-                              }`}
-                            >
-                              🥗
-                              {!demoAvailable && (
-                                <span className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center text-[9px] font-black text-white uppercase">
-                                  Sold Out
-                                </span>
-                              )}
+                      {/* Customer Restaurant Header */}
+                      <div className="bg-white px-4 py-3 border-b border-[#EAE8E3] flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-9 w-9 rounded-xl bg-[#0B7A5F] flex items-center justify-center text-white font-black text-sm shadow-sm">
+                            G
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-xs sm:text-sm font-bold text-[#171717]">
+                                Golden Spoon
+                              </h3>
+                              <span className="bg-[#0B7A5F]/15 text-[#0B7A5F] text-[8px] font-black px-1 rounded">
+                                PRO
+                              </span>
                             </div>
+                            <p className="text-[10px] text-[#737373]">
+                              Yangon Cuisine • Table #04
+                            </p>
+                          </div>
+                        </div>
+                        <div className="h-7 px-2.5 rounded-full bg-[#F5F5F5] border border-[#E5E5E5] flex items-center text-[10px] font-bold text-[#525252]">
+                          📞 Call Staff
+                        </div>
+                      </div>
 
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between">
-                                <h5
-                                  className={`text-xs font-bold truncate ${
-                                    demoAvailable ? "text-[#111111]" : "text-gray-400 line-through"
-                                  }`}
-                                >
-                                  {demoLang === "en"
-                                    ? "Laphet Thoke (Tea Leaf)"
-                                    : "လက်ဖက်သုတ် (အကြော်စုံ)"}
-                                </h5>
-                              </div>
-                              <p className="text-[9px] text-[#666666] line-clamp-1 mt-0.5">
-                                {demoLang === "en"
-                                  ? "Fermented green tea leaves, roasted beans, crunchy garlic"
-                                  : "အရသာရှိသော ရှမ်းလက်ဖက်၊ ကြက်သွန်ကြော်၊ ပဲကြော်စုံ"}
-                              </p>
+                      {/* Search Bar + Category Pills */}
+                      <div className="p-3 pb-2 bg-white/70 border-b border-[#EAE8E3] space-y-2 shrink-0">
+                        <div className="bg-white border border-[#E5E5E5] rounded-xl px-2.5 py-1.5 flex items-center gap-2 text-[#999] shadow-sm">
+                          <Search className="h-3.5 w-3.5 text-[#999]" />
+                          <span className="text-[11px] text-[#888888]">
+                            Search tea leaf salad, noodles...
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5 overflow-x-hidden">
+                          <span className="bg-[#0B7A5F] text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
+                            ⭐ Popular
+                          </span>
+                          <span className="bg-white border border-[#E8E6E1] text-[#525252] px-2.5 py-1 rounded-full text-[10px] font-semibold">
+                            🥗 Salads
+                          </span>
+                          <span className="bg-white border border-[#E8E6E1] text-[#525252] px-2.5 py-1 rounded-full text-[10px] font-semibold">
+                            🍜 Noodles
+                          </span>
+                          <span className="bg-white border border-[#E8E6E1] text-[#525252] px-2.5 py-1 rounded-full text-[10px] font-semibold">
+                            🍧 Desserts
+                          </span>
+                        </div>
+                      </div>
 
-                              <div className="mt-2 flex items-center justify-between">
-                                <span
-                                  className={`text-xs font-black transition-colors ${
-                                    demoAvailable
-                                      ? "text-[#1E45FB]"
-                                      : "text-gray-400 line-through"
-                                  }`}
-                                >
-                                  {demoPrice.toLocaleString()} MMK
-                                </span>
-
-                                <button
-                                  disabled={!demoAvailable}
-                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-md transition-all ${
-                                    demoAvailable
-                                      ? "bg-[#1E45FB] text-white"
-                                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                  }`}
-                                >
-                                  {demoAvailable ? "+ Add" : "Unavailable"}
-                                </button>
-                              </div>
+                      {/* Scrollable Customer Menu Dish Feed */}
+                      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-[#F8F7F4] scrollbar-thin">
+                        {/* Dish 1: Laphet Thoke */}
+                        <div className="bg-white rounded-2xl p-2.5 border border-[#E8E6E1] shadow-sm flex gap-3 items-center">
+                          <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-emerald-100 to-amber-100 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl shadow-inner">
+                            🥗
+                            <span className="absolute top-1 left-1 bg-[#0B7A5F] text-white text-[7px] font-black px-1 rounded">
+                              POPULAR
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <h4 className="text-xs font-bold text-[#171717] truncate">
+                                Laphet Thoke (Tea Leaf)
+                              </h4>
+                            </div>
+                            <p className="text-[9px] text-[#737373] line-clamp-1 mt-0.5">
+                              လက်ဖက်သုတ် • Fermented tea leaves, crunchy beans & garlic
+                            </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-xs font-black text-[#0B7A5F]">
+                                3,500 MMK
+                              </span>
+                              <button className="h-6 px-2.5 rounded-full bg-[#0B7A5F] text-white text-[10px] font-bold shadow-sm hover:opacity-90 flex items-center gap-1">
+                                <span>+ Add</span>
+                              </button>
                             </div>
                           </div>
                         </div>
 
-                        {/* Secondary Mock Dish (Shwe Yin Aye) */}
-                        <div className="bg-white rounded-xl p-3 border border-[#E5E5E5] flex gap-2.5 opacity-80">
-                          <div className="h-16 w-16 rounded-lg bg-amber-50 flex items-center justify-center text-2xl shrink-0">
+                        {/* Dish 2: Shan Khao Swe */}
+                        <div className="bg-white rounded-2xl p-2.5 border border-[#E8E6E1] shadow-sm flex gap-3 items-center">
+                          <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl shadow-inner">
+                            🍜
+                            <span className="absolute top-1 left-1 bg-amber-600 text-white text-[7px] font-black px-1 rounded">
+                              CHEF SPECIAL
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-[#171717] truncate">
+                              Shan Khao Swe (Chicken)
+                            </h4>
+                            <p className="text-[9px] text-[#737373] line-clamp-1 mt-0.5">
+                              ရှမ်းခေါက်ဆွဲ • Spiced chicken, sticky rice noodles & chili oil
+                            </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-xs font-black text-[#0B7A5F]">
+                                4,500 MMK
+                              </span>
+                              <button className="h-6 px-2.5 rounded-full bg-[#0B7A5F] text-white text-[10px] font-bold shadow-sm hover:opacity-90 flex items-center gap-1">
+                                <span>+ Add</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dish 3: Kyay Oh Soup */}
+                        <div className="bg-white rounded-2xl p-2.5 border border-[#E8E6E1] shadow-sm flex gap-3 items-center">
+                          <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl shadow-inner">
+                            🍲
+                            <span className="absolute top-1 left-1 bg-[#1E45FB] text-white text-[7px] font-black px-1 rounded">
+                              BESTSELLER
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-[#171717] truncate">
+                              Kyay Oh Special Soup
+                            </h4>
+                            <p className="text-[9px] text-[#737373] line-clamp-1 mt-0.5">
+                              ကြေးအိုး • Pork meatballs, quail egg, vermicelli soup
+                            </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-xs font-black text-[#0B7A5F]">
+                                6,500 MMK
+                              </span>
+                              <button className="h-6 px-2.5 rounded-full bg-[#0B7A5F] text-white text-[10px] font-bold shadow-sm hover:opacity-90 flex items-center gap-1">
+                                <span>+ Add</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dish 4: Shwe Yin Aye */}
+                        <div className="bg-white rounded-2xl p-2.5 border border-[#E8E6E1] shadow-sm flex gap-3 items-center">
+                          <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-pink-50 to-purple-100 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl shadow-inner">
                             🍧
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h5 className="text-xs font-bold text-[#111111] truncate">
-                              {demoLang === "en"
-                                ? "Shwe Yin Aye Coconut Dessert"
-                                : "ရွှေရင်အေး အချိုပွဲ"}
-                            </h5>
-                            <p className="text-[9px] text-[#666666] line-clamp-1 mt-0.5">
-                              {demoLang === "en"
-                                ? "Chilled coconut milk, sticky rice & jelly"
-                                : "အုန်းနို့၊ ကျောက်ကျော၊ ကောက်ညှင်း"}
+                            <h4 className="text-xs font-bold text-[#171717] truncate">
+                              Shwe Yin Aye Dessert
+                            </h4>
+                            <p className="text-[9px] text-[#737373] line-clamp-1 mt-0.5">
+                              ရွှေရင်အေး • Chilled coconut milk, sticky rice & jelly
                             </p>
                             <div className="mt-2 flex items-center justify-between">
-                              <span className="text-xs font-black text-[#1E45FB]">2,800 MMK</span>
-                              <span className="text-[10px] font-bold bg-[#F0F2F5] text-[#111111] px-2 py-0.5 rounded">
-                                In Stock
+                              <span className="text-xs font-black text-[#0B7A5F]">
+                                2,800 MMK
                               </span>
+                              <button className="h-6 px-2.5 rounded-full bg-[#0B7A5F] text-white text-[10px] font-bold shadow-sm hover:opacity-90 flex items-center gap-1">
+                                <span>+ Add</span>
+                              </button>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Bottom Phone Bar */}
-                      <div className="bg-white border-t border-[#E5E5E5] p-2.5 text-center">
-                        <span className="text-[9px] font-medium text-[#666666]">
-                          {t.liveProof?.customerSyncNotice || "⚡ Synchronized live with restaurant admin"}
-                        </span>
+                      {/* Sticky Diner Bottom Cart Bar */}
+                      <div className="bg-white border-t border-[#EAE8E3] p-2.5 shrink-0 flex items-center justify-between shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-[#0B7A5F] text-white flex items-center justify-center">
+                            <ShoppingBag className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-[#171717] leading-none">
+                              1 item selected
+                            </p>
+                            <p className="text-[10px] text-[#737373] mt-0.5">
+                              Total: <span className="font-bold text-[#0B7A5F]">3,500 MMK</span>
+                            </p>
+                          </div>
+                        </div>
+                        <button className="bg-[#0B7A5F] text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-sm">
+                          View Order
+                        </button>
                       </div>
                     </div>
                   </div>
