@@ -23,6 +23,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
 import { getImageUrl } from "@/lib/image-url";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscription";
+import { useRouter } from "next/navigation";
+import { buildCategoryMenuUrl, buildMainMenuUrl } from "@/lib/slug";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -111,7 +113,12 @@ function parseBilingualText(
    MAIN COMPONENT
 =========================================================== */
 
-export default function CustomerMenu() {
+export default function CustomerMenu({
+  restaurantSlug,
+}: {
+  restaurantSlug?: string;
+} = {}) {
+  const router = useRouter();
   const supabase = createClient();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -141,7 +148,7 @@ export default function CustomerMenu() {
     plan.id.toLowerCase() === "pro" || plan.id.toLowerCase() === "business";
 
   /* ----------------------------------------------------------
-     DATA FETCHING & MULTI-TENANT RESOLUTION
+     DATA FETCHING & MULTI-TENANT RESOLUTION (STRICTLY SCOPED)
   ---------------------------------------------------------- */
   useEffect(() => {
     const fetchData = async () => {
@@ -151,6 +158,16 @@ export default function CustomerMenu() {
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         targetRestaurantId = urlParams.get("restaurantId");
+      }
+
+      if (!targetRestaurantId && restaurantSlug) {
+        const decodedSlug = decodeURIComponent(restaurantSlug).trim().toLowerCase();
+        const { data: restBySlug } = await supabase
+          .from("restaurants")
+          .select("id")
+          .or(`id.eq.${decodedSlug},name.ilike.${decodedSlug}`)
+          .maybeSingle();
+        if (restBySlug) targetRestaurantId = restBySlug.id;
       }
 
       if (!targetRestaurantId) {
@@ -521,25 +538,17 @@ export default function CustomerMenu() {
             className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5"
           >
             {groupedSections.map((sec) => {
-              const isActive = sec.name === activeCategory;
+              const catUrl = buildCategoryMenuUrl(sec.name, currentRestaurantId, restaurantSlug);
               return (
                 <button
                   key={`chip-${sec.name}`}
                   data-cat={sec.name}
                   type="button"
-                  onClick={() => scrollToSection(sec.name)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 ${
-                    isActive
-                      ? "bg-[#CDF22B] text-[#111111] shadow-sm border border-[#CDF22B]"
-                      : "bg-white border border-[#E5E5E5] text-[#525252] hover:text-[#111111] hover:border-[#CCCCCC]"
-                  }`}
+                  onClick={() => router.push(catUrl)}
+                  className="shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 bg-white border border-[#E5E5E5] text-[#525252] hover:text-[#111111] hover:border-[#CCCCCC] active:scale-95 shadow-2xs"
                 >
                   <span>{getCategoryLabel(sec.name)}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isActive ? "bg-black/15 text-[#111111]" : "bg-neutral-100 text-neutral-500"
-                    }`}
-                  >
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-100 text-neutral-500 font-semibold">
                     {sec.items.length}
                   </span>
                 </button>
@@ -579,24 +588,26 @@ export default function CustomerMenu() {
             )}
           </div>
 
-          {/* Layout switcher (List vs Grid) */}
-          <button
-            type="button"
-            onClick={() => setViewLayout((p) => (p === "list" ? "grid" : "list"))}
-            title="Switch Layout"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] shadow-sm active:scale-95 transition-all"
-          >
-            {viewLayout === "list" ? (
-              <Grid2X2 className="h-4 w-4" />
-            ) : (
-              <List className="h-4 w-4" />
-            )}
-          </button>
+          {/* Layout switcher for search results */}
+          {isSearching && (
+            <button
+              type="button"
+              onClick={() => setViewLayout((p) => (p === "list" ? "grid" : "list"))}
+              title="Switch Layout"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] shadow-sm active:scale-95 transition-all"
+            >
+              {viewLayout === "list" ? (
+                <Grid2X2 className="h-4 w-4" />
+              ) : (
+                <List className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* ====================================================
-          5. CATEGORY BANNER CARDS & DISH SECTIONS
+          5. CATEGORY BANNER CARDS ONLY (NO DISH LIST ON MAIN PAGE)
       ==================================================== */}
       <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-2 sm:px-5">
         {loading ? (
@@ -607,7 +618,7 @@ export default function CustomerMenu() {
         ) : (
           <>
             {/* ------------------------------------------------
-                SEARCH RESULTS VIEW
+                SEARCH RESULTS VIEW (If user types a query)
             ------------------------------------------------ */}
             {isSearching ? (
               <section aria-label="Search results" className="space-y-3 pt-2">
@@ -646,84 +657,66 @@ export default function CustomerMenu() {
               </section>
             ) : (
               /* ------------------------------------------------
-                 FULL MENU SECTIONS WITH CATEGORY BANNER CARDS
+                 CATEGORY BANNER CARDS OVERVIEW (Navigates to Category Page)
               ------------------------------------------------ */
-              <div className="space-y-8 pt-2">
+              <div className="space-y-4 pt-2">
                 {groupedSections.length === 0 ? (
-                  <EmptyState message="Menu is empty" sub="Dishes will appear once added." />
+                  <EmptyState message="Menu is empty" sub="Categories will appear once dishes are added." />
                 ) : (
-                  groupedSections.map((section) => (
-                    <section
-                      key={section.name}
-                      aria-labelledby={`cat-${section.name}`}
-                      ref={(el) => { sectionRefs.current[section.name] = el; }}
-                      className="space-y-3.5 scroll-mt-36"
-                    >
-                      {/* Category Banner Card: Large dish photo card with bold text & no color tint */}
-                      <div
-                        onClick={() => scrollToSection(section.name)}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] flex items-end"
-                      >
-                        {section.coverImage ? (
-                          <img
-                            src={getImageUrl(section.coverImage)}
-                            alt={section.name}
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
-                            <UtensilsCrossed className="h-8 w-8 text-neutral-500" />
+                  <div className="grid grid-cols-1 gap-3.5">
+                    {groupedSections.map((section) => {
+                      const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId, restaurantSlug);
+
+                      return (
+                        <div
+                          key={section.name}
+                          onClick={() => router.push(catUrl)}
+                          className="group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] flex items-end transition-all active:scale-[0.99] hover:shadow-md"
+                        >
+                          {section.coverImage ? (
+                            <img
+                              src={getImageUrl(section.coverImage)}
+                              alt={section.name}
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
+                              <UtensilsCrossed className="h-8 w-8 text-neutral-500" />
+                            </div>
+                          )}
+
+                          {/* Neutral Legibility Scrim (No color tint, natural photography) */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+                          {/* Overlaid Category Information */}
+                          <div className="relative z-10 p-4 sm:p-5 w-full flex items-end justify-between">
+                            <div>
+                              <h2
+                                id={`cat-${section.name}`}
+                                className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm group-hover:text-[#CDF22B] transition-colors"
+                              >
+                                {getCategoryLabel(section.name)}
+                              </h2>
+                              <p className="text-xs text-white/80 font-medium mt-0.5">
+                                {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
+                              </p>
+                            </div>
+
+                            <span className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#CDF22B] group-hover:text-[#111111] transition-all shadow-xs">
+                              <ChevronRight className="h-4 w-4" />
+                            </span>
                           </div>
-                        )}
-
-                        {/* Neutral Legibility Scrim (No color tint, natural photography) */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
-
-                        {/* Overlaid Category Information */}
-                        <div className="relative z-10 p-4 sm:p-5 w-full flex items-end justify-between">
-                          <div>
-                            <h2
-                              id={`cat-${section.name}`}
-                              className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm"
-                            >
-                              {getCategoryLabel(section.name)}
-                            </h2>
-                            <p className="text-xs text-white/80 font-medium mt-0.5">
-                              {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
-                            </p>
-                          </div>
-
-                          <span className="h-7 w-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-white group-hover:text-[#111111] transition-colors">
-                            <ChevronRight className="h-4 w-4" />
-                          </span>
                         </div>
-                      </div>
-
-                      {/* Category Dishes List / Grid */}
-                      <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
-                        {section.items.map((item) => (
-                          <MenuItemCard
-                            key={item.id}
-                            item={item}
-                            isPro={isPro}
-                            layout={viewLayout}
-                            langMode={langMode}
-                            cartQuantity={cart[item.id]?.quantity || 0}
-                            onAddToCart={() => handleAddToCart(item)}
-                            onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
-                            onOpenDetail={() => setActiveModalItem(item)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ))
+                      );
+                    })}
+                  </div>
                 )}
-              </div>
-            )}
-          </>
-        )}
-      </main>
+            </div>
+          )}
+        </>
+      )}
+    </main>
 
       {/* ====================================================
           6. FLOATING ORDER BAR
