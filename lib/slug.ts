@@ -42,14 +42,14 @@ export function categoryMatchesSlug(
 }
 
 export function buildCategoryMenuUrl(
-  categoryName: string,
+  categoryNameOrId: string,
   restaurantId?: string | null
 ): string {
-  const catSlug = slugify(categoryName);
+  const catSlug = slugify(categoryNameOrId);
   if (restaurantId) {
-    return `/menu/${catSlug}?restaurantId=${encodeURIComponent(restaurantId)}`;
+    return `/category/${catSlug}?restaurantId=${encodeURIComponent(restaurantId)}`;
   }
-  return `/menu/${catSlug}`;
+  return `/category/${catSlug}`;
 }
 
 export function buildMainMenuUrl(
