@@ -112,10 +112,8 @@ function parseBilingualText(
 
 export default function CategoryMenuView({
   categorySlug,
-  restaurantSlug,
 }: {
   categorySlug: string;
-  restaurantSlug?: string;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -146,27 +144,16 @@ export default function CategoryMenuView({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      let targetRestaurantId: string | null = null;
+      try {
+        let targetRestaurantId: string | null = null;
 
-      // 1. Resolve from query param if available
+        // Resolve from query param (?restaurantId=...)
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         targetRestaurantId = urlParams.get("restaurantId");
       }
 
-      // 2. Resolve from restaurantSlug if provided in dynamic route
-      if (!targetRestaurantId && restaurantSlug) {
-        const decodedSlug = decodeURIComponent(restaurantSlug).trim().toLowerCase();
-        // Check by ID or slug in restaurants table
-        const { data: restBySlug } = await supabase
-          .from("restaurants")
-          .select("id")
-          .or(`id.eq.${decodedSlug},name.ilike.${decodedSlug}`)
-          .maybeSingle();
-        if (restBySlug) targetRestaurantId = restBySlug.id;
-      }
-
-      // 3. Fallback to auth user's restaurant
+      // Fallback only to auth user's restaurant in dashboard preview
       if (!targetRestaurantId) {
         const {
           data: { user },
@@ -181,18 +168,12 @@ export default function CategoryMenuView({
         }
       }
 
-      // 4. Default to first restaurant if still unresolved
       if (!targetRestaurantId) {
-        const { data: firstRest } = await supabase
-          .from("restaurants")
-          .select("id")
-          .limit(1)
-          .maybeSingle();
-        if (firstRest) targetRestaurantId = firstRest.id;
+        setLoading(false);
+        return;
       }
 
-      if (targetRestaurantId) {
-        setCurrentRestaurantId(targetRestaurantId);
+      setCurrentRestaurantId(targetRestaurantId);
 
         // Load cart for this specific tenant from sessionStorage
         if (typeof window !== "undefined") {
@@ -248,13 +229,16 @@ export default function CategoryMenuView({
 
         if (catData) setCategories(catData);
         if (menuData) setAllMenuItems(menuData);
-      }
 
-      setLoading(false);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching category menu data:", err);
+        setLoading(false);
+      }
     };
 
     fetchData();
-  }, [categorySlug, restaurantSlug, supabase]);
+  }, [categorySlug, supabase]);
 
   // Persist cart per restaurant tenant
   useEffect(() => {
@@ -363,7 +347,21 @@ export default function CategoryMenuView({
   const cartTotalItems = cartItems.reduce((acc, i) => acc + i.quantity, 0);
   const cartTotalPrice = cartItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-  const mainPageUrl = buildMainMenuUrl(currentRestaurantId, restaurantSlug);
+  const mainPageUrl = buildMainMenuUrl(currentRestaurantId);
+
+  if (!loading && !currentRestaurantId) {
+    return (
+      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-sm rounded-3xl bg-white border border-[#E5E5E5] p-8 shadow-sm space-y-3">
+          <UtensilsCrossed className="w-10 h-10 text-[#888888] mx-auto" />
+          <h2 className="text-base font-bold text-[#111111]">Menu Not Found</h2>
+          <p className="text-xs text-[#666666] leading-relaxed">
+            This category link is missing a valid restaurant ID. Please re-scan the restaurant&apos;s QR code.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] font-sans antialiased selection:bg-[#CDF22B] selection:text-black">
@@ -464,13 +462,12 @@ export default function CategoryMenuView({
           <div className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5">
             {categories.map((cat) => {
               const isSelected = activeCategory?.id === cat.id || cat.name === activeCategoryName;
-              const catUrl = buildCategoryMenuUrl(cat.name, currentRestaurantId, restaurantSlug);
+              const catUrl = buildCategoryMenuUrl(cat.name, currentRestaurantId);
 
               return (
-                <button
+                <Link
                   key={cat.id}
-                  type="button"
-                  onClick={() => router.push(catUrl)}
+                  href={catUrl}
                   className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 ${
                     isSelected
                       ? "bg-[#CDF22B] text-[#111111] shadow-sm border border-[#CDF22B]"
@@ -478,7 +475,7 @@ export default function CategoryMenuView({
                   }`}
                 >
                   <span>{cat.name_mm || cat.name}</span>
-                </button>
+                </Link>
               );
             })}
           </div>

@@ -1,5 +1,5 @@
 /**
- * Multi-tenant safe slug helper for restaurants and categories.
+ * Multi-tenant safe slug helper for categories and restaurant query routing.
  */
 
 export function slugify(text: string): string {
@@ -43,13 +43,9 @@ export function categoryMatchesSlug(
 
 export function buildCategoryMenuUrl(
   categoryName: string,
-  restaurantId?: string | null,
-  restaurantSlug?: string | null
+  restaurantId?: string | null
 ): string {
   const catSlug = slugify(categoryName);
-  if (restaurantSlug) {
-    return `/${encodeURIComponent(restaurantSlug)}/menu/${catSlug}`;
-  }
   if (restaurantId) {
     return `/menu/${catSlug}?restaurantId=${encodeURIComponent(restaurantId)}`;
   }
@@ -57,12 +53,8 @@ export function buildCategoryMenuUrl(
 }
 
 export function buildMainMenuUrl(
-  restaurantId?: string | null,
-  restaurantSlug?: string | null
+  restaurantId?: string | null
 ): string {
-  if (restaurantSlug) {
-    return `/${encodeURIComponent(restaurantSlug)}/menu`;
-  }
   if (restaurantId) {
     return `/menu?restaurantId=${encodeURIComponent(restaurantId)}`;
   }

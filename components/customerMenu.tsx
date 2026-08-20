@@ -24,6 +24,7 @@ import { formatMMK } from "@/lib/utils";
 import { getImageUrl } from "@/lib/image-url";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscription";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { buildCategoryMenuUrl, buildMainMenuUrl } from "@/lib/slug";
 
 /* ===========================================================
@@ -153,21 +154,12 @@ export default function CustomerMenu({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      let targetRestaurantId: string | null = null;
+      try {
+        let targetRestaurantId: string | null = null;
 
-      if (typeof window !== "undefined") {
+        if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         targetRestaurantId = urlParams.get("restaurantId");
-      }
-
-      if (!targetRestaurantId && restaurantSlug) {
-        const decodedSlug = decodeURIComponent(restaurantSlug).trim().toLowerCase();
-        const { data: restBySlug } = await supabase
-          .from("restaurants")
-          .select("id")
-          .or(`id.eq.${decodedSlug},name.ilike.${decodedSlug}`)
-          .maybeSingle();
-        if (restBySlug) targetRestaurantId = restBySlug.id;
       }
 
       if (!targetRestaurantId) {
@@ -180,13 +172,11 @@ export default function CustomerMenu({
       }
 
       if (!targetRestaurantId) {
-        const { data: firstRest } = await supabase
-          .from("restaurants").select("id").limit(1).maybeSingle();
-        if (firstRest) targetRestaurantId = firstRest.id;
+        setLoading(false);
+        return;
       }
 
-      if (targetRestaurantId) {
-        setCurrentRestaurantId(targetRestaurantId);
+      setCurrentRestaurantId(targetRestaurantId);
 
         if (typeof window !== "undefined") {
           const savedCart = sessionStorage.getItem(`menu_cart_${targetRestaurantId}`);
@@ -222,9 +212,12 @@ export default function CustomerMenu({
         if (catData) setCategories(catData);
         if (menuData)
           setMenuItems(menuData.filter((item) => item.is_available !== false));
-      }
 
-      setLoading(false);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching menu data:", err);
+        setLoading(false);
+      }
     };
     fetchData();
   }, [supabase]);
@@ -411,6 +404,20 @@ export default function CustomerMenu({
   /* ----------------------------------------------------------
      RENDER
   ---------------------------------------------------------- */
+  if (!loading && !currentRestaurantId) {
+    return (
+      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-sm rounded-3xl bg-white border border-[#E5E5E5] p-8 shadow-sm space-y-3">
+          <UtensilsCrossed className="w-10 h-10 text-[#888888] mx-auto" />
+          <h2 className="text-base font-bold text-[#111111]">Menu Not Found</h2>
+          <p className="text-xs text-[#666666] leading-relaxed">
+            This digital menu link is missing a valid restaurant ID. Please re-scan the restaurant&apos;s QR code.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#111111] font-sans antialiased selection:bg-[#CDF22B] selection:text-[#111111]">
       {/* ====================================================
@@ -538,20 +545,19 @@ export default function CustomerMenu({
             className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5"
           >
             {groupedSections.map((sec) => {
-              const catUrl = buildCategoryMenuUrl(sec.name, currentRestaurantId, restaurantSlug);
+              const catUrl = buildCategoryMenuUrl(sec.name, currentRestaurantId);
               return (
-                <button
+                <Link
                   key={`chip-${sec.name}`}
                   data-cat={sec.name}
-                  type="button"
-                  onClick={() => router.push(catUrl)}
+                  href={catUrl}
                   className="shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 bg-white border border-[#E5E5E5] text-[#525252] hover:text-[#111111] hover:border-[#CCCCCC] active:scale-95 shadow-2xs"
                 >
                   <span>{getCategoryLabel(sec.name)}</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-100 text-neutral-500 font-semibold">
                     {sec.items.length}
                   </span>
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -665,13 +671,13 @@ export default function CustomerMenu({
                 ) : (
                   <div className="grid grid-cols-1 gap-3.5">
                     {groupedSections.map((section) => {
-                      const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId, restaurantSlug);
+                      const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId);
 
                       return (
-                        <div
+                        <Link
                           key={section.name}
-                          onClick={() => router.push(catUrl)}
-                          className="group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] flex items-end transition-all active:scale-[0.99] hover:shadow-md"
+                          href={catUrl}
+                          className="group relative block cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] transition-all active:scale-[0.99] hover:shadow-md"
                         >
                           {section.coverImage ? (
                             <img
@@ -690,7 +696,7 @@ export default function CustomerMenu({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
 
                           {/* Overlaid Category Information */}
-                          <div className="relative z-10 p-4 sm:p-5 w-full flex items-end justify-between">
+                          <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 flex items-end justify-between">
                             <div>
                               <h2
                                 id={`cat-${section.name}`}
@@ -707,7 +713,7 @@ export default function CustomerMenu({
                               <ChevronRight className="h-4 w-4" />
                             </span>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
