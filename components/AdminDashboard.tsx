@@ -1127,99 +1127,105 @@ export const AdminDashboard: React.FC = () => {
           <>
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#CDF22B] text-[#111111] border border-[#CDF22B]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#111111]" /> Published Menu
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#CDF22B] text-slate-950 border border-[#CDF22B]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" /> Published Menu
                 </span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#1E45FB]/10 text-[#1E45FB] uppercase">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60 uppercase">
                   {storePlan} Plan
                 </span>
               </div>
-              <span className="text-xs text-[#666666] font-medium hidden sm:inline">
-                Limit: {menuItems.length} / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                Limit: <strong className="text-slate-900 font-bold">{menuItems.length}</strong> / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
               </span>
             </div>
           
-            {/* Stat Cards with Icons */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+            {/* Stat Cards with Modern SaaS Hierarchy */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4">
+              <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-medium text-[#666666]">Total Menu Items</p>
-                  <p className="text-xl font-bold text-[#111111] mt-1">{menuItems.length}</p>
+                  <p className="text-xs font-medium text-slate-500">Total Dishes</p>
+                  <p className="text-2xl font-black text-slate-950 mt-1">{menuItems.length}</p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-[#F5F5F5] flex items-center justify-center text-[#666666]">
-                  <UtensilsCrossed className="w-4.5 h-4.5" />
+                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                  <UtensilsCrossed className="w-5 h-5" />
                 </div>
               </div>
-              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+
+              <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-medium text-[#666666]">Active Categories</p>
-                  <p className="text-xl font-bold text-[#111111] mt-1">{categories.length}</p>
+                  <p className="text-xs font-medium text-slate-500">Categories</p>
+                  <p className="text-2xl font-black text-slate-950 mt-1">{categories.length}</p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-[#F5F5F5] flex items-center justify-center text-[#666666]">
-                  <Tag className="w-4.5 h-4.5" />
+                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                  <Tag className="w-5 h-5" />
                 </div>
               </div>
-              <div className="col-span-2 sm:col-span-1 bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+
+              <div className="col-span-2 sm:col-span-1 bg-white border border-blue-100/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between bg-gradient-to-br from-white to-blue-50/30">
                 <div>
-                  <p className="text-[11px] font-medium text-[#666666]">Visible on Menu</p>
-                  <p className="text-xl font-bold text-[#1E45FB] mt-1">{availableCount} <span className="text-xs font-normal text-[#666666]">items</span></p>
+                  <p className="text-xs font-medium text-blue-900">Live On Menu</p>
+                  <p className="text-2xl font-black text-blue-600 mt-1">{availableCount} <span className="text-xs font-normal text-slate-500">items</span></p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-[#1E45FB]/10 flex items-center justify-center text-[#1E45FB]">
-                  <EyeIcon className="w-4.5 h-4.5" />
+                <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                  <EyeIcon className="w-5 h-5" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white border border-[#E5E5E5] p-4 rounded-3xl space-y-3.5 shadow-xs">
+            {/* Controls & Filter Bar */}
+            <div className="bg-white border border-slate-200/90 p-3.5 sm:p-4 rounded-3xl space-y-3.5 shadow-2xs">
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:w-56 md:w-64">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
+                  <div className="relative flex-1 sm:w-60 md:w-68">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Search dishes or drinks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#F5F5F5] border border-[#E5E5E5] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#1E45FB]/30 focus:border-[#1E45FB] transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all placeholder:text-slate-400"
                     />
                   </div>
                   <button
                     onClick={handleOpenAddDishModal}
-                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-[#1E45FB] text-white px-3.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-[#1737C9] transition-all shrink-0 shadow-xs min-h-[40px]"
+                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-700 active:scale-95 transition-all shrink-0 shadow-xs min-h-[42px]"
                   >
                     <Plus className="w-4 h-4" /> Add Dish
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 flex-1 min-w-0 scrollbar-hide">
                   <button
                     onClick={() => setSelectedCategoryFilter("All")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
                       selectedCategoryFilter === "All"
-                        ? "bg-[#111111] text-white"
-                        : "bg-[#F5F5F5] text-[#666666] hover:text-[#111111]"
+                        ? "bg-slate-950 text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                     }`}
                   >
-                    All Categories
+                    All Categories ({menuItems.length})
                   </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategoryFilter(cat.name)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                        selectedCategoryFilter === cat.name
-                          ? "bg-[#111111] text-white"
-                          : "bg-[#F5F5F5] text-[#666666] hover:text-[#111111]"
-                      }`}
-                    >
-                      {cat.name_mm || cat.name}
-                    </button>
-                  ))}
+                  {categories.map((cat) => {
+                    const catCount = menuItems.filter((i) => i.category === cat.name).length;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategoryFilter(cat.name)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
+                          selectedCategoryFilter === cat.name
+                            ? "bg-slate-950 text-white shadow-2xs"
+                            : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
+                        }`}
+                      >
+                        {cat.name_mm || cat.name} ({catCount})
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <button
                   onClick={handleOpenAddDishModal}
-                  className="hidden sm:inline-flex items-center justify-center gap-1.5 bg-[#1E45FB] text-white px-4 py-2.5 rounded-2xl text-xs font-bold hover:bg-[#1737C9] transition-all shrink-0 shadow-xs min-h-[40px]"
+                  className="hidden sm:inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-4.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-700 active:scale-95 transition-all shrink-0 shadow-sm min-h-[42px]"
                 >
                   <Plus className="w-4 h-4" /> Add Dish
                 </button>
@@ -1227,24 +1233,26 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {loading ? (
-              <div className="py-16 text-center text-xs text-[#666666] flex items-center justify-center gap-2 bg-white border border-[#E5E5E5] rounded-3xl">
-                <Loader2 className="w-5 h-5 animate-spin text-[#1E45FB]" /> Loading menu items...
+              <div className="py-20 text-center text-xs text-slate-500 flex items-center justify-center gap-2 bg-white border border-slate-200/80 rounded-3xl">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-600" /> Loading menu items...
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="py-16 text-center bg-white border border-[#E5E5E5] rounded-3xl space-y-3 px-6">
-                <UtensilsCrossed className="w-8 h-8 mx-auto text-[#888888]" aria-hidden="true" />
-                <p className="text-xs font-semibold text-[#111111]">
+              <div className="py-16 text-center bg-white border border-slate-200/80 rounded-3xl space-y-3 px-6">
+                <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                  <UtensilsCrossed className="w-6 h-6" aria-hidden="true" />
+                </div>
+                <p className="text-sm font-bold text-slate-900">
                   {menuItems.length === 0 ? "Your menu is empty" : "No menu items found"}
                 </p>
-                <p className="text-[11px] text-[#666666]">
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
                   {menuItems.length === 0
-                    ? "Add your first dish to get started."
-                    : "Try adjusting your search or category filter."}
+                    ? "Add your first dish to make your digital menu live for customers."
+                    : "Try adjusting your search query or selecting another category filter."}
                 </p>
                 {menuItems.length === 0 && (
                   <button
                     onClick={handleOpenAddDishModal}
-                    className="inline-flex items-center gap-2 bg-[#1E45FB] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#1737C9] transition-all mt-2 min-h-[40px]"
+                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-4.5 py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all mt-2 min-h-[42px] shadow-sm"
                   >
                     <Plus className="w-4 h-4" /> Add your first item
                   </button>
@@ -1255,74 +1263,75 @@ export const AdminDashboard: React.FC = () => {
                 {filteredItems.map((item) => (
                   <article
                     key={item.id}
-                    className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-xs hover:border-[#1E45FB]/30 hover:shadow-sm transition-all group"
+                    className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all group"
                   >
                     <div className="flex items-stretch">
-                      <div className="relative w-24 sm:w-28 shrink-0">
+                      <div className="relative w-28 sm:w-32 shrink-0 bg-slate-100">
                         <img
                           src={getImageUrl(item.image)}
                           alt={item.name_mm || item.name}
-                          className="w-full h-full min-h-[96px] object-cover bg-[#F5F5F5]"
+                          className="w-full h-full min-h-[110px] object-cover"
                         />
                         {!item.is_available && (
-                          <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wide bg-rose-500 text-white px-1.5 py-0.5 rounded">
+                          <span className="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white px-2 py-0.5 rounded-md shadow-xs">
                             Hidden
                           </span>
                         )}
                       </div>
 
-                      <div className="flex-1 min-w-0 p-3.5 flex flex-col justify-between">
+                      <div className="flex-1 min-w-0 p-3.5 sm:p-4 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-bold text-[#1E45FB] tracking-wider uppercase">
+                            <span className="text-[10px] font-bold text-blue-600 tracking-wider uppercase">
                               {item.category}
                             </span>
                             {item.is_popular && (
-                              <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-500/10 text-amber-600 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                              <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">
                                 Popular
                               </span>
                             )}
                           </div>
-                          <h3 className="text-sm font-bold text-[#111111] truncate mt-0.5">
+                          <h3 className="text-sm font-bold text-slate-900 truncate mt-1 burmese-title">
                             {item.name_mm || item.name}
                           </h3>
                           {item.name && item.name_mm && item.name !== item.name_mm && (
-                            <p className="text-[11px] text-[#888888] truncate font-medium">
+                            <p className="text-xs text-slate-500 truncate font-medium">
                               {item.name}
                             </p>
                           )}
                           {(item.description_mm || item.description) && (
-                            <p className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">
+                            <p className="text-xs text-slate-600 line-clamp-1 mt-0.5 burmese-body">
                               {item.description_mm || item.description}
                             </p>
                           )}
-                          <p className="text-sm font-bold text-[#1E45FB] mt-1">
+                          <p className="text-sm font-black text-slate-950 mt-1.5">
                             {formatMMK(item.price)}
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-[#F5F5F5]">
+                        <div className="flex items-center justify-end gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
                           <button
                             onClick={() => handleOpenEditDishModal(item)}
-                            className="p-2 rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
                             aria-label={`Edit ${item.name}`}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => toggleAvailability(item.id, item.is_available)}
-                            className={`p-2 rounded-lg text-xs border transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center ${
+                            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all min-h-[38px] flex items-center gap-1.5 ${
                               item.is_available
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100"
+                                : "bg-rose-50 text-rose-700 border-rose-200/80 hover:bg-rose-100"
                             }`}
                             aria-label={item.is_available ? `Hide ${item.name} from menu` : `Show ${item.name} on menu`}
                           >
                             {item.is_available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            <span className="hidden xs:inline text-[11px]">{item.is_available ? "Live" : "Hidden"}</span>
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item.id)}
-                            className="p-2 rounded-lg text-[#666666] hover:text-rose-600 hover:bg-rose-50 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                            className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
                             aria-label={`Delete ${item.name}`}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1337,118 +1346,122 @@ export const AdminDashboard: React.FC = () => {
           </>
         ) : (
           <div className="space-y-6">
-            <div className="bg-white border border-[#E5E5E5] p-6 rounded-3xl shadow-xs">
-              <div className="flex items-center gap-2 mb-1">
-                <QrCode className="w-5 h-5 text-[#1E45FB]" />
-                <h2 className="text-xl md:text-2xl font-bold text-[#111111] tracking-tight">Your QR Code</h2>
+              <div className="bg-white border border-slate-200/80 p-6 rounded-3xl shadow-2xs">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">QR Code Studio</h2>
+                    <p className="text-xs text-slate-500">
+                      Scan or download the high-resolution QR code for <strong className="text-slate-900 font-semibold">{storeName}</strong>
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-[#666666] mt-1">
-                Customers scan this code to open your digital menu for <span className="font-semibold text-[#111111]">{storeName}</span>.
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white border border-[#E5E5E5] rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-xs">
-                <div className="relative bg-white p-5 rounded-3xl border border-[#E5E5E5] shadow-sm">
-                  {menuUrl && (
-                    <QRCodeCanvas
-                      ref={qrRef}
-                      value={menuUrl}
-                      size={220}
-                      level="H"
-                      includeMargin
-                      bgColor="#FFFFFF"
-                      fgColor="#111111"
-                    />
-                  )}
-                  {logoUrl && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-12 h-12 rounded-xl bg-white p-1.5 shadow-md border border-[#E5E5E5]">
-                        <img
-                          src={getImageUrl(logoUrl)}
-                          alt=""
-                          className="w-full h-full object-cover rounded-lg"
-                        />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xs">
+                  <div className="relative bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    {menuUrl && (
+                      <QRCodeCanvas
+                        ref={qrRef}
+                        value={menuUrl}
+                        size={220}
+                        level="H"
+                        includeMargin
+                        bgColor="#FFFFFF"
+                        fgColor="#0f172a"
+                      />
+                    )}
+                    {logoUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-12 h-12 rounded-xl bg-white p-1 shadow-md border border-slate-200">
+                          <img
+                            src={getImageUrl(logoUrl)}
+                            alt=""
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <div className="text-center mt-5">
-                  {logoUrl && (
-                    <img
-                      src={getImageUrl(logoUrl)}
-                      alt=""
-                      className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-[#E5E5E5]"
-                    />
-                  )}
-                  <p className="text-sm font-bold text-[#111111]">{storeName}</p>
-                  <p className="text-[11px] text-[#666666] mt-1">Scan to view menu</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-[#E5E5E5] rounded-3xl p-6 space-y-5 shadow-xs">
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-2">Menu Link</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={menuUrl}
-                      className="flex-1 bg-[#F5F5F5] border border-[#E5E5E5] rounded-xl px-3.5 py-2.5 text-xs text-[#666666] focus:outline-none"
-                    />
-                    <button
-                      onClick={handleCopyMenuUrl}
-                      className="shrink-0 bg-white border border-[#E5E5E5] text-[#111111] px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-[#F5F5F5] transition-colors min-h-[40px]"
-                    >
-                      <Copy className="w-4 h-4" />
-                      {copied ? "Copied!" : "Copy"}
-                    </button>
+                  <div className="text-center mt-5">
+                    {logoUrl && (
+                      <img
+                        src={getImageUrl(logoUrl)}
+                        alt=""
+                        className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-slate-200"
+                      />
+                    )}
+                    <p className="text-sm font-bold text-slate-900">{storeName}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Scan to open digital menu</p>
                   </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  <a
-                    href={menuUrl || "/menu"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] transition-all shadow-xs min-h-[44px]"
-                  >
-                    <ExternalLink className="w-4 h-4" /> Preview Live Menu
-                  </a>
-                  <button
-                    onClick={handleDownloadQr}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#F5F5F5] hover:text-[#1E45FB] transition-all min-h-[44px]"
-                  >
-                    <Download className="w-4 h-4" /> Download QR Code
-                  </button>
-                </div>
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-5 shadow-2xs flex flex-col justify-between">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-900 mb-2">Live Menu URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={menuUrl}
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-mono focus:outline-none"
+                      />
+                      <button
+                        onClick={handleCopyMenuUrl}
+                        className="shrink-0 bg-white border border-slate-200 text-slate-900 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50 active:scale-95 transition-all min-h-[42px] shadow-2xs"
+                      >
+                        <Copy className="w-4 h-4 text-slate-500" />
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="bg-[#F5F5F5] border border-[#E5E5E5] rounded-xl p-4">
-                  <p className="text-[11px] font-bold text-[#111111] mb-1">How to use</p>
-                  <ol className="text-[11px] text-[#666666] space-y-1 list-decimal list-inside">
-                    <li>Download or print your QR code</li>
-                    <li>Place it on tables, counters, or entrances</li>
-                    <li>Customers scan with their phone camera</li>
-                  </ol>
+                  <div className="space-y-3">
+                    <a
+                      href={menuUrl || "/menu"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-[0.99] transition-all shadow-sm min-h-[46px]"
+                    >
+                      <ExternalLink className="w-4 h-4" /> Preview Diner Experience
+                    </a>
+                    <button
+                      onClick={handleDownloadQr}
+                      className="w-full bg-white border border-slate-200 text-slate-900 font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-blue-600 active:scale-[0.99] transition-all min-h-[46px] shadow-2xs"
+                    >
+                      <Download className="w-4 h-4" /> Download Printable QR
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                    <p className="text-xs font-bold text-slate-900 mb-1.5">How to deploy:</p>
+                    <ol className="text-xs text-slate-600 space-y-1 list-decimal list-inside font-medium leading-relaxed">
+                      <li>Download and print your QR code on acrylic table stands or counter cards.</li>
+                      <li>Diners scan directly with any iOS or Android camera (zero app download).</li>
+                      <li>Any dish price or availability changes update instantaneously for all diners.</li>
+                    </ol>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
 
-      <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#E5E5E5] safe-area-pb"
-        aria-label="Dashboard navigation"
-      >
-        <div className="flex items-center justify-around px-2 py-2">
-          <button
-            onClick={() => setActiveSection("menu")}
-            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              activeSection === "menu" ? "text-[#1E45FB]" : "text-[#666666]"
-            }`}
-          >
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-safe"
+          aria-label="Dashboard navigation"
+        >
+          <div className="flex items-center justify-around px-2 py-2">
+            <button
+              onClick={() => setActiveSection("menu")}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
+                activeSection === "menu" ? "text-blue-600 font-bold" : "text-slate-500 font-medium"
+              }`}
+            >
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[10px] font-semibold">Menu</span>
           </button>

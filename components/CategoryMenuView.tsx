@@ -22,6 +22,11 @@ import { formatMMK } from "@/lib/utils";
 import { getImageUrl } from "@/lib/image-url";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscription";
 import { categoryMatchesSlug, buildCategoryMenuUrl, buildMainMenuUrl } from "@/lib/slug";
+import {
+  DEMO_STORE_PROFILE,
+  DEMO_CATEGORIES,
+  DEMO_MENU_ITEMS,
+} from "@/lib/demo-menu-data";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -147,33 +152,66 @@ export default function CategoryMenuView({
       try {
         let targetRestaurantId: string | null = null;
 
-        // Resolve from query param (?restaurantId=...)
-      if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        targetRestaurantId = urlParams.get("restaurantId");
-      }
-
-      // Fallback only to auth user's restaurant in dashboard preview
-      if (!targetRestaurantId) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          const { data: userRest } = await supabase
-            .from("restaurants")
-            .select("id")
-            .eq("owner_id", user.id)
-            .maybeSingle();
-          if (userRest) targetRestaurantId = userRest.id;
+        // Resolve from query param (?restaurantId=... or ?demo=true)
+        let isDemoMode = false;
+        if (typeof window !== "undefined") {
+          const urlParams = new URLSearchParams(window.location.search);
+          targetRestaurantId = urlParams.get("restaurantId");
+          isDemoMode = urlParams.get("demo") === "true" || targetRestaurantId === "demo";
         }
-      }
 
-      if (!targetRestaurantId) {
-        setLoading(false);
-        return;
-      }
+        // Fallback only to auth user's restaurant in dashboard preview
+        if (!targetRestaurantId && !isDemoMode) {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            const { data: userRest } = await supabase
+              .from("restaurants")
+              .select("id")
+              .eq("owner_id", user.id)
+              .maybeSingle();
+            if (userRest) targetRestaurantId = userRest.id;
+          }
+        }
 
-      setCurrentRestaurantId(targetRestaurantId);
+        // If explicitly demo mode, or if no restaurant ID is found at all, load Live Demo Menu
+        if (isDemoMode || !targetRestaurantId) {
+          if (!isDemoMode) {
+            const { data: publicRest } = await supabase
+              .from("restaurants")
+              .select("id")
+              .limit(1)
+              .maybeSingle();
+
+            if (publicRest) {
+              targetRestaurantId = publicRest.id;
+            }
+          }
+
+          if (!targetRestaurantId || isDemoMode) {
+            setCurrentRestaurantId("demo");
+            setStoreProfile(DEMO_STORE_PROFILE);
+            setCategories(DEMO_CATEGORIES);
+            setAllMenuItems(DEMO_MENU_ITEMS);
+            if (typeof window !== "undefined") {
+              const savedCart = sessionStorage.getItem("menu_cart_demo");
+              if (savedCart) {
+                try {
+                  setCart(JSON.parse(savedCart));
+                } catch {
+                  setCart({});
+                }
+              } else {
+                setCart({});
+              }
+            }
+            setLoading(false);
+            return;
+          }
+        }
+
+        setCurrentRestaurantId(targetRestaurantId);
 
         // Load cart for this specific tenant from sessionStorage
         if (typeof window !== "undefined") {
@@ -227,12 +265,26 @@ export default function CategoryMenuView({
           if (restInfo) setStoreProfile({ store_name: restInfo.name });
         }
 
-        if (catData) setCategories(catData);
-        if (menuData) setAllMenuItems(menuData);
+        if (catData && catData.length > 0) {
+          setCategories(catData);
+        } else {
+          setCategories(DEMO_CATEGORIES);
+        }
+
+        if (menuData && menuData.length > 0) {
+          setAllMenuItems(menuData);
+        } else {
+          setAllMenuItems(DEMO_MENU_ITEMS);
+        }
 
         setLoading(false);
       } catch (err) {
         console.error("Error fetching category menu data:", err);
+        // Resilient fallback to demo menu on error
+        setCurrentRestaurantId("demo");
+        setStoreProfile(DEMO_STORE_PROFILE);
+        setCategories(DEMO_CATEGORIES);
+        setAllMenuItems(DEMO_MENU_ITEMS);
         setLoading(false);
       }
     };
@@ -626,9 +678,7 @@ export default function CategoryMenuView({
 
 /* ===========================================================
    ITEM CARD COMPONENT
-=========================================================== */
-
-function MenuItemCard({
+=========================================================== */function MenuItemCard({
   item,
   isPro,
   layout,
@@ -645,7 +695,7 @@ function MenuItemCard({
   cartQuantity: number;
   onAddToCart: () => void;
   onUpdateQuantity: (delta: number) => void;
-  onOpenDetail?: () => void;
+  onOpenDetail: () => void;
 }) {
   const parsedName = parseBilingualText(item.name, item.name_mm);
 
@@ -669,9 +719,9 @@ function MenuItemCard({
     return (
       <article
         onClick={onOpenDetail}
-        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs hover:shadow-md hover:border-slate-300 transition-all active:scale-[0.98] cursor-pointer"
       >
-        <div className="relative aspect-square w-full overflow-hidden bg-[#ECE8E1]">
+        <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
           {item.image ? (
             <img
               src={getImageUrl(item.image)}
@@ -681,57 +731,57 @@ function MenuItemCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <UtensilsCrossed className="h-6 w-6 text-[#B5B0A7]" />
+              <UtensilsCrossed className="h-7 w-7 text-slate-400" />
             </div>
           )}
           {item.is_popular && (
-            <span className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[8px] font-black text-[#111111] bg-[#CDF22B] shadow-xs uppercase tracking-wider">
+            <span className="absolute left-2.5 top-2.5 rounded-md px-2 py-1 text-[10px] font-black text-slate-900 bg-[#CDF22B] shadow-xs uppercase tracking-wider">
               POPULAR
             </span>
           )}
         </div>
 
-        <div className="p-3 space-y-0.5 flex-1 flex flex-col justify-between">
+        <div className="p-3.5 space-y-1 flex-1 flex flex-col justify-between">
           <div>
-            <h3 className="text-[13px] font-bold text-[#111111] line-clamp-1 leading-snug">
+            <h3 className="text-sm font-bold text-slate-900 line-clamp-1 burmese-title">
               {displayName}
             </h3>
-            {subName && <p className="text-[10px] text-[#737373] line-clamp-1">{subName}</p>}
+            {subName && <p className="text-xs text-slate-500 line-clamp-1 font-medium">{subName}</p>}
             {displayDesc && (
-              <p className="mt-1 line-clamp-2 text-[11px] text-[#666666] leading-relaxed font-medium">
+              <p className="mt-1 line-clamp-2 text-xs text-slate-600 burmese-body">
                 {displayDesc}
               </p>
             )}
           </div>
 
-          <div className="border-t border-[#F5F4F0] pt-2.5 mt-2 flex items-center justify-between">
-            <p className="text-sm font-black text-[#111111]">
+          <div className="border-t border-slate-100 pt-3 mt-2 flex items-center justify-between">
+            <p className="text-sm font-black text-slate-900">
               {formatMMK(item.price)}
             </p>
 
             {cartQuantity > 0 ? (
               <div
-                className="flex items-center gap-1 rounded-full border border-[#E5E5E5] bg-[#F5F4F0] px-1 py-0.5"
+                className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-2xs"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(-1)}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#111111] active:scale-90"
-                  aria-label="Decrease"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900 border border-slate-200 active:scale-90 transition-transform"
+                  aria-label="Decrease quantity"
                 >
-                  <Minus className="h-3 w-3" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="min-w-[14px] text-center text-xs font-bold text-[#111111]">
+                <span className="min-w-[18px] text-center text-xs font-bold text-slate-900">
                   {cartQuantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(1)}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#111111] text-white active:scale-90"
-                  aria-label="Increase"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white active:scale-90 transition-transform"
+                  aria-label="Increase quantity"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
@@ -741,9 +791,9 @@ function MenuItemCard({
                   e.stopPropagation();
                   onAddToCart();
                 }}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-[#111111] text-white hover:bg-black active:scale-95 min-h-[28px]"
+                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-black active:scale-95 min-h-[34px] shadow-2xs transition-all"
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="h-3.5 w-3.5" />
                 <span>Add</span>
               </button>
             )}
@@ -757,9 +807,9 @@ function MenuItemCard({
   return (
     <article
       onClick={onOpenDetail}
-      className="group relative flex overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all active:scale-[0.99] cursor-pointer"
+      className="group relative flex overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs hover:shadow-md hover:border-slate-300 transition-all active:scale-[0.99] cursor-pointer"
     >
-      <div className="relative h-[88px] w-[88px] sm:h-24 sm:w-24 shrink-0 overflow-hidden bg-[#ECE8E1]">
+      <div className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden bg-slate-100">
         {item.image ? (
           <img
             src={getImageUrl(item.image)}
@@ -769,55 +819,55 @@ function MenuItemCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <UtensilsCrossed className="h-5 w-5 text-[#B5B0A7]" />
+            <UtensilsCrossed className="h-6 w-6 text-slate-400" />
           </div>
         )}
         {item.is_popular && (
-          <span className="absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-black text-[#111111] bg-[#CDF22B] leading-none uppercase tracking-tight shadow-xs">
+          <span className="absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[9px] font-black text-slate-900 bg-[#CDF22B] uppercase tracking-wider shadow-xs">
             POPULAR
           </span>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between p-3">
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-3.5">
         <div>
-          <h3 className="text-[13px] font-bold leading-snug text-[#111111]">{displayName}</h3>
-          {subName && <p className="text-[10px] text-[#737373] mt-px">{subName}</p>}
+          <h3 className="text-sm font-bold text-slate-900 burmese-title">{displayName}</h3>
+          {subName && <p className="text-xs text-slate-500 font-medium mt-0.5">{subName}</p>}
           {displayDesc && (
-            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#666666] font-medium">
+            <p className="mt-1 line-clamp-2 text-xs text-slate-600 burmese-body">
               {displayDesc}
             </p>
           )}
         </div>
 
-        <div className="mt-2 flex items-center justify-between border-t border-[#F5F4F0] pt-2">
-          <p className="text-sm font-black text-[#111111]">
+        <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2.5">
+          <p className="text-sm font-black text-slate-900">
             {formatMMK(item.price)}
           </p>
 
           {cartQuantity > 0 ? (
             <div
-              className="flex items-center gap-1 rounded-full border border-[#E5E5E5] bg-[#F5F4F0] px-1 py-0.5"
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-2xs"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(-1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#111111] active:scale-90"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900 border border-slate-200 active:scale-90 transition-transform"
                 aria-label="Decrease quantity"
               >
-                <Minus className="h-3 w-3" />
+                <Minus className="h-3.5 w-3.5" />
               </button>
-              <span className="min-w-[16px] text-center text-xs font-bold text-[#111111]">
+              <span className="min-w-[18px] text-center text-xs font-bold text-slate-900">
                 {cartQuantity}
               </span>
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111111] text-white active:scale-90"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white active:scale-90 transition-transform"
                 aria-label="Increase quantity"
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
           ) : (
@@ -827,7 +877,7 @@ function MenuItemCard({
                 e.stopPropagation();
                 onAddToCart();
               }}
-              className="flex items-center gap-1 rounded-full bg-[#111111] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-black active:scale-95 transition-all min-h-[30px]"
+              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-black active:scale-95 min-h-[34px] shadow-2xs transition-all"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Add</span>

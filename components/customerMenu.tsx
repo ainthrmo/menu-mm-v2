@@ -26,6 +26,11 @@ import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscr
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { buildCategoryMenuUrl, buildMainMenuUrl } from "@/lib/slug";
+import {
+  DEMO_STORE_PROFILE,
+  DEMO_CATEGORIES,
+  DEMO_MENU_ITEMS,
+} from "@/lib/demo-menu-data";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -149,27 +154,57 @@ export default function CustomerMenu({
       setLoading(true);
       try {
         let targetRestaurantId: string | null = null;
+        let isDemoMode = false;
 
         if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        targetRestaurantId = urlParams.get("restaurantId");
-      }
-
-      if (!targetRestaurantId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: userRest } = await supabase
-            .from("restaurants").select("id").eq("owner_id", user.id).maybeSingle();
-          if (userRest) targetRestaurantId = userRest.id;
+          const urlParams = new URLSearchParams(window.location.search);
+          targetRestaurantId = urlParams.get("restaurantId");
+          isDemoMode = urlParams.get("demo") === "true" || targetRestaurantId === "demo";
         }
-      }
 
-      if (!targetRestaurantId) {
-        setLoading(false);
-        return;
-      }
+        if (!targetRestaurantId && !isDemoMode) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: userRest } = await supabase
+              .from("restaurants").select("id").eq("owner_id", user.id).maybeSingle();
+            if (userRest) targetRestaurantId = userRest.id;
+          }
+        }
 
-      setCurrentRestaurantId(targetRestaurantId);
+        // If explicitly demo mode, or if no restaurant ID is found at all, load Live Demo Menu
+        if (isDemoMode || !targetRestaurantId) {
+          // Check if any restaurant exists in database first if not explicit demo
+          if (!isDemoMode) {
+            const { data: publicRest } = await supabase
+              .from("restaurants")
+              .select("id")
+              .limit(1)
+              .maybeSingle();
+
+            if (publicRest) {
+              targetRestaurantId = publicRest.id;
+            }
+          }
+
+          if (!targetRestaurantId || isDemoMode) {
+            setCurrentRestaurantId("demo");
+            setStoreProfile(DEMO_STORE_PROFILE);
+            setCategories(DEMO_CATEGORIES);
+            setMenuItems(DEMO_MENU_ITEMS);
+            if (typeof window !== "undefined") {
+              const savedCart = sessionStorage.getItem("menu_cart_demo");
+              if (savedCart) {
+                try { setCart(JSON.parse(savedCart)); } catch { setCart({}); }
+              } else {
+                setCart({});
+              }
+            }
+            setLoading(false);
+            return;
+          }
+        }
+
+        setCurrentRestaurantId(targetRestaurantId);
 
         if (typeof window !== "undefined") {
           const savedCart = sessionStorage.getItem(`menu_cart_${targetRestaurantId}`);
@@ -202,13 +237,26 @@ export default function CustomerMenu({
           if (restInfo) setStoreProfile({ store_name: restInfo.name });
         }
 
-        if (catData) setCategories(catData);
-        if (menuData)
+        if (catData && catData.length > 0) {
+          setCategories(catData);
+        } else {
+          setCategories(DEMO_CATEGORIES);
+        }
+
+        if (menuData && menuData.length > 0) {
           setMenuItems(menuData.filter((item) => item.is_available !== false));
+        } else {
+          setMenuItems(DEMO_MENU_ITEMS);
+        }
 
         setLoading(false);
       } catch (err) {
         console.error("Error fetching menu data:", err);
+        // Resilient fallback to demo menu on error
+        setCurrentRestaurantId("demo");
+        setStoreProfile(DEMO_STORE_PROFILE);
+        setCategories(DEMO_CATEGORIES);
+        setMenuItems(DEMO_MENU_ITEMS);
         setLoading(false);
       }
     };
@@ -603,24 +651,24 @@ export default function CustomerMenu({
                           </div>
                         )}
 
-                        {/* Neutral Legibility Scrim (No color tint, natural photography) */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+                        {/* Neutral Legibility Scrim */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                         {/* Overlaid Category Information */}
                         <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 flex items-end justify-between">
                           <div>
                             <h2
                               id={`cat-${section.name}`}
-                              className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm group-hover:text-[#CDF22B] transition-colors"
+                              className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm group-hover:text-[#CDF22B] transition-colors burmese-title"
                             >
                               {getCategoryLabel(section.name)}
                             </h2>
-                            <p className="text-xs text-white/80 font-medium mt-0.5">
+                            <p className="text-xs text-white/80 font-medium mt-1">
                               {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
                             </p>
                           </div>
 
-                          <span className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#CDF22B] group-hover:text-[#111111] transition-all shadow-xs">
+                          <span className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#CDF22B] group-hover:text-slate-950 transition-all shadow-sm">
                             <ChevronRight className="h-4 w-4" />
                           </span>
                         </div>
@@ -636,20 +684,20 @@ export default function CustomerMenu({
 
       {/* ====================================================
           6. FLOATING ORDER BAR
-          Lime (#CDF22B) active order badge
+          Lime (#CDF22B) active order badge + safe area
       ==================================================== */}
       {totalCartItems > 0 && (
-        <div className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-lg">
-          <div className="flex items-center justify-between rounded-2xl border border-[#333333] bg-[#111111]/95 p-3 shadow-2xl backdrop-blur-md text-white">
-            <div className="flex items-center gap-2.5">
-              <div className="relative rounded-xl p-2 bg-[#222222] text-white">
-                <ShoppingBag className="h-4 w-4" />
-                <span className="absolute -right-1.5 -top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-[#111111] bg-[#CDF22B] text-[9px] font-black text-[#111111]">
+        <div className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-lg pb-safe">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/95 p-3.5 shadow-2xl backdrop-blur-md text-white">
+            <div className="flex items-center gap-3">
+              <div className="relative rounded-xl p-2.5 bg-slate-800 text-white">
+                <ShoppingBag className="h-4.5 w-4.5" />
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-950 bg-[#CDF22B] text-[10px] font-black text-slate-950">
                   {totalCartItems}
                 </span>
               </div>
               <div>
-                <p className="text-[10px] font-medium text-white/60">Your Order</p>
+                <p className="text-[11px] font-medium text-slate-400">Your Order</p>
                 <p className="text-sm font-bold text-white">{formatMMK(totalCartPrice)}</p>
               </div>
             </div>
@@ -657,10 +705,10 @@ export default function CustomerMenu({
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-[#CDF22B] text-[#111111] px-4 py-2 text-xs font-black shadow-sm active:scale-95 transition-all min-h-[36px]"
+              className="flex items-center gap-1.5 rounded-xl bg-[#CDF22B] text-slate-950 px-4.5 py-2.5 text-xs font-black shadow-sm active:scale-95 transition-all min-h-[42px]"
             >
               <span>View Cart</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -675,73 +723,77 @@ export default function CustomerMenu({
           onClick={() => setIsCartOpen(false)}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-3xl border border-[#E5E5E5] bg-white shadow-2xl sm:rounded-3xl"
+            className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#EAE8E3] p-4 shrink-0">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-[#111111]" />
-                <h2 className="text-sm font-bold text-[#111111]">Order Summary</h2>
-                <span className="rounded-full bg-[#F5F4F0] px-2 py-0.5 text-[10px] font-bold text-[#737373]">
-                  {totalCartItems} {totalCartItems === 1 ? "item" : "items"}
-                </span>
+            <div className="flex items-center justify-between border-b border-slate-100 p-4.5 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-slate-100 text-slate-900">
+                  <ShoppingBag className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Order Summary</h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {totalCartItems} {totalCartItems === 1 ? "item" : "items"} selected
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCartOpen(false)}
-                className="rounded-xl p-1.5 text-[#737373] hover:bg-[#F5F5F5] hover:text-[#111111]"
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Items */}
-            <div className="flex-1 overflow-y-auto space-y-2 p-4 pr-3">
+            <div className="flex-1 overflow-y-auto space-y-2.5 p-4 pr-3.5">
               {cartList.map(({ item, quantity }) => (
                 <div
                   key={`cart-${item.id}`}
-                  className="flex items-center justify-between gap-2.5 rounded-xl border border-[#EAE8E3] bg-[#FAF9F6] p-3"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5"
                 >
                   <div className="min-w-0 flex-1">
-                    <h4 className="truncate text-[13px] font-bold text-[#111111]">{item.name}</h4>
-                    <p className="mt-0.5 text-xs text-[#737373]">
+                    <h4 className="truncate text-sm font-bold text-slate-900 burmese-title">{item.name}</h4>
+                    <p className="mt-0.5 text-xs text-slate-500 font-medium">
                       {formatMMK(item.price)} × {quantity} ={" "}
-                      <span className="font-bold text-[#111111]">
+                      <span className="font-bold text-slate-900">
                         {formatMMK(item.price * quantity)}
                       </span>
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <div className="flex items-center gap-1 rounded-lg border border-[#E5E5E5] bg-white px-1.5 py-1 shadow-sm">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => handleUpdateQuantity(item.id, -1)}
-                        className="flex h-6 w-6 items-center justify-center rounded text-[#111111] hover:bg-[#F5F5F5] active:scale-90"
-                        aria-label="Decrease"
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-900 hover:bg-slate-100 active:scale-90 transition-transform"
+                        aria-label="Decrease quantity"
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
-                      <span className="min-w-[16px] text-center text-xs font-bold text-[#111111]">
+                      <span className="min-w-[18px] text-center text-xs font-bold text-slate-900">
                         {quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleUpdateQuantity(item.id, 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded bg-[#111111] text-white active:scale-90"
-                        aria-label="Increase"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white active:scale-90 transition-transform"
+                        aria-label="Increase quantity"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveFromCart(item.id)}
-                      className="p-1.5 text-[#A3A3A3] hover:text-rose-600 active:scale-90"
-                      title="Remove"
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors active:scale-90"
+                      title="Remove item"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -749,19 +801,19 @@ export default function CustomerMenu({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-[#EAE8E3] p-4 shrink-0 space-y-3">
+            <div className="border-t border-slate-100 p-4.5 shrink-0 space-y-3.5 pb-safe">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-[#525252]">Total</span>
-                <span className="text-lg font-black text-[#111111]">
+                <span className="text-sm font-semibold text-slate-600">Total Amount</span>
+                <span className="text-xl font-black text-slate-950">
                   {formatMMK(totalCartPrice)}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCartOpen(false)}
-                className="w-full rounded-xl bg-[#111111] py-3 text-sm font-bold text-white hover:bg-black transition-all min-h-[44px]"
+                className="w-full rounded-2xl bg-slate-950 py-3.5 text-sm font-bold text-white hover:bg-black transition-all min-h-[46px] shadow-sm active:scale-[0.99]"
               >
-                Done
+                Close Summary
               </button>
             </div>
           </div>
@@ -771,9 +823,9 @@ export default function CustomerMenu({
       {/* ====================================================
           9. FOOTER
       ==================================================== */}
-      <footer className="mx-auto max-w-xl border-t border-[#E8E6E1] px-4 pb-8 pt-5 text-center">
-        <p className="text-[10px] font-semibold tracking-wider text-[#A3A3A3]">
-          POWERED BY <span className="text-[#111111] font-bold">MENUU</span>
+      <footer className="mx-auto max-w-xl border-t border-slate-200/80 px-4 pb-12 pt-6 text-center">
+        <p className="text-[11px] font-semibold tracking-wider text-slate-400">
+          POWERED BY <span className="text-slate-900 font-bold">MENUU</span>
         </p>
       </footer>
     </div>
@@ -786,10 +838,12 @@ export default function CustomerMenu({
 
 function EmptyState({ message, sub }: { message: string; sub: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#D9D9D9] bg-white p-10 text-center">
-      <UtensilsCrossed className="mx-auto h-7 w-7 text-[#A8A29E]" />
-      <p className="mt-2.5 text-sm font-semibold text-[#111111]">{message}</p>
-      <p className="mt-1 text-xs text-[#737373]">{sub}</p>
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center space-y-2.5">
+      <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+        <UtensilsCrossed className="h-6 w-6" />
+      </div>
+      <p className="text-sm font-bold text-slate-900">{message}</p>
+      <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">{sub}</p>
     </div>
   );
 }

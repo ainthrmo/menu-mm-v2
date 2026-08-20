@@ -25,22 +25,21 @@ export default function LandingNavbar() {
   ];
 
   const LanguageSwitcher = () => {
-    if (!isMounted) return <div className="w-16 h-6 animate-pulse bg-gray-200 rounded"></div>;
+    if (!isMounted) return <div className="w-16 h-6 animate-pulse bg-slate-200 rounded-full"></div>;
     return (
-      <div className="flex items-center gap-1.5 text-xs font-semibold">
+      <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 p-1 text-xs font-bold shadow-2xs">
         <button
           onClick={() => setLanguage("en")}
-          className={`transition-colors ${
-            language === "en" ? "text-[#1E45FB]" : "text-[#888888] hover:text-[#111111]"
+          className={`px-2.5 py-1 rounded-full transition-all min-h-[28px] ${
+            language === "en" ? "bg-white text-slate-950 shadow-2xs" : "text-slate-500 hover:text-slate-900"
           }`}
         >
           EN
         </button>
-        <span className="text-[#E5E5E5]">|</span>
         <button
           onClick={() => setLanguage("my")}
-          className={`transition-colors ${
-            language === "my" ? "text-[#1E45FB]" : "text-[#888888] hover:text-[#111111]"
+          className={`px-2.5 py-1 rounded-full transition-all min-h-[28px] ${
+            language === "my" ? "bg-white text-slate-950 shadow-2xs" : "text-slate-500 hover:text-slate-900"
           }`}
         >
           မြန်မာ
@@ -53,7 +52,7 @@ export default function LandingNavbar() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "border-b border-[#E5E5E5] bg-white/90 shadow-sm backdrop-blur-xl"
+          ? "border-b border-slate-200/80 bg-white/90 shadow-2xs backdrop-blur-xl"
           : "bg-white"
       }`}
     >
@@ -61,12 +60,12 @@ export default function LandingNavbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-extrabold text-[#111111]"
+          className="flex items-center gap-2.5 font-extrabold text-slate-950"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E45FB] text-white shadow-sm">
-            <UtensilsCrossed className="h-4 w-4" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
+            <UtensilsCrossed className="h-4.5 w-4.5" />
           </span>
-          <span className="tracking-tight">Menuu</span>
+          <span className="tracking-tight text-lg">Menuu</span>
         </Link>
 
         {/* Desktop nav */}
@@ -75,7 +74,7 @@ export default function LandingNavbar() {
             <Link
               key={href}
               href={href}
-              className="text-sm font-medium text-[#666666] transition-colors hover:text-[#111111]"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
             >
               {label}
             </Link>
@@ -89,13 +88,13 @@ export default function LandingNavbar() {
           <div className="flex items-center gap-2">
             <Link
               href="/auth/login"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-[#666666] transition-colors hover:text-[#111111]"
+              className="rounded-xl px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:text-slate-950 hover:bg-slate-100"
             >
               {t.nav.login}
             </Link>
             <Link
               href="/auth/sign-up"
-              className="group inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#1E45FB] px-4.5 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1737C9] hover:shadow-md active:translate-y-0"
+              className="group inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0"
             >
               {t.hero.createMenu}
               <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -104,14 +103,14 @@ export default function LandingNavbar() {
         </div>
 
         {/* Mobile toggle & Lang Switcher */}
-        <div className="flex items-center gap-4 md:hidden">
+        <div className="flex items-center gap-3 md:hidden">
           <LanguageSwitcher />
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close menu" : "Open menu"}
             aria-expanded={isOpen}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950 min-h-[40px] min-w-[40px]"
           >
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -120,30 +119,30 @@ export default function LandingNavbar() {
 
       {/* Mobile drawer */}
       {isOpen && (
-        <div className="border-t border-[#E5E5E5] bg-white px-4 py-4 md:hidden">
+        <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map(({ label, href }) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#111111]"
+                className="rounded-xl px-3.5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
               >
                 {label}
               </Link>
             ))}
-            <div className="mt-3 flex flex-col gap-2 border-t border-[#E5E5E5] pt-4">
+            <div className="mt-3 flex flex-col gap-2.5 border-t border-slate-100 pt-4">
               <Link
                 href="/auth/login"
                 onClick={() => setIsOpen(false)}
-                className="flex min-h-11 items-center justify-center rounded-xl border border-[#E5E5E5] text-sm font-semibold text-[#666666]"
+                className="flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 text-sm font-bold text-slate-800 hover:bg-slate-50"
               >
                 {t.nav.login}
               </Link>
               <Link
                 href="/auth/sign-up"
                 onClick={() => setIsOpen(false)}
-                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1E45FB] text-sm font-semibold text-white"
+                className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-500/20 active:scale-[0.99]"
               >
                 {t.nav.getStarted}
                 <ArrowRight className="h-4 w-4" />

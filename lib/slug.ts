@@ -46,8 +46,10 @@ export function buildCategoryMenuUrl(
   restaurantId?: string | null
 ): string {
   const catSlug = slugify(categoryNameOrId);
-  if (restaurantId) {
+  if (restaurantId && restaurantId !== "demo") {
     return `/category/${catSlug}?restaurantId=${encodeURIComponent(restaurantId)}`;
+  } else if (restaurantId === "demo") {
+    return `/category/${catSlug}?demo=true`;
   }
   return `/category/${catSlug}`;
 }
@@ -55,8 +57,10 @@ export function buildCategoryMenuUrl(
 export function buildMainMenuUrl(
   restaurantId?: string | null
 ): string {
-  if (restaurantId) {
+  if (restaurantId && restaurantId !== "demo") {
     return `/menu?restaurantId=${encodeURIComponent(restaurantId)}`;
+  } else if (restaurantId === "demo") {
+    return `/menu?demo=true`;
   }
   return `/menu`;
 }
