@@ -566,54 +566,36 @@ export default function CustomerMenu({
 
       {/* ====================================================
           4. SEARCH BAR (Positioned directly below category chips)
-          Rounded input, neutral gray icon (no lime)
+          Filters category cards
       ==================================================== */}
       <div className="mx-auto max-w-xl px-4 pt-4 pb-2 sm:px-5">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888888]"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes, drinks, ingredients..."
-              aria-label="Search menu"
-              className="h-11 w-full rounded-2xl border border-[#E5E5E5] bg-white pl-10 pr-9 text-sm font-medium text-[#111111] outline-none placeholder:text-[#888888] shadow-sm transition-all focus:border-[#111111]"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#888888] hover:text-[#111111]"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Layout switcher for search results */}
-          {isSearching && (
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888888]"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search categories or dishes..."
+            aria-label="Search categories"
+            className="h-11 w-full rounded-2xl border border-[#E5E5E5] bg-white pl-10 pr-9 text-sm font-medium text-[#111111] outline-none placeholder:text-[#888888] shadow-sm transition-all focus:border-[#111111]"
+          />
+          {searchQuery && (
             <button
               type="button"
-              onClick={() => setViewLayout((p) => (p === "list" ? "grid" : "list"))}
-              title="Switch Layout"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] shadow-sm active:scale-95 transition-all"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#888888] hover:text-[#111111]"
             >
-              {viewLayout === "list" ? (
-                <Grid2X2 className="h-4 w-4" />
-              ) : (
-                <List className="h-4 w-4" />
-              )}
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
       {/* ====================================================
-          5. CATEGORY BANNER CARDS ONLY (NO DISH LIST ON MAIN PAGE)
+          5. CATEGORY CARDS ONLY (NO DISH LISTS ON MAIN PAGE)
       ==================================================== */}
       <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-2 sm:px-5">
         {loading ? (
@@ -622,107 +604,91 @@ export default function CustomerMenu({
             <p className="text-xs font-medium text-[#737373]">Loading menu…</p>
           </div>
         ) : (
-          <>
-            {/* ------------------------------------------------
-                SEARCH RESULTS VIEW (If user types a query)
-            ------------------------------------------------ */}
-            {isSearching ? (
-              <section aria-label="Search results" className="space-y-3 pt-2">
-                <div className="flex items-center justify-between border-b border-[#E8E6E1] pb-2.5">
-                  <h2 className="text-sm font-bold text-[#111111]">
-                    Results ({searchResults.length})
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="text-xs text-[#737373] underline hover:text-[#111111]"
-                  >
-                    Clear
-                  </button>
-                </div>
+          <div className="space-y-4 pt-2">
+            {groupedSections.length === 0 ? (
+              <EmptyState
+                message="Menu is empty"
+                sub="Categories will appear once dishes are added."
+              />
+            ) : (() => {
+              const q = searchQuery.toLowerCase().trim();
+              const displayed = q
+                ? groupedSections.filter((section) => {
+                    const catMatches =
+                      section.name.toLowerCase().includes(q) ||
+                      (getCategoryLabel(section.name) || "").toLowerCase().includes(q);
+                    const dishMatches = section.items.some(
+                      (item) =>
+                        item.name.toLowerCase().includes(q) ||
+                        (item.name_mm && item.name_mm.toLowerCase().includes(q))
+                    );
+                    return catMatches || dishMatches;
+                  })
+                : groupedSections;
 
-                {searchResults.length === 0 ? (
-                  <EmptyState message="No dishes found" sub="Try searching for something else." />
-                ) : (
-                  <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
-                    {searchResults.map((item) => (
-                      <MenuItemCard
-                        key={item.id}
-                        item={item}
-                        isPro={isPro}
-                        layout={viewLayout}
-                        langMode={langMode}
-                        cartQuantity={cart[item.id]?.quantity || 0}
-                        onAddToCart={() => handleAddToCart(item)}
-                        onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
-                        onOpenDetail={() => setActiveModalItem(item)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            ) : (
-              /* ------------------------------------------------
-                 CATEGORY BANNER CARDS OVERVIEW (Navigates to Category Page)
-              ------------------------------------------------ */
-              <div className="space-y-4 pt-2">
-                {groupedSections.length === 0 ? (
-                  <EmptyState message="Menu is empty" sub="Categories will appear once dishes are added." />
-                ) : (
-                  <div className="grid grid-cols-1 gap-3.5">
-                    {groupedSections.map((section) => {
-                      const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId);
+              if (displayed.length === 0) {
+                return (
+                  <EmptyState
+                    message="No matching categories"
+                    sub="Try searching for another category or dish."
+                  />
+                );
+              }
 
-                      return (
-                        <Link
-                          key={section.name}
-                          href={catUrl}
-                          className="group relative block cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] transition-all active:scale-[0.99] hover:shadow-md"
-                        >
-                          {section.coverImage ? (
-                            <img
-                              src={getImageUrl(section.coverImage)}
-                              alt={section.name}
-                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
-                              <UtensilsCrossed className="h-8 w-8 text-neutral-500" />
-                            </div>
-                          )}
+              return (
+                <div className="grid grid-cols-1 gap-3.5">
+                  {displayed.map((section) => {
+                    const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId);
 
-                          {/* Neutral Legibility Scrim (No color tint, natural photography) */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
-
-                          {/* Overlaid Category Information */}
-                          <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 flex items-end justify-between">
-                            <div>
-                              <h2
-                                id={`cat-${section.name}`}
-                                className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm group-hover:text-[#CDF22B] transition-colors"
-                              >
-                                {getCategoryLabel(section.name)}
-                              </h2>
-                              <p className="text-xs text-white/80 font-medium mt-0.5">
-                                {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
-                              </p>
-                            </div>
-
-                            <span className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#CDF22B] group-hover:text-[#111111] transition-all shadow-xs">
-                              <ChevronRight className="h-4 w-4" />
-                            </span>
+                    return (
+                      <Link
+                        key={section.name}
+                        href={catUrl}
+                        className="group relative block cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] transition-all active:scale-[0.99] hover:shadow-md"
+                      >
+                        {section.coverImage ? (
+                          <img
+                            src={getImageUrl(section.coverImage)}
+                            alt={section.name}
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
+                            <UtensilsCrossed className="h-8 w-8 text-neutral-500" />
                           </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-            </div>
-          )}
-        </>
-      )}
-    </main>
+                        )}
+
+                        {/* Neutral Legibility Scrim (No color tint, natural photography) */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+                        {/* Overlaid Category Information */}
+                        <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 flex items-end justify-between">
+                          <div>
+                            <h2
+                              id={`cat-${section.name}`}
+                              className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm group-hover:text-[#CDF22B] transition-colors"
+                            >
+                              {getCategoryLabel(section.name)}
+                            </h2>
+                            <p className="text-xs text-white/80 font-medium mt-0.5">
+                              {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
+                            </p>
+                          </div>
+
+                          <span className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#CDF22B] group-hover:text-[#111111] transition-all shadow-xs">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </main>
 
       {/* ====================================================
           6. FLOATING ORDER BAR
