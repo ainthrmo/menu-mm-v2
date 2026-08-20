@@ -30,6 +30,9 @@ import {
   Sparkles,
   Tag,
   Eye as EyeIcon,
+  ChevronUp,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -50,17 +53,21 @@ const MENUU_FB_PAGE_URL =
 export interface AdminMenuItem {
   id: string;
   name: string;
+  name_mm?: string;
   category: string;
   price: number;
   is_available: boolean;
   image: string;
   description?: string;
+  description_mm?: string;
   is_popular?: boolean;
 }
 
 export interface Category {
   id: string;
   name: string;
+  name_mm?: string;
+  sort_order?: number;
 }
 
 type DashboardSection = "menu" | "qr";
@@ -131,16 +138,22 @@ export const AdminDashboard: React.FC = () => {
 
   // Dish Form State
   const [editingItem, setEditingItem] = useState<AdminMenuItem | null>(null);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemCategory, setNewItemCategory] = useState("");
+  const [newItemNameMm, setNewItemNameMm] = useState("");
+  const [newItemNameEn, setNewItemNameEn] = useState("");
+  const [selectedCategoryChoice, setSelectedCategoryChoice] = useState("");
+  const [newCategoryNameMm, setNewCategoryNameMm] = useState("");
+  const [newCategoryNameEn, setNewCategoryNameEn] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
-  const [newItemDescription, setNewItemDescription] = useState("");
+  const [newItemDescriptionMm, setNewItemDescriptionMm] = useState("");
+  const [newItemDescriptionEn, setNewItemDescriptionEn] = useState("");
   const [newItemIsPopular, setNewItemIsPopular] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Category Form State
-  const [newCategoryName, setNewCategoryName] = useState("");
+  // Category Management & Edit State
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryNameMm, setEditCategoryNameMm] = useState("");
+  const [editCategoryNameEn, setEditCategoryNameEn] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -249,6 +262,7 @@ export const AdminDashboard: React.FC = () => {
         .from("categories")
         .select("*")
         .eq("restaurant_id", activeRestaurantId)
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("name");
 
       if (catFetchError) {
@@ -261,7 +275,9 @@ export const AdminDashboard: React.FC = () => {
       } else if (catData) {
         setCategories(catData);
         if (catData.length > 0) {
-          setNewItemCategory(catData[0].name);
+          setSelectedCategoryChoice(catData[0].name);
+        } else {
+          setSelectedCategoryChoice("__NEW__");
         }
       }
 
@@ -533,10 +549,20 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenAddDishModal = () => {
     setEditingItem(null);
-    setNewItemName("");
-    if (categories.length > 0) setNewItemCategory(categories[0].name);
+    setNewItemNameMm("");
+    setNewItemNameEn("");
+    if (categories.length > 0) {
+      setSelectedCategoryChoice(categories[0].name);
+      setNewCategoryNameMm("");
+      setNewCategoryNameEn("");
+    } else {
+      setSelectedCategoryChoice("__NEW__");
+      setNewCategoryNameMm("");
+      setNewCategoryNameEn("");
+    }
     setNewItemPrice("");
-    setNewItemDescription("");
+    setNewItemDescriptionMm("");
+    setNewItemDescriptionEn("");
     setNewItemIsPopular(false);
     setImageFile(null);
     setImagePreview(null);
@@ -546,10 +572,21 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenEditDishModal = (item: AdminMenuItem) => {
     setEditingItem(item);
-    setNewItemName(item.name);
-    setNewItemCategory(item.category);
+    // Treat existing single name/description as Burmese value (Requirement 4)
+    const burmeseName = item.name_mm?.trim() || item.name || "";
+    const englishName = (item.name_mm && item.name !== item.name_mm) ? item.name : "";
+
+    const burmeseDesc = item.description_mm?.trim() || item.description || "";
+    const englishDesc = (item.description_mm && item.description !== item.description_mm) ? (item.description || "") : "";
+
+    setNewItemNameMm(burmeseName);
+    setNewItemNameEn(englishName);
+    setSelectedCategoryChoice(item.category);
+    setNewCategoryNameMm("");
+    setNewCategoryNameEn("");
     setNewItemPrice(item.price.toString());
-    setNewItemDescription(item.description || "");
+    setNewItemDescriptionMm(burmeseDesc);
+    setNewItemDescriptionEn(englishDesc);
     setNewItemIsPopular(Boolean(item.is_popular));
     setImageFile(null);
     setImagePreview(item.image);
@@ -619,48 +656,109 @@ export const AdminDashboard: React.FC = () => {
     setSubmitting(false);
   };
 
-  const handleAddCategory = async (e: React.FormEvent) => {
+  const handleStartEditCategory = (cat: Category) => {
+    setEditingCategoryId(cat.id);
+    setEditCategoryNameMm(cat.name_mm?.trim() || cat.name || "");
+    setEditCategoryNameEn(cat.name_mm && cat.name !== cat.name_mm ? cat.name : "");
+    setCategoryError(null);
+  };
+
+  const handleCancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setEditCategoryNameMm("");
+    setEditCategoryNameEn("");
+    setCategoryError(null);
+  };
+
+  const handleSaveEditCategory = async (e: React.FormEvent, cat: Category) => {
     e.preventDefault();
-    if (!newCategoryName.trim()) return;
+    if (!editCategoryNameMm.trim()) {
+      setCategoryError("Burmese Category Name is required.");
+      return;
+    }
+
+    // Case-insensitive uniqueness check against other categories
+    const isDuplicate = categories.some(
+      (c) =>
+        c.id !== cat.id &&
+        (c.name_mm || c.name).trim().toLowerCase() === editCategoryNameMm.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setCategoryError(`A category named "${editCategoryNameMm.trim()}" already exists.`);
+      return;
+    }
 
     setSubmitting(true);
     setCategoryError(null);
 
+    const updatedName = editCategoryNameEn.trim() || editCategoryNameMm.trim();
+    const updatedNameMm = editCategoryNameMm.trim();
+    const oldName = cat.name;
+
     const { data, error } = await supabase
       .from("categories")
-      .insert([
-        {
-          name: newCategoryName.trim(),
-          restaurant_id: restaurantId,
-        },
-      ])
+      .update({
+        name: updatedName,
+        name_mm: updatedNameMm,
+      })
+      .eq("id", cat.id)
       .select();
 
     if (error) {
-      console.error("CATEGORY INSERT ERROR:", error);
-      setCategoryError(error.message || "Failed to add category.");
-      toast.error("Failed to add category");
+      console.error("CATEGORY UPDATE ERROR:", error);
+      setCategoryError(error.message || "Failed to update category.");
+      toast.error("Failed to update category");
     } else if (data && data.length > 0) {
-      setCategories([...categories, data[0]]);
-      setNewCategoryName("");
-      toast.success(`Category "${data[0].name}" added`);
+      // If the English/primary category name changed, update all assigned dishes
+      if (oldName !== updatedName) {
+        await supabase
+          .from("menu_items")
+          .update({ category: updatedName })
+          .eq("restaurant_id", restaurantId)
+          .eq("category", oldName);
+
+        setMenuItems((prev) =>
+          prev.map((item) =>
+            item.category === oldName ? { ...item, category: updatedName } : item
+          )
+        );
+      }
+
+      setCategories((prev) =>
+        prev.map((c) => (c.id === cat.id ? { ...c, ...data[0] } : c))
+      );
+      setEditingCategoryId(null);
+      setEditCategoryNameMm("");
+      setEditCategoryNameEn("");
+      toast.success(`Category "${updatedNameMm}" updated`);
     }
     setSubmitting(false);
   };
 
-  const handleDeleteCategory = (id: string, name: string) => {
+  const handleDeleteCategory = (cat: Category) => {
+    const dishCount = menuItems.filter((i) => i.category === cat.name).length;
+    if (dishCount > 0) {
+      setCategoryError(
+        `Cannot delete "${cat.name_mm || cat.name}" because it contains ${dishCount} ${
+          dishCount === 1 ? "dish" : "dishes"
+        }. Please reassign or delete these dishes first.`
+      );
+      toast.error(`Cannot delete category with ${dishCount} assigned dishes`);
+      return;
+    }
+
     setConfirmDialog({
       open: true,
       title: "Delete Category?",
-      message: `Are you sure you want to delete category "${name}"? This action cannot be undone.`,
+      message: `Are you sure you want to delete category "${cat.name_mm || cat.name}"? This action cannot be undone.`,
       confirmLabel: "Delete Category",
       variant: "danger",
       onConfirm: async () => {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        const { error } = await supabase.from("categories").delete().eq("id", id);
+        const { error } = await supabase.from("categories").delete().eq("id", cat.id);
         if (!error) {
-          setCategories(categories.filter((c) => c.id !== id));
-          toast.success(`Category "${name}" deleted`);
+          setCategories(categories.filter((c) => c.id !== cat.id));
+          toast.success(`Category "${cat.name_mm || cat.name}" deleted`);
         } else {
           console.error("CATEGORY DELETE ERROR:", error);
           toast.error("Failed to delete category: " + error.message);
@@ -669,9 +767,47 @@ export const AdminDashboard: React.FC = () => {
     });
   };
 
+  const handleReorderCategory = async (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+    const newCats = [...categories];
+    const [movedCat] = newCats.splice(index, 1);
+    newCats.splice(targetIndex, 0, movedCat);
+
+    const updatedWithOrder = newCats.map((cat, idx) => ({
+      ...cat,
+      sort_order: idx,
+    }));
+
+    setCategories(updatedWithOrder);
+
+    // Persist sort_order updates to Supabase
+    try {
+      await Promise.all(
+        updatedWithOrder.map((c) =>
+          supabase.from("categories").update({ sort_order: c.sort_order }).eq("id", c.id)
+        )
+      );
+    } catch (err) {
+      console.warn("Failed to persist category order:", err);
+    }
+  };
+
   const handleSaveDish = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemName || !newItemPrice) return;
+    if (!newItemNameMm.trim()) {
+      setFormError("Burmese Dish Name is required.");
+      return;
+    }
+    if (!newItemDescriptionMm.trim()) {
+      setFormError("Burmese Dish Description is required.");
+      return;
+    }
+    if (!newItemPrice.trim() || isNaN(parseFloat(newItemPrice)) || parseFloat(newItemPrice) < 0) {
+      setFormError("Please enter a valid price.");
+      return;
+    }
 
     setFormError(null);
 
@@ -715,6 +851,56 @@ export const AdminDashboard: React.FC = () => {
     }
 
     setSubmitting(true);
+
+    let targetCategory = selectedCategoryChoice;
+
+    // If "Add new category" was chosen, create the category first
+    if (selectedCategoryChoice === "__NEW__") {
+      if (!newCategoryNameMm.trim()) {
+        setFormError("Burmese Category Name is required for the new category.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Case-insensitive uniqueness check against existing categories
+      const isDuplicate = categories.some(
+        (c) => (c.name_mm || c.name).trim().toLowerCase() === newCategoryNameMm.trim().toLowerCase()
+      );
+      if (isDuplicate) {
+        setFormError(
+          `A category named "${newCategoryNameMm.trim()}" already exists. Please select it from the dropdown or choose a different name.`
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      const createdCatName = newCategoryNameEn.trim() || newCategoryNameMm.trim();
+      const newCatPayload = {
+        name: createdCatName,
+        name_mm: newCategoryNameMm.trim(),
+        restaurant_id: restaurantId,
+        sort_order: categories.length,
+      };
+
+      const { data: newCatData, error: catError } = await supabase
+        .from("categories")
+        .insert([newCatPayload])
+        .select();
+
+      if (catError) {
+        console.error("CATEGORY CREATION IN DISH FORM ERROR:", catError);
+        setFormError("Failed to create category: " + catError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      if (newCatData && newCatData.length > 0) {
+        setCategories((prev) => [...prev, newCatData[0]]);
+        targetCategory = newCatData[0].name;
+        setSelectedCategoryChoice(targetCategory);
+      }
+    }
+
     let imageUrl = editingItem ? editingItem.image : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
 
     if (imageFile) {
@@ -739,12 +925,14 @@ export const AdminDashboard: React.FC = () => {
       if (publicUrlData?.publicUrl) imageUrl = publicUrlData.publicUrl;
     }
 
-    const dishPayload = {
-      name: newItemName,
-      category: newItemCategory,
+    const dishPayload: any = {
+      name: newItemNameEn.trim() || newItemNameMm.trim(),
+      name_mm: newItemNameMm.trim(),
+      category: targetCategory,
       price: parseFloat(newItemPrice),
       image: imageUrl,
-      description: isFreePlan ? null : (newItemDescription.trim() || null),
+      description: newItemDescriptionEn.trim() || newItemDescriptionMm.trim(),
+      description_mm: newItemDescriptionMm.trim(),
       is_popular: isFreePlan ? false : newItemIsPopular,
     };
 
@@ -761,7 +949,7 @@ export const AdminDashboard: React.FC = () => {
       } else if (data && data.length > 0) {
         setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data[0] : i)));
         setIsDishModalOpen(false);
-        toast.success(`Updated "${newItemName}"`);
+        toast.success(`Updated "${newItemNameMm.trim()}"`);
       }
     } else {
       const { data, error } = await supabase
@@ -781,7 +969,7 @@ export const AdminDashboard: React.FC = () => {
       } else if (data && data.length > 0) {
         setMenuItems([data[0], ...menuItems]);
         setIsDishModalOpen(false);
-        toast.success(`Added "${newItemName}" to menu`);
+        toast.success(`Added "${newItemNameMm.trim()}" to menu`);
       }
     }
 
@@ -826,7 +1014,14 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const filteredItems = menuItems.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      item.name.toLowerCase().includes(q) ||
+      (item.name_mm && item.name_mm.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.description_mm && item.description_mm.toLowerCase().includes(q)) ||
+      item.category.toLowerCase().includes(q);
     const matchesCategory = selectedCategoryFilter === "All" || item.category === selectedCategoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -1017,7 +1212,7 @@ export const AdminDashboard: React.FC = () => {
                           : "bg-[#F5F5F5] text-[#666666] hover:text-[#111111]"
                       }`}
                     >
-                      {cat.name}
+                      {cat.name_mm || cat.name}
                     </button>
                   ))}
                 </div>
@@ -1066,7 +1261,7 @@ export const AdminDashboard: React.FC = () => {
                       <div className="relative w-24 sm:w-28 shrink-0">
                         <img
                           src={getImageUrl(item.image)}
-                          alt={item.name}
+                          alt={item.name_mm || item.name}
                           className="w-full h-full min-h-[96px] object-cover bg-[#F5F5F5]"
                         />
                         {!item.is_available && (
@@ -1088,9 +1283,18 @@ export const AdminDashboard: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <h3 className="text-sm font-bold text-[#111111] truncate mt-0.5">{item.name}</h3>
-                          {item.description && (
-                            <p className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">{item.description}</p>
+                          <h3 className="text-sm font-bold text-[#111111] truncate mt-0.5">
+                            {item.name_mm || item.name}
+                          </h3>
+                          {item.name && item.name_mm && item.name !== item.name_mm && (
+                            <p className="text-[11px] text-[#888888] truncate font-medium">
+                              {item.name}
+                            </p>
+                          )}
+                          {(item.description_mm || item.description) && (
+                            <p className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">
+                              {item.description_mm || item.description}
+                            </p>
                           )}
                           <p className="text-sm font-bold text-[#1E45FB] mt-1">
                             {formatMMK(item.price)}
@@ -1563,69 +1767,215 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Categories Management Modal */}
+      {/* Categories Management Modal (Repurposed for Editing, Reordering, and Deleting) */}
       {isCategoryModalOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setIsCategoryModalOpen(false)}
+          onClick={() => {
+            setIsCategoryModalOpen(false);
+            setEditingCategoryId(null);
+            setCategoryError(null);
+          }}
         >
           <div
-            className="bg-white w-full max-w-md rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl"
+            className="bg-white w-full max-w-xl rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
-              <h2 className="text-base font-bold text-[#111111]">Manage Categories</h2>
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 shrink-0">
+              <div>
+                <h2 className="text-base font-bold text-[#111111]">Manage Categories</h2>
+                <p className="text-xs text-[#666666] mt-0.5">
+                  Edit names, reorder sequence, or delete unused categories.
+                </p>
+              </div>
               <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-[#F5F5F5]"
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setEditingCategoryId(null);
+                  setCategoryError(null);
+                }}
+                className="p-1.5 rounded-xl hover:bg-[#F5F5F5] shrink-0"
               >
                 <X className="w-4 h-4 text-[#666666]" />
               </button>
             </div>
 
             {categoryError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl font-medium">
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl font-medium shrink-0">
                 {categoryError}
               </div>
             )}
 
-            <form onSubmit={handleAddCategory} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="New Category Name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#1E45FB]"
-              />
-              <button
-                type="submit"
-                disabled={submitting}
-                className="bg-[#1E45FB] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#1737C9] transition-all shadow-xs"
-              >
-                Add
-              </button>
-            </form>
-
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {/* List of categories with edit, reorder, delete & dish count */}
+            <div className="space-y-2.5 overflow-y-auto flex-1 pr-1">
               {categories.length === 0 ? (
-                <div className="py-6 text-center bg-[#F8F8F8] border border-dashed border-[#E5E5E5] rounded-2xl space-y-1.5 px-4">
-                  <FolderPlus className="w-6 h-6 mx-auto text-[#888888]" />
-                  <p className="text-xs font-semibold text-[#111111]">No categories yet</p>
-                  <p className="text-[11px] text-[#666666]">Type a name above and click Add to create one.</p>
+                <div className="py-10 text-center bg-[#F8F8F8] border border-dashed border-[#E5E5E5] rounded-2xl space-y-2 px-4">
+                  <FolderPlus className="w-7 h-7 mx-auto text-[#888888]" />
+                  <p className="text-xs font-semibold text-[#111111]">No categories found</p>
+                  <p className="text-[11px] text-[#666666]">
+                    Categories will be created automatically when you add dishes in the Add Dish form.
+                  </p>
                 </div>
               ) : (
-                categories.map((cat) => (
-                  <div key={cat.id} className="flex items-center justify-between bg-white border border-[#E5E5E5] px-3.5 py-2.5 rounded-xl text-xs shadow-2xs">
-                    <span className="font-semibold text-[#111111]">{cat.name}</span>
-                    <button
-                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                      className="p-1 text-[#666666] hover:text-rose-600 transition-colors"
+                categories.map((cat, index) => {
+                  const dishCount = menuItems.filter((i) => i.category === cat.name).length;
+                  const isEditing = editingCategoryId === cat.id;
+
+                  if (isEditing) {
+                    return (
+                      <div
+                        key={cat.id}
+                        className="bg-[#FAFAFA] border-2 border-[#1E45FB] p-3.5 rounded-2xl space-y-3 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#1E45FB]">Editing Category</span>
+                          <span className="text-[10px] text-[#666666]">
+                            {dishCount} {dishCount === 1 ? "dish" : "dishes"} assigned
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="text-[11px] font-bold text-[#111111] flex items-center gap-1 mb-1">
+                              <span className="bg-[#111111] text-white text-[8px] font-black px-1 rounded">MM</span>
+                              <span>Name (မြန်မာ) *</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editCategoryNameMm}
+                              onChange={(e) => setEditCategoryNameMm(e.target.value)}
+                              className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1E45FB]"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-[#111111] flex items-center gap-1 mb-1">
+                              <span className="bg-neutral-200 text-neutral-800 text-[8px] font-black px-1 rounded">EN</span>
+                              <span>Name (English)</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={editCategoryNameEn}
+                              onChange={(e) => setEditCategoryNameEn(e.target.value)}
+                              className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1E45FB]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={handleCancelEditCategory}
+                            className="px-3 py-1.5 rounded-xl border border-[#E5E5E5] bg-white text-xs font-semibold text-[#666666] hover:bg-[#F5F5F5]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={submitting}
+                            onClick={(e) => handleSaveEditCategory(e, cat)}
+                            className="px-4 py-1.5 rounded-xl bg-[#1E45FB] text-white text-xs font-bold hover:bg-[#1737C9] flex items-center gap-1.5"
+                          >
+                            {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                            <span>Save Changes</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={cat.id}
+                      className="flex items-center justify-between bg-white border border-[#E5E5E5] p-3 rounded-2xl text-xs shadow-2xs hover:border-[#CCCCCC] transition-all gap-3"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))
+                      {/* Reorder Buttons */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => handleReorderCategory(index, "up")}
+                          className="p-1 rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                          title="Move Up"
+                          aria-label="Move Up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === categories.length - 1}
+                          onClick={() => handleReorderCategory(index, "down")}
+                          className="p-1 rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                          title="Move Down"
+                          aria-label="Move Down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Category Info */}
+                      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-[#111111] truncate text-[13px]">
+                          {cat.name_mm || cat.name}
+                        </span>
+                        {cat.name && cat.name_mm && cat.name !== cat.name_mm && (
+                          <span className="text-xs text-[#888888] font-medium truncate">
+                            ({cat.name})
+                          </span>
+                        )}
+                        <span className="rounded-full bg-[#F5F5F5] border border-[#E5E5E5] px-2 py-0.5 text-[10px] font-semibold text-[#666666]">
+                          {dishCount} {dishCount === 1 ? "dish" : "dishes"}
+                        </span>
+                      </div>
+
+                      {/* Actions: Edit & Delete */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditCategory(cat)}
+                          className="p-1.5 rounded-xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors flex items-center gap-1 text-[11px] font-semibold"
+                          title="Edit Category"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCategory(cat)}
+                          className={`p-1.5 rounded-xl border transition-colors flex items-center gap-1 text-[11px] font-semibold ${
+                            dishCount > 0
+                              ? "border-[#E5E5E5] text-[#AAAAAA] hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50/50"
+                              : "border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
+                          }`}
+                          title={
+                            dishCount > 0
+                              ? `Contains ${dishCount} dishes (must be 0 to delete)`
+                              : "Delete Category"
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
+            </div>
+
+            <div className="border-t border-[#E5E5E5] pt-3 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setEditingCategoryId(null);
+                  setCategoryError(null);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#111111] text-white text-xs font-bold hover:bg-black transition-all min-h-[38px]"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
@@ -1638,7 +1988,7 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setIsDishModalOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto"
+            className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 sticky top-0 bg-white z-10 -mt-6 -mx-6 px-6 pt-6">
@@ -1686,81 +2036,183 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">Dish Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder="e.g. Shan Kaut Swe"
-                  className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3.5">
+              {/* Dish Name: Side-by-Side (Burmese Required, English Optional) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">Category</label>
-                  <select
-                    value={newItemCategory}
-                    onChange={(e) => setNewItemCategory(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">Price (MMK)</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                      <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
+                      <span>Dish Name (မြန်မာ)</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-rose-500">Required</span>
+                  </div>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(e.target.value)}
-                    placeholder="e.g. 3500"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
+                    value={newItemNameMm}
+                    onChange={(e) => setNewItemNameMm(e.target.value)}
+                    placeholder="ဥပမာ - ရှမ်းခေါက်ဆွဲ"
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                      <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
+                      <span>Dish Name (English)</span>
+                    </label>
+                    <span className="text-[10px] text-[#888888]">Optional</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={newItemNameEn}
+                    onChange={(e) => setNewItemNameEn(e.target.value)}
+                    placeholder="e.g. Shan Noodles"
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
                   />
                 </div>
               </div>
 
-              {/* Dish Description (Pro Feature) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-[#111111]">
-                    Dish Description
-                  </label>
-                  {isFreePlan ? (
-                    <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> Pro Feature
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-[#666666]">Optional</span>
-                  )}
-                </div>
-                {isFreePlan ? (
-                  <div className="relative">
-                    <textarea
-                      disabled
-                      rows={2}
-                      placeholder="Upgrade to Pro to add dish descriptions for customers..."
-                      className="w-full bg-[#F5F5F5] border border-[#E5E5E5] text-[#888888] rounded-xl px-3.5 py-2.5 text-xs resize-none cursor-not-allowed"
+              {/* Category (Dropdown + Inline Creation) & Price */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-[#111111]">
+                        Category <span className="text-rose-500">*</span>
+                      </label>
+                      {selectedCategoryChoice === "__NEW__" && (
+                        <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded">
+                          New Category
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={selectedCategoryChoice}
+                      onChange={(e) => setSelectedCategoryChoice(e.target.value)}
+                      className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs font-medium"
+                    >
+                      <option value="__NEW__" className="font-bold text-[#1E45FB]">
+                        + Add New Category...
+                      </option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name_mm && cat.name !== cat.name_mm ? `${cat.name_mm} (${cat.name})` : (cat.name_mm || cat.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                      Price (MMK) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={newItemPrice}
+                      onChange={(e) => setNewItemPrice(e.target.value)}
+                      placeholder="e.g. 3500"
+                      className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
                     />
                   </div>
-                ) : (
-                  <textarea
-                    rows={2}
-                    value={newItemDescription}
-                    onChange={(e) => setNewItemDescription(e.target.value)}
-                    placeholder="e.g. Traditional fish broth with rice noodles, lemongrass, and fresh herbs."
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none"
-                  />
+                </div>
+
+                {/* Inline Category Creation Fields (Revealed when "+ Add New Category..." is selected) */}
+                {selectedCategoryChoice === "__NEW__" && (
+                  <div className="p-3.5 rounded-2xl border border-[#1E45FB]/30 bg-[#1E45FB]/5 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-[#1E45FB] flex items-center gap-1.5">
+                        <FolderPlus className="w-3.5 h-3.5" />
+                        <span>New Category Details</span>
+                      </p>
+                      <span className="text-[10px] text-[#666666]">
+                        Created and assigned automatically on save
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                            <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
+                            <span>Category (မြန်မာ)</span>
+                            <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-[10px] font-bold text-rose-500">Required</span>
+                        </div>
+                        <input
+                          type="text"
+                          required={selectedCategoryChoice === "__NEW__"}
+                          placeholder="ဥပမာ - ခေါက်ဆွဲများ"
+                          value={newCategoryNameMm}
+                          onChange={(e) => setNewCategoryNameMm(e.target.value)}
+                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                            <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
+                            <span>Category (English)</span>
+                          </label>
+                          <span className="text-[10px] text-[#888888]">Optional</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. Noodles"
+                          value={newCategoryNameEn}
+                          onChange={(e) => setNewCategoryNameEn(e.target.value)}
+                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Popular / Featured Item Toggle (Pro Feature) */}
+              {/* Dish Description: Side-by-Side (Burmese Required, English Optional, all plans) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                      <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
+                      <span>Description (မြန်မာ)</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-rose-500">Required</span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    required
+                    value={newItemDescriptionMm}
+                    onChange={(e) => setNewItemDescriptionMm(e.target.value)}
+                    placeholder="ဥပမာ - ကြက်သား၊ ငရုတ်ဆီ၊ ရှမ်းချဥ်တို့ဖြင့် တွဲဖက်ထားသော ရှမ်းရိုးရာခေါက်ဆွဲ"
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                      <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
+                      <span>Description (English)</span>
+                    </label>
+                    <span className="text-[10px] text-[#888888]">Optional</span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={newItemDescriptionEn}
+                    onChange={(e) => setNewItemDescriptionEn(e.target.value)}
+                    placeholder="e.g. Traditional sticky rice noodles with spiced chicken, chili oil and pickled mustard greens"
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Popular / Featured Item Toggle */}
               <div>
                 <div className="flex items-center justify-between p-3 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA]">
                   <div className="space-y-0.5 pr-2">

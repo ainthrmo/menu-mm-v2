@@ -31,6 +31,7 @@ import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan } from "@/lib/subscr
 interface Category {
   id: string;
   name: string;
+  name_mm?: string;
 }
 
 interface MenuItem {
@@ -85,7 +86,10 @@ function parseBilingualText(
   customMmText?: string | null
 ): { primary: string; secondary?: string } {
   if (!text && !customMmText) return { primary: "" };
-  if (customMmText && text) return { primary: text, secondary: customMmText };
+  if (customMmText && text) {
+    if (text.trim() === customMmText.trim()) return { primary: text.trim() };
+    return { primary: text.trim(), secondary: customMmText.trim() };
+  }
 
   const raw = (text || customMmText || "").trim();
   if (!raw) return { primary: "" };
@@ -184,7 +188,7 @@ export default function CustomerMenu() {
         ] = await Promise.all([
           getRestaurantSubscription(supabase, targetRestaurantId),
           supabase.from("store_profile").select("*").eq("restaurant_id", targetRestaurantId).maybeSingle(),
-          supabase.from("categories").select("*").eq("restaurant_id", targetRestaurantId).order("name"),
+          supabase.from("categories").select("*").eq("restaurant_id", targetRestaurantId).order("sort_order", { ascending: true, nullsFirst: false }).order("name"),
           supabase.from("menu_items").select("*").eq("restaurant_id", targetRestaurantId),
         ]);
 
@@ -299,9 +303,24 @@ export default function CustomerMenu() {
         i.name.toLowerCase().includes(q) ||
         (i.name_mm && i.name_mm.toLowerCase().includes(q)) ||
         (i.description && i.description.toLowerCase().includes(q)) ||
+        (i.description_mm && i.description_mm.toLowerCase().includes(q)) ||
         i.category.toLowerCase().includes(q)
     );
   }, [menuItems, searchQuery, isSearching]);
+
+  const getCategoryLabel = useCallback(
+    (catName: string) => {
+      const catObj = categories.find((c) => c.name === catName);
+      if (!catObj) return catName;
+      if (langMode === "mm") return catObj.name_mm || catObj.name;
+      if (langMode === "en") return catObj.name || catObj.name_mm;
+      if (catObj.name_mm && catObj.name && catObj.name !== catObj.name_mm) {
+        return `${catObj.name} (${catObj.name_mm})`;
+      }
+      return catObj.name_mm || catObj.name;
+    },
+    [categories, langMode]
+  );
 
   /* ----------------------------------------------------------
      SCROLL-SPY
@@ -515,7 +534,7 @@ export default function CustomerMenu() {
                       : "bg-white border border-[#E5E5E5] text-[#525252] hover:text-[#111111] hover:border-[#CCCCCC]"
                   }`}
                 >
-                  <span>{sec.name}</span>
+                  <span>{getCategoryLabel(sec.name)}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                       isActive ? "bg-black/15 text-[#111111]" : "bg-neutral-100 text-neutral-500"
@@ -668,7 +687,7 @@ export default function CustomerMenu() {
                               id={`cat-${section.name}`}
                               className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm"
                             >
-                              {section.name}
+                              {getCategoryLabel(section.name)}
                             </h2>
                             <p className="text-xs text-white/80 font-medium mt-0.5">
                               {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
@@ -909,8 +928,16 @@ function MenuItemCard({
     langMode === "mm" && parsedName.secondary
       ? parsedName.secondary
       : parsedName.primary;
-  const subName = langMode === "all" ? parsedName.secondary : null;
-  const displayDesc = item.description ? item.description.trim() : null;
+  const subName =
+    langMode === "all" && parsedName.secondary && parsedName.primary !== parsedName.secondary
+      ? parsedName.secondary
+      : null;
+
+  const parsedDesc = parseBilingualText(item.description, item.description_mm);
+  const displayDesc =
+    langMode === "mm" && parsedDesc.secondary
+      ? parsedDesc.secondary
+      : (parsedDesc.primary || parsedDesc.secondary || null);
 
   /* --- GRID Layout --- */
   if (layout === "grid") {
@@ -1104,6 +1131,20 @@ function DishDetailModal({
 }) {
   const [modalQty, setModalQty] = useState(1);
   const parsedName = parseBilingualText(item.name, item.name_mm);
+  const displayName =
+    langMode === "mm" && parsedName.secondary
+      ? parsedName.secondary
+      : parsedName.primary;
+  const subName =
+    langMode === "all" && parsedName.secondary && parsedName.primary !== parsedName.secondary
+      ? parsedName.secondary
+      : null;
+
+  const parsedDesc = parseBilingualText(item.description, item.description_mm);
+  const displayDesc =
+    langMode === "mm" && parsedDesc.secondary
+      ? parsedDesc.secondary
+      : (parsedDesc.primary || parsedDesc.secondary || null);
 
   return (
     <div
@@ -1142,10 +1183,10 @@ function DishDetailModal({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-[#111111] leading-tight">
-                {parsedName.primary}
+                {displayName}
               </h2>
-              {parsedName.secondary && (
-                <p className="text-xs text-[#737373] mt-0.5">{parsedName.secondary}</p>
+              {subName && (
+                <p className="text-xs text-[#737373] mt-0.5">{subName}</p>
               )}
             </div>
             <span className="text-base font-black shrink-0 text-[#111111]">
@@ -1157,9 +1198,9 @@ function DishDetailModal({
             {item.category}
           </div>
 
-          {item.description && (
+          {displayDesc && (
             <div className="rounded-xl border border-[#F0EEEA] bg-[#FAF9F6] p-3 text-sm text-[#525252] leading-relaxed">
-              {item.description}
+              {displayDesc}
             </div>
           )}
         </div>
