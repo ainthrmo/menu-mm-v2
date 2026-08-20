@@ -28,6 +28,8 @@ import {
   LogOut,
   Lock,
   Sparkles,
+  Tag,
+  Eye as EyeIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -35,6 +37,9 @@ import { getImageUrl } from "@/lib/image-url";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan, Subscription } from "@/lib/subscription";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
 
 const MENUU_VIBER_URL =
   process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "https://viber.click/placeholder-menuu-qr";
@@ -63,6 +68,7 @@ type DashboardSection = "menu" | "qr";
 export const AdminDashboard: React.FC = () => {
   const supabase = createClient();
   const router = useRouter();
+  const toast = useToast();
   const [activeSection, setActiveSection] = useState<DashboardSection>("menu");
   const [profileError, setProfileError] = useState(false);
   const [menuItems, setMenuItems] = useState<AdminMenuItem[]>([]);
@@ -98,7 +104,25 @@ export const AdminDashboard: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const qrRef = React.useRef<HTMLCanvasElement | null>(null);
 
+  // Confirm dialog state (replaces native confirm())
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: "danger" | "primary";
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    confirmLabel: "Delete",
+    variant: "danger",
+    onConfirm: () => {},
+  });
+
   const isFreePlan = storePlan.toLowerCase() === "free" || (plan?.id ? plan.id.toLowerCase() === "free" : false);
+
   
   // Restaurant Ownership & Error State
   const [restaurantId, setRestaurantId] = useState<string>("");
@@ -295,35 +319,167 @@ export const AdminDashboard: React.FC = () => {
   const handleDownloadQr = () => {
     const qrCanvas = qrRef.current;
     if (!qrCanvas) return;
-  
-    const padding = 80;
-    const logoSize = 110;
-    const textArea = 110;
+
+    // Target export width: 1200px for high-res print quality
+    const exportWidth = 1200;
+    const frameBorder = 28; // Brand blue outer frame (#1E45FB)
+    const outerRadius = 44;
+    const innerRadius = 32;
+    const innerPadding = 60;
+
+    // Vertical layout calculations
+    const headerHeight = 110;  // For restaurant name
+    const qrDrawSize = 680;
+    const captionHeight = 65;   // For "Scan for menu"
+    const footerAreaHeight = 95; // For "POWERED BY MENUU"
+
+    const exportHeight =
+      frameBorder * 2 + innerPadding * 2 + headerHeight + qrDrawSize + captionHeight + footerAreaHeight;
+
     const exportCanvas = document.createElement("canvas");
-  
-    exportCanvas.width = qrCanvas.width + padding * 2;
-    exportCanvas.height = qrCanvas.height + padding * 2 + textArea;
-  
+    exportCanvas.width = exportWidth;
+    exportCanvas.height = exportHeight;
+
     const ctx = exportCanvas.getContext("2d");
     if (!ctx) return;
-  
-    const currentCtx = ctx;
-    const currentQrCanvas = qrCanvas;
+    const context = ctx;
 
-    currentCtx.fillStyle = "#FFFFFF";
-    currentCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-    currentCtx.drawImage(currentQrCanvas, padding, padding);
+    // 1. Draw outer rounded rectangle filled with Brand Blue (#1E45FB)
+    context.fillStyle = "#1E45FB";
+    context.beginPath();
+    context.roundRect(0, 0, exportWidth, exportHeight, outerRadius);
+    context.fill();
 
-    function drawExportText() {
-      const centerX = exportCanvas.width / 2;
-      currentCtx.textAlign = "center";
-      currentCtx.fillStyle = "#111111";
-      currentCtx.font = "bold 32px Arial";
-      currentCtx.fillText(storeName, centerX, currentQrCanvas.height + padding + 55);
+    // 2. Draw inner white card area
+    const innerX = frameBorder;
+    const innerY = frameBorder;
+    const innerWidth = exportWidth - frameBorder * 2;
+    const innerHeight = exportHeight - frameBorder * 2;
 
-      currentCtx.fillStyle = "#666666";
-      currentCtx.font = "20px Arial";
-      currentCtx.fillText("Scan to view menu", centerX, currentQrCanvas.height + padding + 88);
+    context.fillStyle = "#FFFFFF";
+    context.beginPath();
+    context.roundRect(innerX, innerY, innerWidth, innerHeight, innerRadius);
+    context.fill();
+
+    // 3. Render Header: Restaurant Name (centered at top, dark text, clean sans-serif)
+    const centerX = exportWidth / 2;
+    const headerY = frameBorder + innerPadding + 45;
+
+    context.textAlign = "center";
+    context.fillStyle = "#111111";
+    context.font = "600 42px system-ui, -apple-system, sans-serif";
+    context.fillText(storeName, centerX, headerY);
+
+    // 4. Draw QR Code & Replace Corner Eyes flush with exact module coordinates
+    const qrX = (exportWidth - qrDrawSize) / 2;
+    const qrY = frameBorder + innerPadding + headerHeight;
+
+    // Detect exact module count and quiet zone from the source qrCanvas
+    const srcCtx = qrCanvas.getContext("2d");
+    let moduleCount = 29; // default fallback
+    let quietZoneModules = 4; // qrcode.react includeMargin uses 4 modules by default
+
+    if (srcCtx) {
+      const srcWidth = qrCanvas.width;
+      const imgData = srcCtx.getImageData(0, 0, srcWidth, srcWidth);
+      const data = imgData.data;
+
+      // Find first dark pixel along diagonal to measure quiet zone margin
+      let marginPixels = 0;
+      for (let i = 0; i < srcWidth; i++) {
+        const idx = (i * srcWidth + i) * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        if (r < 100 && g < 100 && b < 100) {
+          marginPixels = i;
+          break;
+        }
+      }
+
+      // Measure width of the first dark module bar (top-left eye outer border = 7 modules)
+      let eyePixels = 0;
+      for (let i = marginPixels; i < srcWidth; i++) {
+        const idx = (marginPixels * srcWidth + i) * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        if (r < 100 && g < 100 && b < 100) {
+          eyePixels++;
+        } else {
+          break;
+        }
+      }
+
+      if (eyePixels > 0) {
+        const modPx = eyePixels / 7;
+        quietZoneModules = Math.round(marginPixels / modPx);
+        moduleCount = Math.round(srcWidth / modPx);
+      }
+    }
+
+    // Calculate exact rendered positions inside drawn 680px QR canvas area
+    const totalModules = moduleCount;
+    const moduleDrawSize = qrDrawSize / totalModules;
+    const marginDrawOffset = quietZoneModules * moduleDrawSize;
+    const eyeDrawSize = 7 * moduleDrawSize;
+    const eyeRadius = eyeDrawSize * 0.22; // 22% squircle corner
+
+    // Draw base QR code onto export canvas
+    context.drawImage(qrCanvas, qrX, qrY, qrDrawSize, qrDrawSize);
+
+    // Exact top-left positions for 3 finder eyes (excluding quiet zone margin)
+    const eyePositions = [
+      { x: qrX + marginDrawOffset, y: qrY + marginDrawOffset }, // Top-Left
+      { x: qrX + qrDrawSize - marginDrawOffset - eyeDrawSize, y: qrY + marginDrawOffset }, // Top-Right
+      { x: qrX + marginDrawOffset, y: qrY + qrDrawSize - marginDrawOffset - eyeDrawSize }, // Bottom-Left
+    ];
+
+    eyePositions.forEach(({ x, y }) => {
+      // 1. Precise mask: Erase original 7x7 square finder pattern completely (flush bounding box)
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(x - 0.5, y - 0.5, eyeDrawSize + 1, eyeDrawSize + 1);
+
+      // 2. Outer Ring (Black #111111)
+      context.fillStyle = "#111111";
+      context.beginPath();
+      context.roundRect(x, y, eyeDrawSize, eyeDrawSize, eyeRadius);
+      context.fill();
+
+      // 3. Inner White Cutout (1 module thickness)
+      const ringThickness = moduleDrawSize;
+      const innerEyeX = x + ringThickness;
+      const innerEyeY = y + ringThickness;
+      const innerEyeSize = eyeDrawSize - ringThickness * 2;
+      const innerEyeRadius = innerEyeSize * 0.20;
+
+      context.fillStyle = "#FFFFFF";
+      context.beginPath();
+      context.roundRect(innerEyeX, innerEyeY, innerEyeSize, innerEyeSize, innerEyeRadius);
+      context.fill();
+
+      // 4. Inner Pupil (3x3 modules, Black #111111)
+      const pupilX = x + moduleDrawSize * 2;
+      const pupilY = y + moduleDrawSize * 2;
+      const pupilSize = moduleDrawSize * 3;
+      const pupilRadius = pupilSize * 0.25;
+
+      context.fillStyle = "#111111";
+      context.beginPath();
+      context.roundRect(pupilX, pupilY, pupilSize, pupilSize, pupilRadius);
+      context.fill();
+    });
+
+    function finishExport() {
+      // 6. Caption text: "Scan for menu" (centered below QR)
+      const captionY = qrY + qrDrawSize + 48;
+      context.textAlign = "center";
+      context.fillStyle = "#555555";
+      context.font = "500 28px system-ui, -apple-system, sans-serif";
+      context.fillText("Scan for menu", centerX, captionY);
+
+      // 7. Footer text: "POWERED BY MENUU" (centered at bottom)
+      const footerY = captionY + 58;
+      context.fillStyle = "#1E45FB";
+      context.font = "900 24px system-ui, -apple-system, sans-serif";
+      context.letterSpacing = "2px";
+      context.fillText("POWERED BY MENUU", centerX, footerY);
 
       const url = exportCanvas.toDataURL("image/png");
       const link = document.createElement("a");
@@ -332,33 +488,44 @@ export const AdminDashboard: React.FC = () => {
       link.click();
     }
 
+    // 8. Optional Logo Overlay in center of QR
     if (logoUrl) {
       const logo = new Image();
       logo.onload = () => {
-        const logoX = (exportCanvas.width - logoSize) / 2;
-        const logoY = padding + (currentQrCanvas.height - logoSize) / 2;
-        
-        currentCtx.fillStyle = "#FFFFFF";
-        currentCtx.beginPath();
-        currentCtx.roundRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20, 18);
-        currentCtx.fill();
+        const logoSize = 160;
+        const logoX = (exportWidth - logoSize) / 2;
+        const logoY = qrY + (qrDrawSize - logoSize) / 2;
 
-        currentCtx.save();
-        currentCtx.beginPath();
-        currentCtx.roundRect(logoX, logoY, logoSize, logoSize, 14);
-        currentCtx.clip();
-        currentCtx.drawImage(logo, logoX, logoY, logoSize, logoSize);
-        currentCtx.restore();
+        // White backing pad behind ring
+        context.fillStyle = "#FFFFFF";
+        context.beginPath();
+        context.roundRect(logoX - 14, logoY - 14, logoSize + 28, logoSize + 28, 26);
+        context.fill();
 
-        drawExportText();
+        // Brand Blue Accent Ring
+        context.strokeStyle = "#1E45FB";
+        context.lineWidth = 5;
+        context.beginPath();
+        context.roundRect(logoX - 10, logoY - 10, logoSize + 20, logoSize + 20, 22);
+        context.stroke();
+
+        // Logo image
+        context.save();
+        context.beginPath();
+        context.roundRect(logoX, logoY, logoSize, logoSize, 18);
+        context.clip();
+        context.drawImage(logo, logoX, logoY, logoSize, logoSize);
+        context.restore();
+
+        finishExport();
       };
       logo.onerror = () => {
-        drawExportText();
+        finishExport();
       };
       logo.crossOrigin = "anonymous";
       logo.src = getImageUrl(logoUrl);
     } else {
-      drawExportText();
+      finishExport();
     }
   };
 
@@ -405,13 +572,8 @@ export const AdminDashboard: React.FC = () => {
         .upload(fileName, logoFile, { cacheControl: "3600", upsert: true });
 
       if (uploadError) {
-        console.error("STORE LOGO UPLOAD ERROR:", {
-          message: uploadError?.message,
-          details: (uploadError as any)?.details,
-          hint: (uploadError as any)?.hint,
-          code: (uploadError as any)?.code,
-        });
-        alert("Logo upload failed: " + uploadError.message);
+        console.error("STORE LOGO UPLOAD ERROR:", uploadError);
+        toast.error("Logo upload failed: " + uploadError.message);
         setSubmitting(false);
         return;
       }
@@ -447,17 +609,12 @@ export const AdminDashboard: React.FC = () => {
     }
 
     if (error) {
-      console.error("STORE PROFILE UPDATE ERROR:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
-      alert("Failed to update store settings: " + error.message);
+      console.error("STORE PROFILE UPDATE ERROR:", error);
+      toast.error("Failed to update store settings: " + error.message);
     } else {
       setLogoUrl(updatedLogo);
       setIsSettingsOpen(false);
-      alert("Store Profile and Social Links updated successfully!");
+      toast.success("Store profile & social links updated!");
     }
     setSubmitting(false);
   };
@@ -480,35 +637,36 @@ export const AdminDashboard: React.FC = () => {
       .select();
 
     if (error) {
-      console.error("CATEGORY INSERT ERROR:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
+      console.error("CATEGORY INSERT ERROR:", error);
       setCategoryError(error.message || "Failed to add category.");
+      toast.error("Failed to add category");
     } else if (data && data.length > 0) {
       setCategories([...categories, data[0]]);
       setNewCategoryName("");
+      toast.success(`Category "${data[0].name}" added`);
     }
     setSubmitting(false);
   };
 
-  const handleDeleteCategory = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete category "${name}"?`)) return;
-
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (!error) {
-      setCategories(categories.filter((c) => c.id !== id));
-    } else {
-      console.error("CATEGORY DELETE ERROR:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
-      alert("Failed to delete category: " + error.message);
-    }
+  const handleDeleteCategory = (id: string, name: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Delete Category?",
+      message: `Are you sure you want to delete category "${name}"? This action cannot be undone.`,
+      confirmLabel: "Delete Category",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        const { error } = await supabase.from("categories").delete().eq("id", id);
+        if (!error) {
+          setCategories(categories.filter((c) => c.id !== id));
+          toast.success(`Category "${name}" deleted`);
+        } else {
+          console.error("CATEGORY DELETE ERROR:", error);
+          toast.error("Failed to delete category: " + error.message);
+        }
+      },
+    });
   };
 
   const handleSaveDish = async (e: React.FormEvent) => {
@@ -568,12 +726,7 @@ export const AdminDashboard: React.FC = () => {
         .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
 
       if (uploadError) {
-        console.error("DISH IMAGE UPLOAD ERROR:", {
-          message: uploadError?.message,
-          details: (uploadError as any)?.details,
-          hint: (uploadError as any)?.hint,
-          code: (uploadError as any)?.code,
-        });
+        console.error("DISH IMAGE UPLOAD ERROR:", uploadError);
         setFormError(`Image upload failed: ${uploadError.message}`);
         setSubmitting(false);
         return;
@@ -603,16 +756,12 @@ export const AdminDashboard: React.FC = () => {
         .select();
 
       if (error) {
-        console.error("MENU UPDATE ERROR:", {
-          message: error?.message,
-          details: error?.details,
-          hint: error?.hint,
-          code: error?.code,
-        });
+        console.error("MENU UPDATE ERROR:", error);
         setFormError(error.message || "Failed to update menu item.");
       } else if (data && data.length > 0) {
         setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data[0] : i)));
         setIsDishModalOpen(false);
+        toast.success(`Updated "${newItemName}"`);
       }
     } else {
       const { data, error } = await supabase
@@ -627,16 +776,12 @@ export const AdminDashboard: React.FC = () => {
         .select();
 
       if (error) {
-        console.error("MENU INSERT ERROR:", {
-          message: error?.message,
-          details: error?.details,
-          hint: error?.hint,
-          code: error?.code,
-        });
+        console.error("MENU INSERT ERROR:", error);
         setFormError(error.message || "Failed to insert menu item into database.");
       } else if (data && data.length > 0) {
         setMenuItems([data[0], ...menuItems]);
         setIsDishModalOpen(false);
+        toast.success(`Added "${newItemName}" to menu`);
       }
     }
 
@@ -650,32 +795,34 @@ export const AdminDashboard: React.FC = () => {
       .eq("id", id);
 
     if (error) {
-      console.error("MENU AVAILABILITY TOGGLE ERROR:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
-      alert("Failed to toggle availability: " + error.message);
+      console.error("MENU AVAILABILITY TOGGLE ERROR:", error);
+      toast.error("Failed to update status: " + error.message);
     } else {
       setMenuItems(menuItems.map((item) => item.id === id ? { ...item, is_available: !currentStatus } : item));
+      toast.info(`Dish is now ${!currentStatus ? "visible" : "hidden"}`);
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this dish?")) return;
-    const { error } = await supabase.from("menu_items").delete().eq("id", id);
-    if (error) {
-      console.error("MENU DELETE ERROR:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
-      alert("Failed to delete dish: " + error.message);
-    } else {
-      setMenuItems(menuItems.filter((i) => i.id !== id));
-    }
+  const handleDeleteItem = (id: string) => {
+    const targetItem = menuItems.find((i) => i.id === id);
+    setConfirmDialog({
+      open: true,
+      title: "Delete Dish?",
+      message: `Are you sure you want to delete "${targetItem?.name || "this dish"}"?`,
+      confirmLabel: "Delete Dish",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        const { error } = await supabase.from("menu_items").delete().eq("id", id);
+        if (error) {
+          console.error("MENU DELETE ERROR:", error);
+          toast.error("Failed to delete dish: " + error.message);
+        } else {
+          setMenuItems(menuItems.filter((i) => i.id !== id));
+          toast.success("Dish deleted");
+        }
+      },
+    });
   };
 
   const filteredItems = menuItems.filter((item) => {
@@ -783,40 +930,51 @@ export const AdminDashboard: React.FC = () => {
       <main className="flex-1 min-w-0 p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full pb-28 md:pb-8">
         {activeSection === "menu" ? (
           <>
-                <div className="flex items-center gap-2 mb-1">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#CDF22B] text-[#111111] border border-[#CDF22B]">
-          <CheckCircle2 className="w-3 h-3 text-[#111111]" /> Published Menu
-        </span>
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#1E45FB]/10 text-[#1E45FB] uppercase">
-          {storePlan} Plan
-        </span>
-      </div>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#CDF22B] text-[#111111] border border-[#CDF22B]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#111111]" /> Published Menu
+                </span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#1E45FB]/10 text-[#1E45FB] uppercase">
+                  {storePlan} Plan
+                </span>
+              </div>
+              <span className="text-xs text-[#666666] font-medium hidden sm:inline">
+                Limit: {menuItems.length} / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
+              </span>
+            </div>
           
-      {/* Total Menu Items, Active Categories */}
+            {/* Stat Cards with Icons */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs">
-                <p className="text-[11px] font-medium text-[#666666]">Total Menu Items</p>
-                <p className="text-xl font-bold text-[#111111] mt-1">{menuItems.length}</p>
+              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-medium text-[#666666]">Total Menu Items</p>
+                  <p className="text-xl font-bold text-[#111111] mt-1">{menuItems.length}</p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-[#F5F5F5] flex items-center justify-center text-[#666666]">
+                  <UtensilsCrossed className="w-4.5 h-4.5" />
+                </div>
               </div>
-              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs">
-                <p className="text-[11px] font-medium text-[#666666]">Active Categories</p>
-                <p className="text-xl font-bold text-[#111111] mt-1">{categories.length}</p>
+              <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-medium text-[#666666]">Active Categories</p>
+                  <p className="text-xl font-bold text-[#111111] mt-1">{categories.length}</p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-[#F5F5F5] flex items-center justify-center text-[#666666]">
+                  <Tag className="w-4.5 h-4.5" />
+                </div>
               </div>
-              <div className="col-span-2 sm:col-span-1 bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs">
-                <p className="text-[11px] font-medium text-[#666666]">Visible on Menu</p>
-                <p className="text-xl font-bold text-[#1E45FB] mt-1">{availableCount} <span className="text-xs font-normal text-[#666666]">items</span></p>
+              <div className="col-span-2 sm:col-span-1 bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-medium text-[#666666]">Visible on Menu</p>
+                  <p className="text-xl font-bold text-[#1E45FB] mt-1">{availableCount} <span className="text-xs font-normal text-[#666666]">items</span></p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-[#1E45FB]/10 flex items-center justify-center text-[#1E45FB]">
+                  <EyeIcon className="w-4.5 h-4.5" />
+                </div>
               </div>
             </div>
 
-            <div className="bg-white border border-[#E5E5E5] p-4 rounded-2xl shadow-xs">
-             <p className="text-[11px] font-medium text-[#666666]">Current Subscription</p>
-            <div className="flex items-center justify-between mt-1">
-            <p className="text-xl font-bold text-[#1E45FB] uppercase">{storePlan}</p>
-            <span className="text-xs text-[#666666]">
-            {menuItems.length} / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
-            </span>
-          </div>
-          </div>
             <div className="bg-white border border-[#E5E5E5] p-4 rounded-3xl space-y-3.5 shadow-xs">
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -827,7 +985,7 @@ export const AdminDashboard: React.FC = () => {
                       placeholder="Search dishes or drinks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#F5F5F5] border border-[#E5E5E5] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#111111] focus:outline-none focus:border-[#1E45FB]"
+                      className="w-full bg-[#F5F5F5] border border-[#E5E5E5] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#1E45FB]/30 focus:border-[#1E45FB] transition-all"
                     />
                   </div>
                   <button
@@ -1450,7 +1608,11 @@ export const AdminDashboard: React.FC = () => {
 
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {categories.length === 0 ? (
-                <p className="text-xs text-[#666666] text-center py-4">No categories yet. Add your first one above.</p>
+                <div className="py-6 text-center bg-[#F8F8F8] border border-dashed border-[#E5E5E5] rounded-2xl space-y-1.5 px-4">
+                  <FolderPlus className="w-6 h-6 mx-auto text-[#888888]" />
+                  <p className="text-xs font-semibold text-[#111111]">No categories yet</p>
+                  <p className="text-[11px] text-[#666666]">Type a name above and click Add to create one.</p>
+                </div>
               ) : (
                 categories.map((cat) => (
                   <div key={cat.id} className="flex items-center justify-between bg-white border border-[#E5E5E5] px-3.5 py-2.5 rounded-xl text-xs shadow-2xs">
@@ -1642,7 +1804,7 @@ export const AdminDashboard: React.FC = () => {
                 className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {editingItem ? "Update Changes" : "Save to Supabase"}
+                {editingItem ? "Update Changes" : "Save Dish"}
               </button>
             </form>
           </div>
@@ -1743,6 +1905,17 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Global Confirmation Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        variant={confirmDialog.variant}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 };

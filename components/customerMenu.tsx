@@ -961,7 +961,7 @@ export default function CustomerMenu() {
       <footer className="mx-auto max-w-xl border-t border-[#E8E6E1] px-4 pb-8 pt-5 text-center">
         <p className="text-[10px] font-semibold tracking-wider text-[#A3A3A3]">
           POWERED BY{" "}
-          <span style={{ color: "var(--theme)" }}>MEE NHUU</span>
+          <span style={{ color: "var(--theme)" }}>MENUU</span>
         </p>
       </footer>
     </div>
@@ -1129,10 +1129,10 @@ function MenuItemCard({
         )}
         {isPro && item.is_popular && (
           <span
-            className="absolute left-1.5 top-1.5 rounded px-1 py-0.5 text-[7px] font-black text-white leading-none"
+            className="absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-black text-white leading-none uppercase tracking-tight flex items-center gap-0.5 shadow-xs"
             style={{ backgroundColor: "var(--theme)" }}
           >
-            POP
+            ★ POPULAR
           </span>
         )}
       </div>
