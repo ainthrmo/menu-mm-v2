@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Loader2,
-  Facebook,
   Phone,
   Search,
   UtensilsCrossed,
@@ -12,12 +11,13 @@ import {
   Minus,
   Trash2,
   X,
-  Sparkles,
   Globe,
   Grid2X2,
   List,
   ChevronRight,
   ChevronLeft,
+  MapPin,
+  Wifi,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -53,13 +53,19 @@ interface StoreProfile {
   logo_url?: string | null;
   image?: string | null;
   description?: string | null;
+  address?: string | null;
+  location?: string | null;
+  city?: string | null;
   social_phone?: string | null;
   social_facebook?: string | null;
   social_instagram?: string | null;
   social_tiktok?: string | null;
   social_messenger?: string | null;
+  wifi_password?: string | null;
+  show_wifi?: boolean | null;
+  wifi_name?: string | null;
   theme_color?: string | null;
-  [key: string]: string | null | undefined;
+  [key: string]: any;
 }
 
 interface CartItem {
@@ -71,20 +77,7 @@ type ViewLayout = "grid" | "list";
 type LanguageMode = "all" | "en" | "mm";
 
 /* ===========================================================
-   HELPER: build CSS custom-property vars from theme_color
-   Descendants can use var(--theme) / var(--theme-light)
-=========================================================== */
-
-function buildThemeVars(themeColor?: string | null): React.CSSProperties {
-  const color = themeColor?.trim() || "#0B7A5F";
-  return {
-    "--theme": color,
-    "--theme-light": color + "1A",   // ~10 % opacity
-  } as React.CSSProperties;
-}
-
-/* ===========================================================
-   HELPER: bilingual text parsing  (PRO ONLY)
+   HELPER: bilingual text parsing (PRO & Standard fallback)
 =========================================================== */
 
 function parseBilingualText(
@@ -131,7 +124,6 @@ export default function CustomerMenu() {
 
   // Navigation & layout
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewLayout, setViewLayout] = useState<ViewLayout>("list");
   const [langMode, setLangMode] = useState<LanguageMode>("all");
   const [activeModalItem, setActiveModalItem] = useState<MenuItem | null>(null);
@@ -145,7 +137,7 @@ export default function CustomerMenu() {
     plan.id.toLowerCase() === "pro" || plan.id.toLowerCase() === "business";
 
   /* ----------------------------------------------------------
-     DATA FETCHING & MULTI-TENANT RESOLUTION  (unchanged logic)
+     DATA FETCHING & MULTI-TENANT RESOLUTION
   ---------------------------------------------------------- */
   useEffect(() => {
     const fetchData = async () => {
@@ -184,8 +176,6 @@ export default function CustomerMenu() {
           }
         }
 
-        // Fire all 4 independent data fetches in parallel — each is
-        // isolated by restaurant_id and does not depend on the others.
         const [
           { plan: currentPlan },
           { data: profileData },
@@ -203,7 +193,6 @@ export default function CustomerMenu() {
         if (profileData) {
           setStoreProfile(profileData);
         } else {
-          // Fallback: fetch restaurant name only if no store_profile row exists.
           const { data: restInfo } = await supabase
             .from("restaurants").select("name").eq("id", targetRestaurantId).maybeSingle();
           if (restInfo) setStoreProfile({ store_name: restInfo.name });
@@ -220,7 +209,7 @@ export default function CustomerMenu() {
   }, [supabase]);
 
   /* ----------------------------------------------------------
-     CART HANDLERS  (unchanged logic, just memoised)
+     CART HANDLERS
   ---------------------------------------------------------- */
   const persistCart = useCallback(
     (newCart: { [id: string]: CartItem }) => {
@@ -284,7 +273,7 @@ export default function CustomerMenu() {
   const isSearching = searchQuery.trim().length > 0;
 
   /* ----------------------------------------------------------
-     GROUPING  (unchanged logic)
+     GROUPING & CATEGORY COVER LOGIC
   ---------------------------------------------------------- */
   const groupedSections = useMemo(() => {
     const categoryNames = categories.map((c) => c.name);
@@ -302,12 +291,6 @@ export default function CustomerMenu() {
       .filter((s) => s.items.length > 0);
   }, [categories, menuItems]);
 
-  // PRO ONLY
-  const spotlightItems = useMemo(
-    () => (isPro ? menuItems.filter((i) => Boolean(i.is_popular)) : []),
-    [isPro, menuItems]
-  );
-
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = searchQuery.toLowerCase();
@@ -315,38 +298,39 @@ export default function CustomerMenu() {
       (i) =>
         i.name.toLowerCase().includes(q) ||
         (i.name_mm && i.name_mm.toLowerCase().includes(q)) ||
-        (isPro && i.description && i.description.toLowerCase().includes(q)) ||
+        (i.description && i.description.toLowerCase().includes(q)) ||
         i.category.toLowerCase().includes(q)
     );
-  }, [isPro, menuItems, searchQuery, isSearching]);
+  }, [menuItems, searchQuery, isSearching]);
 
   /* ----------------------------------------------------------
-     SCROLL-SPY  — updates activeCategory while user scrolls
+     SCROLL-SPY
   ---------------------------------------------------------- */
   useEffect(() => {
     if (isSearching || groupedSections.length === 0) return;
 
-    if (!activeCategory && groupedSections.length > 0)
-      setActiveCategory(groupedSections[0].name);
-
-    const OFFSET = 112; // header (~52) + tabs (~48) + gap (12)
+    const OFFSET = 140;
 
     const onScroll = () => {
       if (isScrollingProgrammatically.current) return;
-      let current = groupedSections[0]?.name ?? null;
+      let current: string | null = null;
       for (const sec of groupedSections) {
         const el = sectionRefs.current[sec.name];
-        if (el && el.getBoundingClientRect().top <= OFFSET) current = sec.name;
+        if (el && el.getBoundingClientRect().top <= OFFSET) {
+          current = sec.name;
+        }
       }
-      setActiveCategory(current);
+      if (current) {
+        setActiveCategory(current);
+      }
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [groupedSections, isSearching, activeCategory]);
+  }, [groupedSections, isSearching]);
 
   /* ----------------------------------------------------------
-     SCROLL-TO-SECTION  — called from tab clicks
+     SCROLL-TO-SECTION
   ---------------------------------------------------------- */
   const scrollToSection = useCallback(
     (name: string) => {
@@ -357,12 +341,11 @@ export default function CustomerMenu() {
       if (!el) return;
 
       isScrollingProgrammatically.current = true;
-      const OFFSET = 112;
+      const OFFSET = 130;
       const top = el.getBoundingClientRect().top + window.scrollY - OFFSET;
       window.scrollTo({ top, behavior: "smooth" });
       setTimeout(() => { isScrollingProgrammatically.current = false; }, 900);
 
-      // scroll the tab pill into view inside the tabs bar
       const pill = tabsRef.current?.querySelector(`[data-cat="${name}"]`) as HTMLElement | null;
       pill?.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
     },
@@ -370,222 +353,273 @@ export default function CustomerMenu() {
   );
 
   const restaurantName = storeProfile?.store_name || "Our Menu";
-  const themeVars = buildThemeVars(storeProfile?.theme_color);
+  const heroCoverImage =
+    storeProfile?.cover_url ||
+    storeProfile?.image ||
+    groupedSections[0]?.coverImage ||
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
+
+  // Location / Address formatting
+  const locationText =
+    storeProfile?.location ||
+    storeProfile?.address ||
+    storeProfile?.city ||
+    null;
+
+  const showWifi = Boolean(
+    storeProfile?.wifi_password?.trim() && storeProfile?.show_wifi !== false
+  );
+
+  const hasAnyInfo = Boolean(locationText || storeProfile?.social_phone || showWifi);
 
   /* ----------------------------------------------------------
      RENDER
   ---------------------------------------------------------- */
   return (
-    <div
-      className="min-h-screen bg-[#F8F7F4] text-[#171717] font-sans antialiased"
-      style={themeVars}
-    >
+    <div className="min-h-screen bg-[#F8F7F4] text-[#111111] font-sans antialiased selection:bg-[#CDF22B] selection:text-[#111111]">
       {/* ====================================================
-          HEADER — compact, sticky
+          1. HERO SECTION (Full-Bleed Cover Photo + Pill Language Switcher)
       ==================================================== */}
-      <header className="sticky top-0 z-40 border-b border-[#EAE8E3] bg-white/97 backdrop-blur-md">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-4 py-2.5 sm:px-5">
-          {/* Logo + name */}
-          <div className="flex items-center gap-2.5 min-w-0">
+      <section className="relative w-full h-52 sm:h-64 md:h-72 bg-neutral-900 overflow-hidden">
+        {/* Full-Bleed Restaurant Photo */}
+        <img
+          src={getImageUrl(heroCoverImage)}
+          alt={`${restaurantName} banner`}
+          className="h-full w-full object-cover object-center"
+        />
+
+        {/* Subtle Top-to-Bottom Shading */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+
+        {/* Language Switcher Button (Top-Right, Overlapping Hero, Neutral Background, NO Lime) */}
+        <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20">
+          <button
+            type="button"
+            onClick={() =>
+              setLangMode((p) => (p === "all" ? "en" : p === "en" ? "mm" : "all"))
+            }
+            className="flex items-center gap-1.5 rounded-full bg-black/65 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white border border-white/20 shadow-md hover:bg-black/80 active:scale-95 transition-all"
+            title="Switch Language"
+          >
+            <Globe className="h-3.5 w-3.5 text-neutral-300" />
+            <span className="uppercase tracking-wider text-[11px] font-bold">
+              {langMode === "all" ? "Dual (EN/MM)" : langMode === "en" ? "English" : "မြန်မာ"}
+            </span>
+          </button>
+        </div>
+      </section>
+
+      {/* ====================================================
+          2. RESTAURANT INFO CARD (Overlapping Bottom Edge of Hero)
+      ==================================================== */}
+      <section className="relative -mt-12 sm:-mt-16 mx-auto max-w-xl px-4 sm:px-5 z-20">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#EAE8E3] shadow-lg">
+          <div className="flex items-center gap-3.5">
+            {/* Logo if available */}
             {storeProfile?.logo_url ? (
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-[#E5E5E5] bg-white p-0.5 shadow-sm">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white p-0.5 shadow-sm">
                 <img
                   src={getImageUrl(storeProfile.logo_url)}
                   alt={`${restaurantName} logo`}
-                  className="h-full w-full object-cover rounded-lg"
+                  className="h-full w-full object-cover rounded-xl"
                 />
               </div>
             ) : (
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-                style={{ backgroundColor: "var(--theme)" }}
-              >
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-[#111111] text-lg font-black text-white shadow-sm">
                 {restaurantName.charAt(0).toUpperCase()}
               </div>
             )}
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="truncate text-[15px] font-bold leading-tight text-[#171717]">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-[#111111] tracking-tight truncate leading-tight">
                   {restaurantName}
                 </h1>
                 {isPro && (
-                  <span
-                    className="shrink-0 rounded px-1 py-px text-[8px] font-black uppercase tracking-wide"
-                    style={{ backgroundColor: "var(--theme-light)", color: "var(--theme)" }}
-                  >
-                    Pro
+                  <span className="shrink-0 rounded bg-neutral-100 border border-neutral-200 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-neutral-700">
+                    PRO
                   </span>
                 )}
               </div>
-              <p className="truncate text-[11px] leading-tight text-[#737373]">
-                {storeProfile?.description || "Digital Menu"}
-              </p>
+
+              {storeProfile?.description ? (
+                <p className="mt-0.5 text-xs text-[#737373] line-clamp-1 leading-normal font-medium">
+                  {storeProfile.description}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-[#737373] font-medium">
+                  Digital Menu
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Quick contact */}
-          {storeProfile?.social_phone ? (
-            <a
-              href={`tel:${storeProfile.social_phone}`}
-              aria-label="Call restaurant"
-              className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-[#E5E5E5] bg-[#F5F5F5] px-3 text-xs font-semibold text-[#525252] active:scale-95"
-            >
-              <Phone className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Call</span>
-            </a>
-          ) : storeProfile?.social_facebook ? (
-            <a
-              href={storeProfile.social_facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook page"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E5E5E5] bg-[#F5F5F5] text-[#525252]"
-            >
-              <Facebook className="h-4 w-4" />
-            </a>
-          ) : null}
+          {/* Compact Info Line: Only Show Actually Filled Fields (Location, Phone, Wifi) */}
+          {hasAnyInfo && (
+            <div className="mt-3.5 pt-3 border-t border-[#F0EEEA] flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#525252] font-medium">
+              {locationText && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-[#888888] shrink-0" />
+                  <span className="truncate max-w-[200px] sm:max-w-xs">{locationText}</span>
+                </div>
+              )}
+
+              {storeProfile?.social_phone && (
+                <a
+                  href={`tel:${storeProfile.social_phone}`}
+                  className="flex items-center gap-1.5 hover:text-[#111111] transition-colors"
+                >
+                  <Phone className="h-3.5 w-3.5 text-[#888888] shrink-0" />
+                  <span>{storeProfile.social_phone}</span>
+                </a>
+              )}
+
+              {showWifi && (
+                <div className="flex items-center gap-1.5">
+                  <Wifi className="h-3.5 w-3.5 text-[#888888] shrink-0" />
+                  <span>
+                    WiFi: <strong className="text-[#111111] font-bold">{storeProfile?.wifi_password}</strong>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </header>
+      </section>
 
       {/* ====================================================
-          SEARCH + PRO CONTROLS  (not sticky; scrolls away)
+          3. CATEGORY NAVIGATION (Horizontally scrollable pill-shaped chips)
+          Active chip: Lime (#CDF22B) background, dark text
+          Inactive chips: Neutral outline/ghost style
       ==================================================== */}
-      <div className="mx-auto max-w-xl px-4 pt-3 pb-1 sm:px-5">
+      {!loading && groupedSections.length > 0 && (
+        <nav
+          aria-label="Menu categories"
+          className="sticky top-0 z-30 bg-[#F8F7F4]/95 backdrop-blur-md pt-4 pb-2 border-b border-[#EAE8E3]"
+        >
+          <div
+            ref={tabsRef}
+            className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5"
+          >
+            {groupedSections.map((sec) => {
+              const isActive = sec.name === activeCategory;
+              return (
+                <button
+                  key={`chip-${sec.name}`}
+                  data-cat={sec.name}
+                  type="button"
+                  onClick={() => scrollToSection(sec.name)}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-[#CDF22B] text-[#111111] shadow-sm border border-[#CDF22B]"
+                      : "bg-white border border-[#E5E5E5] text-[#525252] hover:text-[#111111] hover:border-[#CCCCCC]"
+                  }`}
+                >
+                  <span>{sec.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isActive ? "bg-black/15 text-[#111111]" : "bg-neutral-100 text-neutral-500"
+                    }`}
+                  >
+                    {sec.items.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
+
+      {/* ====================================================
+          4. SEARCH BAR (Positioned directly below category chips)
+          Rounded input, neutral gray icon (no lime)
+      ==================================================== */}
+      <div className="mx-auto max-w-xl px-4 pt-4 pb-2 sm:px-5">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#999]"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888888]"
               aria-hidden="true"
             />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes..."
+              placeholder="Search dishes, drinks, ingredients..."
               aria-label="Search menu"
-              className="h-10 w-full rounded-xl border border-[#E5E5E5] bg-white pl-10 pr-8 text-sm font-medium text-[#171717] outline-none placeholder:text-[#999] shadow-sm transition-colors focus:border-[var(--theme)]"
+              className="h-11 w-full rounded-2xl border border-[#E5E5E5] bg-white pl-10 pr-9 text-sm font-medium text-[#111111] outline-none placeholder:text-[#888888] shadow-sm transition-all focus:border-[#111111]"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#999] hover:text-[#171717]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#888888] hover:text-[#111111]"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
 
-          {/* PRO ONLY: lang toggle + layout switcher */}
-          {isPro && (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() =>
-                  setLangMode((p) => (p === "all" ? "en" : p === "en" ? "mm" : "all"))
-                }
-                title="Toggle Language"
-                className="flex h-10 items-center gap-1 rounded-xl border border-[#E5E5E5] bg-white px-2.5 text-xs font-bold text-[#525252] shadow-sm active:scale-95"
-              >
-                <Globe className="h-3.5 w-3.5" style={{ color: "var(--theme)" }} />
-                <span className="text-[10px] uppercase">
-                  {langMode === "all" ? "Dual" : langMode === "en" ? "EN" : "MM"}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewLayout((p) => (p === "list" ? "grid" : "list"))}
-                title="Switch Layout"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E5E5] bg-white text-[#525252] shadow-sm active:scale-95"
-              >
-                {viewLayout === "list" ? (
-                  <Grid2X2 className="h-4 w-4" />
-                ) : (
-                  <List className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          )}
+          {/* Layout switcher (List vs Grid) */}
+          <button
+            type="button"
+            onClick={() => setViewLayout((p) => (p === "list" ? "grid" : "list"))}
+            title="Switch Layout"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] shadow-sm active:scale-95 transition-all"
+          >
+            {viewLayout === "list" ? (
+              <Grid2X2 className="h-4 w-4" />
+            ) : (
+              <List className="h-4 w-4" />
+            )}
+          </button>
         </div>
       </div>
 
       {/* ====================================================
-          STICKY CATEGORY TABS  (hidden while searching)
+          5. CATEGORY BANNER CARDS & DISH SECTIONS
       ==================================================== */}
-      {!isSearching && !loading && groupedSections.length > 1 && !isPro && (
-        <div className="sticky top-[52px] z-30 border-b border-[#EAE8E3] bg-white/97 backdrop-blur-md">
-          <div
-            ref={tabsRef}
-            className="scrollbar-hide mx-auto flex max-w-xl gap-1 overflow-x-auto px-4 py-2 sm:px-5"
-          >
-            {groupedSections.map((sec) => {
-              const isActive = sec.name === activeCategory;
-              return (
-                <button
-                  key={`tab-${sec.name}`}
-                  data-cat={sec.name}
-                  type="button"
-                  onClick={() => scrollToSection(sec.name)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all min-h-[32px] ${
-                    isActive
-                      ? "text-white shadow-sm"
-                      : "border border-[#E8E6E1] bg-transparent text-[#525252]"
-                  }`}
-                  style={isActive ? { backgroundColor: "var(--theme)" } : undefined}
-                >
-                  {sec.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================
-          MAIN CONTENT
-      ==================================================== */}
-      <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-3 sm:px-5">
+      <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-2 sm:px-5">
         {loading ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
-            <Loader2 className="h-7 w-7 animate-spin" style={{ color: "var(--theme)" }} />
+            <Loader2 className="h-7 w-7 animate-spin text-[#111111]" />
             <p className="text-xs font-medium text-[#737373]">Loading menu…</p>
           </div>
         ) : (
           <>
             {/* ------------------------------------------------
-                SEARCH RESULTS
+                SEARCH RESULTS VIEW
             ------------------------------------------------ */}
             {isSearching ? (
-              <section aria-label="Search results" className="space-y-3 pt-1">
+              <section aria-label="Search results" className="space-y-3 pt-2">
                 <div className="flex items-center justify-between border-b border-[#E8E6E1] pb-2.5">
-                  <h2 className="text-sm font-bold text-[#171717]">
+                  <h2 className="text-sm font-bold text-[#111111]">
                     Results ({searchResults.length})
                   </h2>
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="text-xs text-[#737373] underline"
+                    className="text-xs text-[#737373] underline hover:text-[#111111]"
                   >
                     Clear
                   </button>
                 </div>
 
                 {searchResults.length === 0 ? (
-                  <EmptyState message="No dishes found" sub="Try a different keyword." />
+                  <EmptyState message="No dishes found" sub="Try searching for something else." />
                 ) : (
-                  <div className={isPro && viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
+                  <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
                     {searchResults.map((item) => (
                       <MenuItemCard
                         key={item.id}
                         item={item}
                         isPro={isPro}
-                        layout={isPro ? viewLayout : "list"}
+                        layout={viewLayout}
                         langMode={langMode}
                         cartQuantity={cart[item.id]?.quantity || 0}
                         onAddToCart={() => handleAddToCart(item)}
                         onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
-                        onOpenDetail={isPro ? () => setActiveModalItem(item) : undefined}
+                        onOpenDetail={() => setActiveModalItem(item)}
                       />
                     ))}
                   </div>
@@ -593,207 +627,73 @@ export default function CustomerMenu() {
               </section>
             ) : (
               /* ------------------------------------------------
-                 SINGLE-PAGE SCROLLABLE MENU
+                 FULL MENU SECTIONS WITH CATEGORY BANNER CARDS
               ------------------------------------------------ */
-              <div className="space-y-7 pt-1">
-                {/* PRO ONLY: spotlight carousel */}
-                {isPro && !selectedCategory && spotlightItems.length > 0 && (
-                  <section aria-label="Popular dishes">
-                    <div className="mb-3 flex items-center gap-1.5">
-                      <Sparkles className="h-4 w-4" style={{ color: "var(--theme)" }} />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-[#171717]">
-                        Popular & Featured
-                      </h2>
-                      <span
-                        className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: "var(--theme-light)", color: "var(--theme)" }}
-                      >
-                        Recommended
-                      </span>
-                    </div>
-
-                    <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1 min-h-[260px]">
-                      {spotlightItems.map((item) => {
-                        const parsed = parseBilingualText(item.name, item.name_mm);
-                        return (
-                          <div
-                            key={`spotlight-${item.id}`}
-                            onClick={() => setActiveModalItem(item)}
-                            className="group relative flex w-44 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all active:scale-[0.98]"
-                          >
-                            <div className="relative aspect-square w-full overflow-hidden bg-[#ECE8E1]">
-                              {item.image ? (
-                                <img
-                                  src={getImageUrl(item.image)}
-                                  alt={item.name}
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <UtensilsCrossed className="h-6 w-6 text-[#A8A29E]" />
-                                </div>
-                              )}
-                              <span
-                                className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[8px] font-black text-white"
-                                style={{ backgroundColor: "var(--theme)" }}
-                              >
-                                POPULAR
-                              </span>
-                            </div>
-
-                            <div className="flex flex-1 flex-col justify-between p-2.5">
-                              <div>
-                                <h3 className="line-clamp-1 text-[13px] font-bold text-[#171717]">
-                                  {langMode === "mm" && parsed.secondary
-                                    ? parsed.secondary
-                                    : parsed.primary}
-                                </h3>
-                                {langMode === "all" && parsed.secondary && (
-                                  <p className="line-clamp-1 text-[10px] text-[#737373]">
-                                    {parsed.secondary}
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="mt-2 flex items-center justify-between border-t border-[#F5F4F0] pt-2">
-                                <span className="text-sm font-black" style={{ color: "var(--theme)" }}>
-                                  {formatMMK(item.price)}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAddToCart(item);
-                                  }}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full text-white active:scale-90"
-                                  style={{ backgroundColor: "var(--theme)" }}
-                                  aria-label="Add to cart"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                {/* All category sections */}
+              <div className="space-y-8 pt-2">
                 {groupedSections.length === 0 ? (
-                  <EmptyState message="Menu is empty" sub="Items will appear once added." />
-                ) : isPro ? (
-                  selectedCategory ? (
-                    <div className="space-y-4">
-                      <button
-                        onClick={() => setSelectedCategory(null)}
-                        className="flex items-center gap-1.5 text-sm font-bold text-[#525252] hover:text-[#171717] transition-colors mb-2"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        All Categories
-                      </button>
-                      {groupedSections
-                        .filter((s) => s.name === selectedCategory)
-                        .map((section) => (
-                          <section
-                            key={section.name}
-                            aria-labelledby={`cat-${section.name}`}
-                          >
-                            <div className="mb-3 flex items-baseline justify-between">
-                              <h2
-                                id={`cat-${section.name}`}
-                                className="text-[15px] font-bold tracking-tight text-[#171717]"
-                              >
-                                {section.name}
-                              </h2>
-                              <span className="text-[11px] font-medium text-[#A3A3A3]">
-                                {section.items.length} {section.items.length === 1 ? "item" : "items"}
-                              </span>
-                            </div>
-
-                            <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
-                              {section.items.map((item) => (
-                                <MenuItemCard
-                                  key={item.id}
-                                  item={item}
-                                  isPro={isPro}
-                                  layout={viewLayout}
-                                  langMode={langMode}
-                                  cartQuantity={cart[item.id]?.quantity || 0}
-                                  onAddToCart={() => handleAddToCart(item)}
-                                  onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
-                                  onOpenDetail={() => setActiveModalItem(item)}
-                                />
-                              ))}
-                            </div>
-                          </section>
-                        ))}
-                    </div>
-                  ) : (
-                    <section aria-label="Menu Categories">
-                      <h2 className="text-[15px] font-bold tracking-tight text-[#171717] mb-3">Categories</h2>
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                        {groupedSections.map((section) => (
-                          <div
-                            key={section.name}
-                            onClick={() => setSelectedCategory(section.name)}
-                            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col"
-                          >
-                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#ECE8E1]">
-                              {section.coverImage ? (
-                                <img
-                                  src={getImageUrl(section.coverImage)}
-                                  alt={section.name}
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <UtensilsCrossed className="h-6 w-6 text-[#A8A29E]" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3 text-center border-t border-[#F5F4F0] flex flex-col flex-1 justify-center">
-                              <h3 className="text-[13px] font-bold text-[#171717] line-clamp-1">{section.name}</h3>
-                              <p className="text-[10px] font-medium text-[#737373] mt-0.5">{section.items.length} items</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )
+                  <EmptyState message="Menu is empty" sub="Dishes will appear once added." />
                 ) : (
                   groupedSections.map((section) => (
                     <section
                       key={section.name}
                       aria-labelledby={`cat-${section.name}`}
                       ref={(el) => { sectionRefs.current[section.name] = el; }}
+                      className="space-y-3.5 scroll-mt-36"
                     >
-                      <div className="mb-3 flex items-baseline justify-between">
-                        <h2
-                          id={`cat-${section.name}`}
-                          className="text-[15px] font-bold tracking-tight text-[#171717]"
-                        >
-                          {section.name}
-                        </h2>
-                        <span className="text-[11px] font-medium text-[#A3A3A3]">
-                          {section.items.length} {section.items.length === 1 ? "item" : "items"}
-                        </span>
+                      {/* Category Banner Card: Large dish photo card with bold text & no color tint */}
+                      <div
+                        onClick={() => scrollToSection(section.name)}
+                        className="group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE8E3] bg-neutral-900 shadow-sm aspect-[16/6] sm:aspect-[16/5] flex items-end"
+                      >
+                        {section.coverImage ? (
+                          <img
+                            src={getImageUrl(section.coverImage)}
+                            alt={section.name}
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
+                            <UtensilsCrossed className="h-8 w-8 text-neutral-500" />
+                          </div>
+                        )}
+
+                        {/* Neutral Legibility Scrim (No color tint, natural photography) */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+                        {/* Overlaid Category Information */}
+                        <div className="relative z-10 p-4 sm:p-5 w-full flex items-end justify-between">
+                          <div>
+                            <h2
+                              id={`cat-${section.name}`}
+                              className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-sm"
+                            >
+                              {section.name}
+                            </h2>
+                            <p className="text-xs text-white/80 font-medium mt-0.5">
+                              {section.items.length} {section.items.length === 1 ? "dish" : "dishes"}
+                            </p>
+                          </div>
+
+                          <span className="h-7 w-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-white group-hover:text-[#111111] transition-colors">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="space-y-2.5">
+                      {/* Category Dishes List / Grid */}
+                      <div className={viewLayout === "grid" ? "grid grid-cols-2 gap-3" : "space-y-2.5"}>
                         {section.items.map((item) => (
                           <MenuItemCard
                             key={item.id}
                             item={item}
                             isPro={isPro}
-                            layout="list"
+                            layout={viewLayout}
                             langMode={langMode}
                             cartQuantity={cart[item.id]?.quantity || 0}
                             onAddToCart={() => handleAddToCart(item)}
                             onUpdateQuantity={(d) => handleUpdateQuantity(item.id, d)}
+                            onOpenDetail={() => setActiveModalItem(item)}
                           />
                         ))}
                       </div>
@@ -807,15 +707,16 @@ export default function CustomerMenu() {
       </main>
 
       {/* ====================================================
-          FLOATING ORDER BAR
+          6. FLOATING ORDER BAR
+          Lime (#CDF22B) active order badge
       ==================================================== */}
       {totalCartItems > 0 && (
         <div className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-lg">
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#171717]/95 p-3 shadow-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between rounded-2xl border border-[#333333] bg-[#111111]/95 p-3 shadow-2xl backdrop-blur-md text-white">
             <div className="flex items-center gap-2.5">
-              <div className="relative rounded-xl p-2 text-white" style={{ backgroundColor: "var(--theme)" }}>
+              <div className="relative rounded-xl p-2 bg-[#222222] text-white">
                 <ShoppingBag className="h-4 w-4" />
-                <span className="absolute -right-1.5 -top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-[#171717] bg-[#CDF22B] text-[9px] font-black text-[#171717]">
+                <span className="absolute -right-1.5 -top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-[#111111] bg-[#CDF22B] text-[9px] font-black text-[#111111]">
                   {totalCartItems}
                 </span>
               </div>
@@ -828,8 +729,7 @@ export default function CustomerMenu() {
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white active:scale-95 min-h-[36px]"
-              style={{ backgroundColor: "var(--theme)" }}
+              className="flex items-center gap-1.5 rounded-xl bg-[#CDF22B] text-[#111111] px-4 py-2 text-xs font-black shadow-sm active:scale-95 transition-all min-h-[36px]"
             >
               <span>View Cart</span>
               <ChevronRight className="h-3.5 w-3.5" />
@@ -839,9 +739,9 @@ export default function CustomerMenu() {
       )}
 
       {/* ====================================================
-          PRO ONLY: DISH DETAIL MODAL
+          7. DISH DETAIL MODAL
       ==================================================== */}
-      {isPro && activeModalItem && (
+      {activeModalItem && (
         <DishDetailModal
           item={activeModalItem}
           langMode={langMode}
@@ -853,7 +753,7 @@ export default function CustomerMenu() {
       )}
 
       {/* ====================================================
-          CART SHEET
+          8. CART SHEET (Neutral with Lime Accent)
       ==================================================== */}
       {isCartOpen && (
         <div
@@ -867,8 +767,8 @@ export default function CustomerMenu() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#EAE8E3] p-4 shrink-0">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4" style={{ color: "var(--theme)" }} />
-                <h2 className="text-sm font-bold text-[#171717]">Order Summary</h2>
+                <ShoppingBag className="h-4 w-4 text-[#111111]" />
+                <h2 className="text-sm font-bold text-[#111111]">Order Summary</h2>
                 <span className="rounded-full bg-[#F5F4F0] px-2 py-0.5 text-[10px] font-bold text-[#737373]">
                   {totalCartItems} {totalCartItems === 1 ? "item" : "items"}
                 </span>
@@ -876,7 +776,7 @@ export default function CustomerMenu() {
               <button
                 type="button"
                 onClick={() => setIsCartOpen(false)}
-                className="rounded-xl p-1.5 text-[#737373] hover:bg-[#F5F5F5]"
+                className="rounded-xl p-1.5 text-[#737373] hover:bg-[#F5F5F5] hover:text-[#111111]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -890,10 +790,10 @@ export default function CustomerMenu() {
                   className="flex items-center justify-between gap-2.5 rounded-xl border border-[#EAE8E3] bg-[#FAF9F6] p-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <h4 className="truncate text-[13px] font-bold text-[#171717]">{item.name}</h4>
+                    <h4 className="truncate text-[13px] font-bold text-[#111111]">{item.name}</h4>
                     <p className="mt-0.5 text-xs text-[#737373]">
                       {formatMMK(item.price)} × {quantity} ={" "}
-                      <span className="font-bold" style={{ color: "var(--theme)" }}>
+                      <span className="font-bold text-[#111111]">
                         {formatMMK(item.price * quantity)}
                       </span>
                     </p>
@@ -904,19 +804,18 @@ export default function CustomerMenu() {
                       <button
                         type="button"
                         onClick={() => handleUpdateQuantity(item.id, -1)}
-                        className="flex h-6 w-6 items-center justify-center rounded text-[#171717] hover:bg-[#F5F5F5] active:scale-90"
+                        className="flex h-6 w-6 items-center justify-center rounded text-[#111111] hover:bg-[#F5F5F5] active:scale-90"
                         aria-label="Decrease"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
-                      <span className="min-w-[16px] text-center text-xs font-bold text-[#171717]">
+                      <span className="min-w-[16px] text-center text-xs font-bold text-[#111111]">
                         {quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleUpdateQuantity(item.id, 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded text-white active:scale-90"
-                        style={{ backgroundColor: "var(--theme)" }}
+                        className="flex h-6 w-6 items-center justify-center rounded bg-[#111111] text-white active:scale-90"
                         aria-label="Increase"
                       >
                         <Plus className="h-3 w-3" />
@@ -939,14 +838,14 @@ export default function CustomerMenu() {
             <div className="border-t border-[#EAE8E3] p-4 shrink-0 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-[#525252]">Total</span>
-                <span className="text-lg font-black" style={{ color: "var(--theme)" }}>
+                <span className="text-lg font-black text-[#111111]">
                   {formatMMK(totalCartPrice)}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCartOpen(false)}
-                className="w-full rounded-xl bg-[#171717] py-3 text-sm font-bold text-white hover:bg-black transition-all min-h-[44px]"
+                className="w-full rounded-xl bg-[#111111] py-3 text-sm font-bold text-white hover:bg-black transition-all min-h-[44px]"
               >
                 Done
               </button>
@@ -956,12 +855,11 @@ export default function CustomerMenu() {
       )}
 
       {/* ====================================================
-          FOOTER
+          9. FOOTER
       ==================================================== */}
       <footer className="mx-auto max-w-xl border-t border-[#E8E6E1] px-4 pb-8 pt-5 text-center">
         <p className="text-[10px] font-semibold tracking-wider text-[#A3A3A3]">
-          POWERED BY{" "}
-          <span style={{ color: "var(--theme)" }}>MENUU</span>
+          POWERED BY <span className="text-[#111111] font-bold">MENUU</span>
         </p>
       </footer>
     </div>
@@ -976,14 +874,14 @@ function EmptyState({ message, sub }: { message: string; sub: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-[#D9D9D9] bg-white p-10 text-center">
       <UtensilsCrossed className="mx-auto h-7 w-7 text-[#A8A29E]" />
-      <p className="mt-2.5 text-sm font-semibold text-[#171717]">{message}</p>
+      <p className="mt-2.5 text-sm font-semibold text-[#111111]">{message}</p>
       <p className="mt-1 text-xs text-[#737373]">{sub}</p>
     </div>
   );
 }
 
 /* ===========================================================
-   MENU ITEM CARD  (Free & Pro adaptive)
+   MENU ITEM CARD (Free & Pro Adaptive, Neutral + Lime Accent)
 =========================================================== */
 
 function MenuItemCard({
@@ -1005,19 +903,17 @@ function MenuItemCard({
   onUpdateQuantity: (delta: number) => void;
   onOpenDetail?: () => void;
 }) {
-  const parsedName = isPro
-    ? parseBilingualText(item.name, item.name_mm)
-    : { primary: item.name };
+  const parsedName = parseBilingualText(item.name, item.name_mm);
 
   const displayName =
-    isPro && langMode === "mm" && parsedName.secondary
+    langMode === "mm" && parsedName.secondary
       ? parsedName.secondary
       : parsedName.primary;
-  const subName = isPro && langMode === "all" ? parsedName.secondary : null;
-  const displayDesc = isPro && item.description ? item.description.trim() : null;
+  const subName = langMode === "all" ? parsedName.secondary : null;
+  const displayDesc = item.description ? item.description.trim() : null;
 
-  /* --- GRID card (PRO only) --- */
-  if (isPro && layout === "grid") {
+  /* --- GRID Layout --- */
+  if (layout === "grid") {
     return (
       <article
         onClick={onOpenDetail}
@@ -1037,30 +933,27 @@ function MenuItemCard({
             </div>
           )}
           {item.is_popular && (
-            <span
-              className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[8px] font-black text-white"
-              style={{ backgroundColor: "var(--theme)" }}
-            >
+            <span className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[8px] font-black text-[#111111] bg-[#CDF22B] shadow-xs uppercase tracking-wider">
               POPULAR
             </span>
           )}
         </div>
 
-        <div className="p-3 space-y-0.5">
-          <h3 className="text-[13px] font-bold text-[#171717] line-clamp-1 leading-snug">
-            {displayName}
-          </h3>
-          {subName && <p className="text-[10px] text-[#737373] line-clamp-1">{subName}</p>}
-          {displayDesc && (
-            <p className="mt-1 line-clamp-2 text-[11px] text-[#666] leading-relaxed">
-              {displayDesc}
-            </p>
-          )}
-        </div>
+        <div className="p-3 space-y-0.5 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 className="text-[13px] font-bold text-[#111111] line-clamp-1 leading-snug">
+              {displayName}
+            </h3>
+            {subName && <p className="text-[10px] text-[#737373] line-clamp-1">{subName}</p>}
+            {displayDesc && (
+              <p className="mt-1 line-clamp-2 text-[11px] text-[#666666] leading-relaxed font-medium">
+                {displayDesc}
+              </p>
+            )}
+          </div>
 
-        <div className="px-3 pb-3">
-          <div className="flex items-center justify-between border-t border-[#F5F4F0] pt-2.5">
-            <p className="text-sm font-black" style={{ color: "var(--theme)" }}>
+          <div className="border-t border-[#F5F4F0] pt-2.5 mt-2 flex items-center justify-between">
+            <p className="text-sm font-black text-[#111111]">
               {formatMMK(item.price)}
             </p>
 
@@ -1072,19 +965,18 @@ function MenuItemCard({
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(-1)}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#171717] active:scale-90"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#111111] active:scale-90"
                   aria-label="Decrease"
                 >
                   <Minus className="h-3 w-3" />
                 </button>
-                <span className="min-w-[16px] text-center text-xs font-bold text-[#171717]">
+                <span className="min-w-[16px] text-center text-xs font-bold text-[#111111]">
                   {cartQuantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(1)}
-                  className="flex h-6 w-6 items-center justify-center rounded-full text-white active:scale-90"
-                  style={{ backgroundColor: "var(--theme)" }}
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#111111] text-white active:scale-90"
                   aria-label="Increase"
                 >
                   <Plus className="h-3 w-3" />
@@ -1094,8 +986,7 @@ function MenuItemCard({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onAddToCart(); }}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white active:scale-95 min-h-[28px]"
-                style={{ backgroundColor: "var(--theme)" }}
+                className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-[#111111] text-white hover:bg-black active:scale-95 min-h-[28px]"
               >
                 <Plus className="h-3 w-3" />
                 <span>Add</span>
@@ -1107,11 +998,11 @@ function MenuItemCard({
     );
   }
 
-  /* --- LIST card (default, mobile-first) --- */
+  /* --- LIST Layout (Default, Mobile-First) --- */
   return (
     <article
       onClick={onOpenDetail}
-      className={`group relative flex overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all active:scale-[0.99] ${isPro ? "cursor-pointer" : ""}`}
+      className="group relative flex overflow-hidden rounded-2xl border border-[#E8E6E1] bg-white shadow-sm transition-all active:scale-[0.99] cursor-pointer"
     >
       {/* Thumbnail */}
       <div className="relative h-[88px] w-[88px] sm:h-24 sm:w-24 shrink-0 overflow-hidden bg-[#ECE8E1]">
@@ -1127,12 +1018,9 @@ function MenuItemCard({
             <UtensilsCrossed className="h-5 w-5 text-[#B5B0A7]" />
           </div>
         )}
-        {isPro && item.is_popular && (
-          <span
-            className="absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-black text-white leading-none uppercase tracking-tight flex items-center gap-0.5 shadow-xs"
-            style={{ backgroundColor: "var(--theme)" }}
-          >
-            ★ POPULAR
+        {item.is_popular && (
+          <span className="absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-black text-[#111111] bg-[#CDF22B] leading-none uppercase tracking-tight shadow-xs">
+            POPULAR
           </span>
         )}
       </div>
@@ -1140,17 +1028,17 @@ function MenuItemCard({
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col justify-between p-3">
         <div>
-          <h3 className="text-[13px] font-bold leading-snug text-[#171717]">{displayName}</h3>
+          <h3 className="text-[13px] font-bold leading-snug text-[#111111]">{displayName}</h3>
           {subName && <p className="text-[10px] text-[#737373] mt-px">{subName}</p>}
           {displayDesc && (
-            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#666]">
+            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#666666] font-medium">
               {displayDesc}
             </p>
           )}
         </div>
 
         <div className="mt-2 flex items-center justify-between border-t border-[#F5F4F0] pt-2">
-          <p className="text-sm font-black" style={{ color: "var(--theme)" }}>
+          <p className="text-sm font-black text-[#111111]">
             {formatMMK(item.price)}
           </p>
 
@@ -1162,19 +1050,18 @@ function MenuItemCard({
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(-1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#171717] active:scale-90"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#111111] active:scale-90"
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-3 w-3" />
               </button>
-              <span className="min-w-[16px] text-center text-xs font-bold text-[#171717]">
+              <span className="min-w-[16px] text-center text-xs font-bold text-[#111111]">
                 {cartQuantity}
               </span>
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white active:scale-90"
-                style={{ backgroundColor: "var(--theme)" }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111111] text-white active:scale-90"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-3 w-3" />
@@ -1184,8 +1071,7 @@ function MenuItemCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onAddToCart(); }}
-              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold text-white active:scale-95 min-h-[32px]"
-              style={{ backgroundColor: "var(--theme)" }}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold bg-[#111111] text-white hover:bg-black active:scale-95 min-h-[32px]"
             >
               <Plus className="h-3 w-3" />
               <span>Add</span>
@@ -1198,7 +1084,7 @@ function MenuItemCard({
 }
 
 /* ===========================================================
-   PRO ONLY: DISH DETAIL MODAL
+   DISH DETAIL MODAL (Neutral + Lime Accent)
 =========================================================== */
 
 function DishDetailModal({
@@ -1240,15 +1126,12 @@ function DishDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
+            className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm hover:bg-black/80"
           >
             <X className="h-4 w-4" />
           </button>
           {item.is_popular && (
-            <span
-              className="absolute bottom-2.5 left-3 rounded px-2 py-0.5 text-[9px] font-black text-white"
-              style={{ backgroundColor: "var(--theme)" }}
-            >
+            <span className="absolute bottom-2.5 left-3 rounded px-2 py-0.5 text-[9px] font-black text-[#111111] bg-[#CDF22B] uppercase tracking-wider">
               POPULAR
             </span>
           )}
@@ -1258,22 +1141,19 @@ function DishDetailModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-[#171717] leading-tight">
+              <h2 className="text-base font-bold text-[#111111] leading-tight">
                 {parsedName.primary}
               </h2>
               {parsedName.secondary && (
                 <p className="text-xs text-[#737373] mt-0.5">{parsedName.secondary}</p>
               )}
             </div>
-            <span className="text-base font-black shrink-0" style={{ color: "var(--theme)" }}>
+            <span className="text-base font-black shrink-0 text-[#111111]">
               {formatMMK(item.price)}
             </span>
           </div>
 
-          <div
-            className="inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold text-[#525252]"
-            style={{ backgroundColor: "var(--theme-light)" }}
-          >
+          <div className="inline-block rounded-md bg-neutral-100 border border-neutral-200 px-2 py-0.5 text-[11px] font-bold text-[#525252]">
             {item.category}
           </div>
 
@@ -1294,18 +1174,17 @@ function DishDetailModal({
                   <button
                     type="button"
                     onClick={() => onUpdateQuantity(-1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[#171717] active:scale-90"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[#111111] active:scale-90"
                   >
                     <Minus className="h-3 w-3" />
                   </button>
-                  <span className="min-w-[18px] text-center text-sm font-bold text-[#171717]">
+                  <span className="min-w-[18px] text-center text-sm font-bold text-[#111111]">
                     {cartQuantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => onUpdateQuantity(1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-white active:scale-90"
-                    style={{ backgroundColor: "var(--theme)" }}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#111111] text-white active:scale-90"
                   >
                     <Plus className="h-3 w-3" />
                   </button>
@@ -1314,7 +1193,7 @@ function DishDetailModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl bg-[#171717] px-5 py-2.5 text-sm font-bold text-white hover:bg-black min-h-[40px]"
+                className="rounded-xl bg-[#111111] px-5 py-2.5 text-sm font-bold text-white hover:bg-black min-h-[40px]"
               >
                 Close
               </button>
@@ -1325,17 +1204,17 @@ function DishDetailModal({
                 <button
                   type="button"
                   onClick={() => setModalQty((q) => Math.max(1, q - 1))}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#171717] active:scale-90"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#111111] active:scale-90"
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="min-w-[24px] text-center text-sm font-bold text-[#171717]">
+                <span className="min-w-[24px] text-center text-sm font-bold text-[#111111]">
                   {modalQty}
                 </span>
                 <button
                   type="button"
                   onClick={() => setModalQty((q) => q + 1)}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#171717] active:scale-90"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#111111] active:scale-90"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>
@@ -1344,8 +1223,7 @@ function DishDetailModal({
               <button
                 type="button"
                 onClick={() => { onAddToCart(modalQty); onClose(); }}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold text-white transition-all min-h-[44px]"
-                style={{ backgroundColor: "var(--theme)" }}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold bg-[#111111] text-white hover:bg-black transition-all min-h-[44px]"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add {formatMMK(item.price * modalQty)}</span>
@@ -1357,3 +1235,4 @@ function DishDetailModal({
     </div>
   );
 }
+
