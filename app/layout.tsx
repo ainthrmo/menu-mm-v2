@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastProvider } from "@/components/ui/toast";
@@ -22,6 +22,12 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  display: "swap",
+  subsets: ["latin"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${geistSans.className} ${spaceGrotesk.variable} antialiased`}>
         <LanguageProvider>
           <ThemeProvider
             attribute="class"
