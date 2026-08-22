@@ -65,7 +65,7 @@ export default function LandingNavbar() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
             <UtensilsCrossed className="h-4.5 w-4.5" />
           </span>
-          <span className="tracking-tight text-lg">Menuu</span>
+          <span className="tracking-tight text-lg">Moss QR</span>
         </Link>
 
         {/* Desktop nav */}

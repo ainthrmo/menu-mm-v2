@@ -45,9 +45,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 
 const MENUU_VIBER_URL =
-  process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "https://viber.click/placeholder-menuu-qr";
+  process.env.NEXT_PUBLIC_MOSS_VIBER_URL ||
+  process.env.NEXT_PUBLIC_MENUU_VIBER_URL ||
+  "https://viber.click/placeholder-moss-qr";
 const MENUU_FB_PAGE_URL =
-  process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL || "https://facebook.com/placeholder-menuu-qr";
+  process.env.NEXT_PUBLIC_MOSS_FB_PAGE_URL ||
+  process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL ||
+  "https://facebook.com/placeholder-moss-qr";
 
 
 export interface AdminMenuItem {
@@ -347,7 +351,7 @@ export const AdminDashboard: React.FC = () => {
     const headerHeight = 110;  // For restaurant name
     const qrDrawSize = 680;
     const captionHeight = 65;   // For "Scan for menu"
-    const footerAreaHeight = 95; // For "POWERED BY MENUU"
+    const footerAreaHeight = 95; // For "POWERED BY MOSS QR"
 
     const exportHeight =
       frameBorder * 2 + innerPadding * 2 + headerHeight + qrDrawSize + captionHeight + footerAreaHeight;
@@ -490,12 +494,12 @@ export const AdminDashboard: React.FC = () => {
       context.font = "500 28px system-ui, -apple-system, sans-serif";
       context.fillText("Scan for menu", centerX, captionY);
 
-      // 7. Footer text: "POWERED BY MENUU" (centered at bottom)
+      // 7. Footer text: "POWERED BY MOSS QR" (centered at bottom)
       const footerY = captionY + 58;
       context.fillStyle = "#1E45FB";
       context.font = "900 24px system-ui, -apple-system, sans-serif";
       context.letterSpacing = "2px";
-      context.fillText("POWERED BY MENUU", centerX, footerY);
+      context.fillText("POWERED BY MOSS QR", centerX, footerY);
 
       const url = exportCanvas.toDataURL("image/png");
       const link = document.createElement("a");
@@ -1041,7 +1045,7 @@ export const AdminDashboard: React.FC = () => {
               )}
               <div>
                 <h1 className="text-sm font-bold text-[#111111] tracking-tight">{storeName}</h1>
-                <p className="text-[11px] text-[#666666] font-medium">Menuu Admin</p>
+                <p className="text-[11px] text-[#666666] font-medium">Moss QR Admin</p>
               </div>
             </div>
             <button
@@ -2302,7 +2306,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <h2 className="text-xl font-bold text-[#111111]">Upgrade to Pro</h2>
               <p className="text-sm text-[#666666] leading-relaxed">
-                Contact Menuu to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#111111]">{storeName}</span>.
+                Contact Moss QR to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#111111]">{storeName}</span>.
               </p>
             </div>
 
@@ -2330,7 +2334,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="text-sm font-bold text-[#111111] group-hover:text-[#7360F2] transition-colors">
                       Viber
                     </div>
-                    <div className="text-xs text-[#666666]">Contact Menuu on Viber</div>
+                    <div className="text-xs text-[#666666]">Contact Moss QR on Viber</div>
                   </div>
                 </div>
                 <ExternalLink className="w-4 h-4 text-[#888888] group-hover:text-[#7360F2] transition-colors" />

@@ -825,7 +825,7 @@ export default function CustomerMenu({
       ==================================================== */}
       <footer className="mx-auto max-w-xl border-t border-slate-200/80 px-4 pb-12 pt-6 text-center">
         <p className="text-[11px] font-semibold tracking-wider text-slate-400">
-          POWERED BY <span className="text-slate-900 font-bold">MENUU</span>
+          POWERED BY <span className="text-slate-900 font-bold">MOSS QR</span>
         </p>
       </footer>
     </div>

@@ -88,7 +88,7 @@ export async function signUpAction(formData: { email: string; password: string; 
       email: formData.email.trim(),
       password: formData.password,
       options: {
-        emailRedirectTo: `${formData.origin}/auth/confirm`,
+        emailRedirectTo: `${formData.origin}/auth/callback`,
       },
     });
 
@@ -120,7 +120,7 @@ export async function forgotPasswordAction(formData: { email: string; origin: st
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(formData.email.trim(), {
-      redirectTo: `${formData.origin}/auth/update-password`,
+      redirectTo: `${formData.origin}/auth/callback?next=/auth/update-password`,
     });
 
     if (error) {

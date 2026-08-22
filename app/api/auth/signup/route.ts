@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${origin || ""}/auth/confirm`,
+        emailRedirectTo: `${origin || ""}/auth/callback`,
       },
     });
 

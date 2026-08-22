@@ -97,7 +97,11 @@ export default function FAQ() {
           <p className="mt-1 text-sm text-[#666666]">
             {t.faq.reachUs}{" "}
             <Link
-              href={process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL || "#"}
+              href={
+                process.env.NEXT_PUBLIC_MOSS_FB_PAGE_URL ||
+                process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL ||
+                "#"
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-[#1E45FB] hover:underline"
@@ -106,7 +110,11 @@ export default function FAQ() {
             </Link>{" "}
             {t.faq.or}{" "}
             <Link
-              href={process.env.NEXT_PUBLIC_MENUU_VIBER_URL || "#"}
+              href={
+                process.env.NEXT_PUBLIC_MOSS_VIBER_URL ||
+                process.env.NEXT_PUBLIC_MENUU_VIBER_URL ||
+                "#"
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-[#1E45FB] hover:underline"

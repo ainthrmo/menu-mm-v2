@@ -17,6 +17,9 @@ export function createClient() {
   // Use custom global.fetch to route HTTP requests through the local Next.js rewrite proxy (/supabase-proxy)
   // for Myanmar ISP compatibility.
   return createBrowserClient(envUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'pkce',
+    },
     global: {
       fetch: (input, init) => {
         if (typeof window !== "undefined") {

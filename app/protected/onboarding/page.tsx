@@ -48,7 +48,7 @@ export default function OnboardingPage() {
     <main className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white border border-[#E5E5E5] rounded-2xl p-8 shadow-sm">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-[#111111]">Welcome to Menuu! 🚀</h1>
+          <h1 className="text-2xl font-bold text-[#111111]">Welcome to Moss QR! 🚀</h1>
           <p className="text-sm text-[#666666] mt-1">
             Let's set up your restaurant before creating your digital menu.
           </p>

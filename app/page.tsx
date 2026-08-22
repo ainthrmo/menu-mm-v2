@@ -34,8 +34,8 @@ export default function LandingPage() {
     {
       q: language === "my" ? "အင်တာနက်လိုင်း (MPT / Atom / Ooredoo) ဖြင့် အသုံးပြုနိုင်ပါသလား?" : "Does it load fast on Myanmar mobile data (MPT / Atom / Ooredoo)?",
       a: language === "my"
-        ? "ဟုတ်ကဲ့၊ အလွန်မြန်ဆန်စွာ အသုံးပြုနိုင်ပါသည်။ Menuu သည် ပေါ့ပါးသော နည်းပညာဖြင့် တည်ဆောက်ထားသောကြောင့် 3G/4G လိုင်းမကောင်းသည့် အခြေအနေတွင်ပင် ၁ စက္ကန့်အတွင်း မီနူးပွင့်စေပါသည်။"
-        : "Yes, Menuu is ultra-lightweight and optimized to open in under 1 second even on standard 3G/4G connections across Myanmar without lag."
+        ? "ဟုတ်ကဲ့၊ အလွန်မြန်ဆန်စွာ အသုံးပြုနိုင်ပါသည်။ Moss QR သည် ပေါ့ပါးသော နည်းပညာဖြင့် တည်ဆောက်ထားသောကြောင့် 3G/4G လိုင်းမကောင်းသည့် အခြေအနေတွင်ပင် ၁ စက္ကန့်အတွင်း မီနူးပွင့်စေပါသည်။"
+        : "Yes, Moss QR is ultra-lightweight and optimized to open in under 1 second even on standard 3G/4G connections across Myanmar without lag."
     },
     {
       q: language === "my" ? "ဧည့်သည်များ App ဒေါင်းလုဒ်လုပ်ရန် လိုအပ်ပါသလား?" : "Do customers need to download any application?",
@@ -176,7 +176,7 @@ export default function LandingPage() {
       <header className="relative z-20 flex justify-between items-center px-[6vw] py-5 border-b border-[#2C3527]/40 bg-[#0D120D]/80 backdrop-blur-md sticky top-0">
         <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-[#F2F0E6]">
           <span className="w-2.5 h-2.5 bg-[#C8FF4D] rounded-xs shadow-[0_0_8px_#C8FF4D]"></span>
-          <span className="display-font tracking-tight text-xl font-bold">Menuu</span>
+          <span className="display-font tracking-tight text-xl font-bold">Moss QR</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -530,10 +530,10 @@ export default function LandingPage() {
           <div className="md:col-span-10">
             <blockquote className="text-base sm:text-lg leading-relaxed text-[#F2F0E6] font-normal">
               {language === "my"
-                ? "“ကျွန်တော်တို့ Menuu ကို ဖန်တီးရတဲ့ ရည်ရွယ်ချက်ကတော့ လက်ရှိ menu tools အများစုဟာ မြန်မာစာအတွက် သီးသန့်ရည်ရွယ်မထားတာကြောင့် ဖြစ်ပါတယ်။ ဆိုင်ရှင်ကိုယ်တိုင် မိနစ်ပိုင်းအတွင်း အကူအညီမလိုဘဲ လွယ်လွယ်ကူကူ အသုံးပြုနိုင်စေချင်ပါတယ်။”"
-                : "“We built Menuu because most menu tools weren't made with Burmese in mind — the language always felt like an afterthought. We wanted restaurant owners to set one up themselves, in minutes, without needing anyone's help.”"}
+                ? "“ကျွန်တော်တို့ Moss QR ကို ဖန်တီးရတဲ့ ရည်ရွယ်ချက်ကတော့ လက်ရှိ menu tools အများစုဟာ မြန်မာစာအတွက် သီးသန့်ရည်ရွယ်မထားတာကြောင့် ဖြစ်ပါတယ်။ ဆိုင်ရှင်ကိုယ်တိုင် မိနစ်ပိုင်းအတွင်း အကူအညီမလိုဘဲ လွယ်လွယ်ကူကူ အသုံးပြုနိုင်စေချင်ပါတယ်။”"
+                : "“We built Moss QR because most menu tools weren't made with Burmese in mind — the language always felt like an afterthought. We wanted restaurant owners to set one up themselves, in minutes, without needing anyone's help.”"}
               <cite className="block mt-4 not-italic text-xs text-[#93A38C] font-mono">
-                — From the team building Menuu (Yangon)
+                — From the team building Moss QR (Yangon)
               </cite>
             </blockquote>
           </div>
@@ -744,7 +744,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="relative z-10 border-t border-[#2C3527] py-10 px-[6vw] flex justify-between items-center flex-wrap gap-4 text-xs text-[#66705F] max-w-7xl mx-auto">
         <div>
-          &copy; 2026 Menuu. All rights reserved. • Myanmar (Yangon)
+          &copy; 2026 Moss QR. All rights reserved. • Myanmar (Yangon)
         </div>
         <div className="flex items-center gap-6">
           <Link href="/menu" target="_blank" className="hover:text-[#F2F0E6] transition-colors">
