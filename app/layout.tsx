@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono, Noto_Sans_Myanmar } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastProvider } from "@/components/ui/toast";
@@ -16,16 +16,32 @@ export const metadata: Metadata = {
     "Moss QR helps restaurants create beautiful digital menus that customers can access instantly by scanning a QR code. Simple, fast, and modern.",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   display: "swap",
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   display: "swap",
   subsets: ["latin"],
+  weight: ["500", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+  subsets: ["latin"],
+  weight: ["500"],
+});
+
+const notoSansMyanmar = Noto_Sans_Myanmar({
+  variable: "--font-noto-sans-myanmar",
+  display: "swap",
+  subsets: ["myanmar"],
+  weight: ["400", "600"],
 });
 
 export default function RootLayout({
@@ -35,7 +51,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} ${spaceGrotesk.variable} antialiased`}>
+      <body
+        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansMyanmar.variable} font-sans antialiased`}
+      >
         <LanguageProvider>
           <ThemeProvider
             attribute="class"

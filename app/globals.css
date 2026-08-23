@@ -5,9 +5,14 @@
 @layer base {
   :root {
     /* =========================================
-       MOSS QR BRAND SYSTEM (Senior SaaS Standard)
-       Electric Indigo/Blue + High-Contrast Lime Accent
+       MOSS DESIGN TOKENS
        ========================================= */
+    --bg: #0F1410;
+    --lime: #C8F55A;
+    --text: #F4F6F1;
+    --muted: #8C948A;
+    --surface: #1A211C;
+    --border: #2A332C;
 
     /* Base */
     --background: #fafafa;

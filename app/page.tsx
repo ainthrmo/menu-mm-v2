@@ -3,22 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Check,
-  UtensilsCrossed,
-  Sparkles,
-  ArrowRight,
   ExternalLink,
   Menu,
   X,
   Phone,
   MessageSquare,
   ChevronDown,
-  QrCode,
-  ShieldCheck,
-  Zap,
 } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import MossField from "@/components/landing/MossField";
+import Hero from "@/components/landing/Hero";
 
 export default function LandingPage() {
   const { language, setLanguage, isMounted } = useLanguage();
@@ -58,73 +52,166 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="landing-root min-h-screen bg-[#0D120D] text-[#F2F0E6] font-sans selection:bg-[#C8FF4D] selection:text-[#0D120D] relative overflow-x-hidden">
+    <div className="landing-root min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans selection:bg-[var(--lime)] selection:text-[var(--bg)] relative overflow-x-hidden">
       <style jsx global>{`
         :root {
-          --bg: #0D120D;
-          --bg-soft: #12160F;
-          --card: #1A211A;
-          --card-line: #2C3527;
-          --lime: #C8FF4D;
-          --lime-text: #C8FF4D;
-          --ink: #F2F0E6;
-          --sage: #93A38C;
-          --muted: #66705F;
+          --bg: #0F1410;
+          --lime: #C8F55A;
+          --text: #F4F6F1;
+          --muted: #8C948A;
+          --surface: #1A211C;
+          --border: #2A332C;
+          --card: #1A211C;
+          --card-line: #2A332C;
         }
 
         .display-font {
-          font-family: var(--font-space-grotesk, 'Space Grotesk', system-ui, -apple-system, sans-serif);
+          font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, -apple-system, sans-serif;
         }
 
-        .bg-glyph {
+        .moss-field {
           position: fixed;
-          top: -25%;
-          right: -15%;
-          width: 60vw;
-          height: 60vw;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(200, 255, 77, 0.06), transparent 70%);
-          z-index: 0;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
           pointer-events: none;
+          z-index: 0;
         }
 
-        /* Phone Screen Animations */
-        .screen-qr-anim {
-          animation: qrOut 6s infinite;
+        .hero {
+          position: relative;
+          z-index: 2;
+          padding: 90px 56px 110px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 56px;
         }
-        .scan-line-anim {
-          animation: scanMove 6s infinite;
+
+        .hero-scene {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+          width: 100%;
+          max-width: 820px;
         }
-        .screen-menu-anim {
+
+        .qr-block {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          flex-shrink: 0;
+        }
+        .qr-code {
+          width: 104px;
+          height: 104px;
+          background: #F4F6F1;
+          border-radius: 10px;
+          padding: 10px;
+        }
+        .qr-caption {
+          font-size: 12.5px;
+          color: var(--muted);
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
+
+        .trail-wrap {
+          flex: 1;
+          min-width: 60px;
+          max-width: 140px;
+          height: 6px;
+        }
+        .trail {
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+        }
+
+        .content-panel {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          padding: 20px 20px 22px;
+          width: 290px;
+          flex-shrink: 0;
+        }
+        .panel-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          padding: 10px 0;
+          border-bottom: 1px dashed var(--border);
           opacity: 0;
-          animation: menuIn 6s infinite;
+          transform: translateY(4px);
+          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+        .panel-row.shown {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .panel-row:last-child {
+          border-bottom: none;
+        }
+        .item-name {
+          font-size: 13.5px;
+        }
+        .item-name .mm {
+          font-family: var(--font-noto-sans-myanmar), 'Noto Sans Myanmar', 'Pyidaungsu', sans-serif;
+          display: block;
+          color: var(--muted);
+          font-size: 12px;
+          margin-top: 2px;
+        }
+        .item-price {
+          font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+          font-size: 13px;
+          color: var(--lime);
+          white-space: nowrap;
+          margin-left: 12px;
         }
 
-        @keyframes qrOut {
-          0%, 28% { opacity: 1; }
-          38%, 100% { opacity: 0; }
+        .value-line {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 15px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--muted);
+          text-align: center;
         }
-        @keyframes scanMove {
-          0% { top: 20%; }
-          25% { top: 75%; }
-          30%, 100% { top: 20%; opacity: 0; }
-          26% { opacity: 1; }
+        .value-line b {
+          color: var(--text);
+          font-weight: 500;
         }
-        @keyframes menuIn {
-          0%, 32% { opacity: 0; transform: translateY(8px); }
-          42%, 92% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; }
+
+        @media (max-width: 640px) {
+          .hero {
+            padding: 48px 20px 56px;
+            gap: 36px;
+          }
+          .hero-scene {
+            flex-direction: column;
+            gap: 20px;
+          }
+          .trail-wrap {
+            width: 6px;
+            height: 60px;
+            max-width: none;
+          }
+          .content-panel {
+            width: 100%;
+            max-width: 300px;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .screen-qr-anim, .scan-line-anim, .screen-menu-anim {
-            animation: none;
-          }
-          .screen-menu-anim {
-            opacity: 1;
-          }
-          .screen-qr-anim {
-            display: none;
+          .panel-row {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            transition: none !important;
           }
         }
 
@@ -133,7 +220,7 @@ export default function LandingPage() {
           position: absolute;
           inset: -40%;
           background:
-            radial-gradient(circle at 30% 30%, rgba(200, 255, 77, 0.14), transparent 55%),
+            radial-gradient(circle at 30% 30%, rgba(200, 245, 90, 0.14), transparent 55%),
             radial-gradient(circle at 75% 70%, rgba(255, 255, 255, 0.06), transparent 50%);
           filter: blur(24px);
           animation: liquidMove 10s ease-in-out infinite alternate;
@@ -146,17 +233,8 @@ export default function LandingPage() {
         }
       `}</style>
 
-      {/* Ambient Radial Background */}
-      <div className="bg-glyph" />
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background: `
-            radial-gradient(ellipse 60% 50% at 85% 0%, rgba(200,255,77,0.07), transparent 60%),
-            radial-gradient(ellipse 50% 40% at 0% 100%, rgba(200,255,77,0.04), transparent 60%)
-          `,
-        }}
-      />
+      {/* Full-viewport fixed moss-pixel background */}
+      <MossField />
 
       {/* TOP ANNOUNCEMENT STRIP (Direct Contact) */}
       <div className="relative z-30 bg-[#12160F] border-b border-[#2C3527]/70 py-1.5 px-4 text-center text-xs text-[#93A38C] flex items-center justify-center gap-4">
@@ -305,163 +383,7 @@ export default function LandingPage() {
       )}
 
       {/* HERO SECTION */}
-      <section className="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-center px-[6vw] pt-10 sm:pt-14 pb-12 sm:pb-16 gap-10 lg:gap-8 max-w-7xl mx-auto">
-        <div className="lg:col-span-7">
-          <div className="inline-flex items-center gap-2 text-[#C8FF4D] text-xs uppercase tracking-widest font-semibold mb-5 sm:mb-6">
-            <span className="w-1.5 h-1.5 bg-[#C8FF4D] rounded-full shadow-[0_0_6px_#C8FF4D]"></span>
-            {language === "my" ? "မြန်မာနိုင်ငံရှိ စားသောက်ဆိုင်များအတွက် အထူးသင့်လျော်သည်" : "Built for Myanmar restaurants"}
-          </div>
-
-          <h1 className="display-font text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#F2F0E6] leading-[1.08] max-w-xl">
-            {language === "my" ? (
-              <>
-                မီနူးတစ်ခုတည်းဖြင့်။<br />
-                ဘာသာစကားနှစ်မျိုးလုံး။<br />
-                <span className="text-[#93A38C] font-normal text-[0.55em] block mt-3 font-sans">
-                  မြန်မာ + English Bilingual Menu
-                </span>
-              </>
-            ) : (
-              <>
-                One menu.<br />
-                Both languages.<br />
-                <span className="text-[#93A38C] font-normal text-[0.52em] block mt-3 font-sans">
-                  Burmese &amp; English
-                </span>
-              </>
-            )}
-          </h1>
-
-          <p className="text-[#93A38C] text-base sm:text-lg max-w-lg mt-5 mb-8 leading-relaxed">
-            {language === "my"
-              ? "ဧည့်သည်များ ဖုန်းဖြင့် Scan ဖတ်ရုံဖြင့် ချက်ချင်းကြည့်ရှုနိုင်သော Bilingual Menu။ App သီးသန့်ဒေါင်းလုဒ်လုပ်ရန် မလိုပါ။ စျေးနှုန်းများကို အချိန်မရွေး ဖုန်းထဲမှ အလွယ်တကူ ပြင်ဆင်နိုင်ပါသည်။"
-              : "Set up a bilingual menu your guests can scan and read instantly — Burmese first, English if you need it. No app for them to install."}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 sm:gap-5 mb-7">
-            <Link
-              href="/auth/sign-up"
-              className="bg-[#C8FF4D] text-[#0D120D] font-semibold px-6 py-3 rounded-xl text-base hover:brightness-105 transition-all shadow-[0_0_20px_rgba(200,255,77,0.25)] inline-flex items-center gap-2"
-            >
-              <span>{language === "my" ? "အခမဲ့ စတင်မည်" : "Start free"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/menu"
-              target="_blank"
-              className="text-sm text-[#F2F0E6] border border-[#2C3527] bg-[#12160F] px-4 py-2.5 rounded-xl hover:border-[#C8FF4D] transition-colors inline-flex items-center gap-2"
-            >
-              <span>{language === "my" ? "Live Demo စမ်းသပ်ကြည့်ရန်" : "Try Live Demo"}</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#C8FF4D]" />
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap gap-5 text-xs text-[#66705F]">
-            <span className="flex items-center gap-2">
-              <span className="text-[#C8FF4D] font-bold">✓</span>{" "}
-              {language === "my" ? "ဟင်းပွဲ ၂၀ အထိ အခမဲ့" : "Free for up to 20 dishes"}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="text-[#C8FF4D] font-bold">✓</span>{" "}
-              {language === "my" ? "Credit Card မလိုပါ" : "No card required to start"}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="text-[#C8FF4D] font-bold">✓</span>{" "}
-              {language === "my" ? "၁၀ မိနစ်အတွင်း အသင့်သုံးနိုင်သည်" : "Live in under 10 minutes"}
-            </span>
-          </div>
-        </div>
-
-        {/* PHONE MOCKUP WITH SCAN ANIMATION & SCANNABLE QR */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
-          <div className="w-[270px] xs:w-[280px] h-[560px] bg-[#0A0E09] border-[6px] border-[#1B231A] rounded-[38px] shadow-[0_30px_90px_rgba(0,0,0,0.65)] relative overflow-hidden">
-            <div className="absolute inset-0 bg-[#12160F]" />
-
-            {/* Step 1 in Phone: Real Scannable QR Code Screen */}
-            <div className="screen-qr-anim absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-              <div className="relative w-44 h-44 bg-[#F2F0E6] rounded-2xl p-3.5 shadow-2xl flex items-center justify-center">
-                <QRCodeSVG
-                  value="https://my-qr-saas.vercel.app/menu"
-                  size={148}
-                  level="M"
-                  fgColor="#0D120D"
-                  bgColor="#F2F0E6"
-                />
-                {/* Animated Scan Line */}
-                <div className="scan-line-anim absolute left-[8%] right-[8%] h-0.5 bg-[#C8FF4D] shadow-[0_0_12px_#C8FF4D]" />
-              </div>
-              <p className="text-[11px] text-[#93A38C] mt-4 font-mono tracking-wider">
-                SCAN WITH PHONE CAMERA
-              </p>
-            </div>
-
-            {/* Step 2 in Phone: Live Menu Screen with Real Burmese Dishes */}
-            <div className="screen-menu-anim absolute inset-0 p-5 pt-7 flex flex-col">
-              <div className="text-[10px] text-[#93A38C] uppercase tracking-wider mb-1">
-                Golden Spoon • Yangon
-              </div>
-              <div className="display-font font-bold text-lg text-[#F2F0E6] mb-4 flex items-center justify-between">
-                <span>{language === "my" ? "အစားအသောက် မီနူး" : "Full Menu"}</span>
-                <span className="text-[9px] bg-[#1A211A] text-[#C8FF4D] border border-[#2C3527] px-2 py-0.5 rounded-full">
-                  Table #04
-                </span>
-              </div>
-
-              <div className="space-y-2.5 overflow-y-auto pr-0.5">
-                {/* Dish 1 */}
-                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.015] backdrop-blur-md border border-white/[0.09] border-t-white/[0.18] rounded-xl p-3 shadow-lg">
-                  <div className="float-right text-[#C8FF4D] text-xs font-bold">
-                    4,500 K
-                  </div>
-                  <div className="text-sm font-semibold text-[#F2F0E6] flex items-center gap-1.5">
-                    <span>ခေါက်ဆွဲကြော်</span>
-                    <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded">⭐ POPULAR</span>
-                  </div>
-                  <div className="text-[10px] text-[#93A38C]">
-                    Fried Noodles (Chicken / Pork)
-                  </div>
-                </div>
-
-                {/* Dish 2 */}
-                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.015] backdrop-blur-md border border-white/[0.09] border-t-white/[0.18] rounded-xl p-3 shadow-lg">
-                  <div className="float-right text-[#C8FF4D] text-xs font-bold">
-                    3,000 K
-                  </div>
-                  <div className="text-sm font-semibold text-[#F2F0E6]">
-                    မုန့်ဟင်းခါး
-                  </div>
-                  <div className="text-[10px] text-[#93A38C]">
-                    Traditional Burmese Mohinga
-                  </div>
-                </div>
-
-                {/* Dish 3 */}
-                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.015] backdrop-blur-md border border-white/[0.09] border-t-white/[0.18] rounded-xl p-3 shadow-lg">
-                  <div className="float-right text-[#C8FF4D] text-xs font-bold">
-                    5,000 K
-                  </div>
-                  <div className="text-sm font-semibold text-[#F2F0E6]">
-                    ကြက်သားဟင်း
-                  </div>
-                  <div className="text-[10px] text-[#93A38C]">
-                    Burmese Chicken Curry
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-3 border-t border-[#2C3527] text-center">
-                <span className="text-[10px] text-[#93A38C] bg-[#1A211A] px-3 py-1 rounded-full border border-[#2C3527]">
-                  ✓ 100% Live Sync • No App Needed
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-[#93A38C] mt-3 font-mono">
-            {language === "my" ? "စမ်းသပ်ရန် ကင်မရာဖြင့် scan ဖတ်နိုင်ပါသည်" : "Scan to test live on your phone"}
-          </p>
-        </div>
-      </section>
+      <Hero />
 
       {/* REASSURANCE STRIP */}
       <div className="relative z-10 border-y border-[#2C3527] py-4 px-[6vw] flex justify-center gap-8 sm:gap-12 flex-wrap text-xs text-[#93A38C] bg-[#12160F]">
