@@ -62,9 +62,11 @@ export default function LandingNavbar() {
           href="/"
           className="flex items-center gap-2.5 font-extrabold text-slate-950"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
-            <UtensilsCrossed className="h-4.5 w-4.5" />
-          </span>
+          <img
+            src="/moss_logo.jpg"
+            alt="Moss QR logo"
+            className="h-8 w-8 rounded-lg object-cover"
+          />
           <span className="tracking-tight text-lg">Moss QR</span>
         </Link>
 

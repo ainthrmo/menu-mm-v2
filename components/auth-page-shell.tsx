@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UtensilsCrossed } from "lucide-react";
+import Image from "next/image";
 
 interface AuthPageShellProps {
   children: React.ReactNode;
@@ -14,9 +14,13 @@ export function AuthPageShell({ children, subtitle }: AuthPageShellProps) {
           href="/"
           className="inline-flex items-center gap-2.5 text-[#111111] hover:opacity-80 transition-opacity"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1E45FB] text-white shadow-sm">
-            <UtensilsCrossed className="h-5 w-5" aria-hidden="true" />
-          </span>
+          <Image
+            src="/moss_logo.jpg"
+            alt="Moss QR"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-xl object-cover"
+          />
           <span className="text-lg font-bold tracking-tight">Moss QR</span>
         </Link>
         {subtitle && (

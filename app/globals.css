@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================
+   MOSSQR Landing — Scoped dark tokens
+   Applied only within .landing-root (app/page.tsx root div).
+   These values MUST NOT be moved to :root — they override
+   shadcn tokens (--border, --card, --muted) and would break
+   app-route styles if declared globally.
+   Canonical lime: #C8F55A — do not use #C8FF4D anywhere.
+   ========================================================== */
+.landing-root {
+  --bg: #ffffff;
+  --lime: #3D7000;
+  --text: #0F1410;
+  --muted: #5A6458;
+  --surface: #F4F6F0;
+  --border: #D0D8CC;
+  --card: #F4F6F0;
+  --card-line: #D0D8CC;
+}
+
 @layer base {
   :root {
     /* =========================================

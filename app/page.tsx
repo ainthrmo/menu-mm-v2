@@ -1,687 +1,953 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  ExternalLink,
-  Menu,
-  X,
-  Phone,
-  MessageSquare,
-  ChevronDown,
-} from "lucide-react";
+import { ChevronDown, Menu, X, ArrowRight, Check, ExternalLink, Globe } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import MossField from "@/components/landing/MossField";
-import Hero from "@/components/landing/Hero";
+import { landingEn } from "@/lib/i18n/landing-en";
+import { landingMy } from "@/lib/i18n/landing-my";
 
 export default function LandingPage() {
-  const { language, setLanguage, isMounted } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [billingPeriod, setBillingPeriod] = useState<"yearly" | "6months">("yearly");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const vineFillRef = useRef<HTMLDivElement | null>(null);
+  const vineTrackRef = useRef<HTMLDivElement | null>(null);
+  const mobileProgressRef = useRef<HTMLDivElement | null>(null);
 
-  const contactPhone = "+959969069005";
-  const viberLink = "viber://chat?number=%2B959969069005";
-  const telLink = "tel:+959969069005";
+  const content = language === "my" ? landingMy : landingEn;
 
-  const faqs = [
-    {
-      q: language === "my" ? "အင်တာနက်လိုင်း (MPT / Atom / Ooredoo) ဖြင့် အသုံးပြုနိုင်ပါသလား?" : "Does it load fast on Myanmar mobile data (MPT / Atom / Ooredoo)?",
-      a: language === "my"
-        ? "ဟုတ်ကဲ့၊ အလွန်မြန်ဆန်စွာ အသုံးပြုနိုင်ပါသည်။ Moss QR သည် ပေါ့ပါးသော နည်းပညာဖြင့် တည်ဆောက်ထားသောကြောင့် 3G/4G လိုင်းမကောင်းသည့် အခြေအနေတွင်ပင် ၁ စက္ကန့်အတွင်း မီနူးပွင့်စေပါသည်။"
-        : "Yes, Moss QR is ultra-lightweight and optimized to open in under 1 second even on standard 3G/4G connections across Myanmar without lag."
-    },
-    {
-      q: language === "my" ? "ဧည့်သည်များ App ဒေါင်းလုဒ်လုပ်ရန် လိုအပ်ပါသလား?" : "Do customers need to download any application?",
-      a: language === "my"
-        ? "လုံးဝမလိုပါ။ ဧည့်သည်များသည် ၎င်းတို့၏ ဖုန်းကင်မရာ (သို့မဟုတ် Viber/Facebook QR scanner) ဖြင့် စကင်ဖတ်ရုံဖြင့် Safari/Chrome browser တွင် ချက်ချင်းကြည့်ရှုနိုင်ပါသည်။"
-        : "No app download or account creation required. Diners simply point their phone camera at the table QR code and the menu opens directly in Safari or Chrome."
-    },
-    {
-      q: language === "my" ? "ဟင်းပွဲစျေးနှုန်းများကို အချိန်မရွေး ပြောင်းလဲနိုင်ပါသလား?" : "Can I update dish prices and availability in real time?",
-      a: language === "my"
-        ? "ဟုတ်ကဲ့၊ ဆိုင်ရှင်သည် မိမိဖုန်းထဲမှ ၅ စက္ကန့်အတွင်း စျေးနှုန်းပြင်ဆင်ခြင်း သို့မဟုတ် ကုန်သွားသော ဟင်းပွဲများကို ခေတ္တပိတ်ထားခြင်း ပြုလုပ်နိုင်ပါသည်။ စားပွဲတင် QR ကို ပြန်လည် Print ထုတ်ရန် မလိုပါ။"
-        : "Yes! Update prices or mark dishes as sold-out from your phone in 5 seconds. The permanent table QR code updates automatically without reprinting."
-    },
-    {
-      q: language === "my" ? "KBZPay / WavePay ဖြင့် ပေးချေနိုင်ပါသလား?" : "How can I pay for the Pro plan? (KBZPay / WavePay)",
-      a: language === "my"
-        ? "ဟုတ်ကဲ့၊ KBZPay, WavePay, AYA Pay နှင့် ဘဏ်အကောင့်လွှဲပြောင်းမှုများဖြင့် လွယ်ကူစွာ ပေးချေနိုင်ပါသည်။ ဖုန်းနံပါတ် +959969069005 (Viber) သို့ တိုက်ရိုက်ဆက်သွယ်၍ အလွယ်တကူ စတင်နိုင်ပါသည်။"
-        : "We accept all local Myanmar payment methods including KBZPay, WavePay, AYA Pay, and bank transfers. You can contact +959969069005 anytime via Viber."
-    },
-  ];
+  useEffect(() => {
+    const sizeTrack = () => {
+      if (vineTrackRef.current) {
+        vineTrackRef.current.style.height = `${document.body.scrollHeight}px`;
+      }
+    };
+
+    const onScroll = () => {
+      const scrollTop = window.scrollY;
+      const docH = document.body.scrollHeight - window.innerHeight;
+      const pct = docH > 0 ? Math.min(100, (scrollTop / docH) * 100) : 0;
+      if (vineFillRef.current) {
+        vineFillRef.current.style.height = `${pct}%`;
+      }
+      if (mobileProgressRef.current) {
+        mobileProgressRef.current.style.width = `${pct}%`;
+      }
+    };
+
+    sizeTrack();
+    onScroll();
+
+    window.addEventListener("resize", sizeTrack);
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Light up nodes as sections are reached
+    const sections = document.querySelectorAll<HTMLElement>("section, header#s0");
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const node = e.target.querySelector<HTMLElement>(".vine-node");
+            if (node) node.classList.add("lit");
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    sections.forEach((s) => obs.observe(s));
+
+    return () => {
+      window.removeEventListener("resize", sizeTrack);
+      window.removeEventListener("scroll", onScroll);
+      obs.disconnect();
+    };
+  }, []);
+
+  const toggleFaq = (index: number) => {
+    setOpenFaq((prev) => (prev === index ? null : index));
+  };
 
   return (
-    <div className="landing-root min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans selection:bg-[var(--lime)] selection:text-[var(--bg)] relative overflow-x-hidden">
+    <div className="landing-editorial-root min-h-screen bg-[var(--stone)] text-[var(--ink)] antialiased overflow-x-hidden selection:bg-[var(--lime)] selection:text-[var(--ink)]">
       <style jsx global>{`
-        :root {
-          --bg: #0F1410;
-          --lime: #C8F55A;
-          --text: #F4F6F1;
-          --muted: #8C948A;
-          --surface: #1A211C;
-          --border: #2A332C;
-          --card: #1A211C;
-          --card-line: #2A332C;
+        @import url("https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap");
+
+        .landing-editorial-root {
+          --stone: #f6f2e8;
+          --stone-2: #efe9da;
+          --moss-deep: #1b2414;
+          --moss-mid: #556036;
+          --ink: #1e2417;
+          --sub: #57604f;
+          --lime: #c8f04a;
+          --lime-hover: #bde63d;
+          --clay: #d98a4a;
+          --border: rgba(30, 36, 23, 0.12);
+          font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+          line-height: 1.55;
         }
 
-        .display-font {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, -apple-system, sans-serif;
+        .font-fraunces {
+          font-family: "Fraunces", Georgia, serif;
+          font-weight: 600;
         }
 
-        .moss-field {
-          position: fixed;
+        .font-caveat {
+          font-family: "Caveat", cursive, sans-serif;
+        }
+
+        /* Growing vine spine */
+        #vine-track {
+          position: absolute;
+          top: 0;
+          left: 38px;
+          width: 3px;
+          background: var(--border);
+          z-index: 10;
+        }
+
+        #vine-fill {
+          position: absolute;
           top: 0;
           left: 0;
-          width: 100vw;
-          height: 100vh;
-          pointer-events: none;
-          z-index: 0;
+          width: 100%;
+          background: linear-gradient(180deg, var(--lime) 0%, var(--moss-mid) 100%);
+          height: 0%;
+          transition: height 0.12s ease-out;
+          box-shadow: 0 0 10px rgba(200, 240, 74, 0.6);
         }
 
-        .hero {
-          position: relative;
-          z-index: 2;
-          padding: 90px 56px 110px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 56px;
+        .vine-node {
+          position: absolute;
+          left: 31px;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: var(--stone);
+          border: 2px solid var(--border);
+          z-index: 11;
+          transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .hero-scene {
-          display: flex;
+        .vine-node.lit {
+          background: var(--lime);
+          border-color: var(--lime);
+          box-shadow: 0 0 14px rgba(200, 240, 74, 0.85);
+          transform: scale(1.15);
+        }
+
+        /* Mobile responsive vine spine & nodes */
+        @media (max-width: 768px) {
+          #vine-track {
+            left: 14px;
+            width: 2.5px;
+            display: block !important;
+          }
+          .vine-node {
+            left: 9px;
+            width: 12.5px;
+            height: 12.5px;
+            display: block !important;
+          }
+          .vine-node.lit {
+            transform: scale(1.25);
+            box-shadow: 0 0 10px rgba(200, 240, 74, 0.9);
+          }
+        }
+
+        /* Editorial Buttons */
+        .btn-editorial {
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 0;
-          width: 100%;
-          max-width: 820px;
-        }
-
-        .qr-block {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-          flex-shrink: 0;
-        }
-        .qr-code {
-          width: 104px;
-          height: 104px;
-          background: #F4F6F1;
-          border-radius: 10px;
-          padding: 10px;
-        }
-        .qr-caption {
-          font-size: 12.5px;
-          color: var(--muted);
-          letter-spacing: 0.01em;
-          white-space: nowrap;
-        }
-
-        .trail-wrap {
-          flex: 1;
-          min-width: 60px;
-          max-width: 140px;
-          height: 6px;
-        }
-        .trail {
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-        }
-
-        .content-panel {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 14px;
-          padding: 20px 20px 22px;
-          width: 290px;
-          flex-shrink: 0;
-        }
-        .panel-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          padding: 10px 0;
-          border-bottom: 1px dashed var(--border);
-          opacity: 0;
-          transform: translateY(4px);
-          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-        }
-        .panel-row.shown {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .panel-row:last-child {
-          border-bottom: none;
-        }
-        .item-name {
+          font-family: "Inter", sans-serif;
+          font-weight: 600;
           font-size: 13.5px;
-        }
-        .item-name .mm {
-          font-family: var(--font-noto-sans-myanmar), 'Noto Sans Myanmar', 'Pyidaungsu', sans-serif;
-          display: block;
-          color: var(--muted);
-          font-size: 12px;
-          margin-top: 2px;
-        }
-        .item-price {
-          font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
-          font-size: 13px;
-          color: var(--lime);
-          white-space: nowrap;
-          margin-left: 12px;
+          padding: 11px 22px;
+          border-radius: 9px;
+          border: none;
+          cursor: pointer;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+          text-decoration: none;
         }
 
-        .value-line {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 15px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--muted);
-          text-align: center;
-        }
-        .value-line b {
-          color: var(--text);
-          font-weight: 500;
+        .btn-editorial:focus-visible {
+          outline: 2px solid var(--ink);
+          outline-offset: 2px;
         }
 
-        @media (max-width: 640px) {
-          .hero {
-            padding: 48px 20px 56px;
-            gap: 36px;
+        .btn-editorial-primary {
+          background: var(--lime);
+          color: var(--ink);
+          box-shadow: 0 4px 12px rgba(200, 240, 74, 0.25);
+        }
+
+        .btn-editorial-primary:hover {
+          background: var(--lime-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(200, 240, 74, 0.4);
+        }
+
+        .btn-editorial-dark {
+          background: var(--moss-deep);
+          color: var(--stone);
+          box-shadow: 0 4px 12px rgba(27, 36, 20, 0.2);
+        }
+
+        .btn-editorial-dark:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(27, 36, 20, 0.35);
+        }
+
+        .btn-editorial-outline {
+          border: 1px solid var(--border);
+          color: var(--ink);
+          background: transparent;
+        }
+
+        .btn-editorial-outline:hover {
+          background: var(--stone-2);
+          border-color: rgba(30, 36, 23, 0.25);
+        }
+
+        /* Hero card curl animation */
+        .curl-path {
+          fill: none;
+          stroke: var(--moss-mid);
+          stroke-width: 2.2;
+          stroke-linecap: round;
+          stroke-dasharray: 120;
+          stroke-dashoffset: 120;
+          animation: drawCurl 1.6s ease-out 0.4s forwards;
+        }
+
+        @keyframes drawCurl {
+          to {
+            stroke-dashoffset: 0;
           }
-          .hero-scene {
-            flex-direction: column;
-            gap: 20px;
-          }
-          .trail-wrap {
-            width: 6px;
-            height: 60px;
-            max-width: none;
-          }
-          .content-panel {
-            width: 100%;
-            max-width: 300px;
-          }
+        }
+
+        /* Order Ticket Clip-path */
+        .ticket-card {
+          clip-path: polygon(
+            0 0,
+            100% 0,
+            100% 92%,
+            95% 100%,
+            90% 92%,
+            85% 100%,
+            80% 92%,
+            75% 100%,
+            70% 92%,
+            65% 100%,
+            60% 92%,
+            55% 100%,
+            50% 92%,
+            45% 100%,
+            40% 92%,
+            35% 100%,
+            30% 92%,
+            25% 100%,
+            20% 92%,
+            15% 100%,
+            10% 92%,
+            5% 100%,
+            0 92%
+          );
+        }
+
+        /* FAQ Grid Transition */
+        .faq-content-grid {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 240ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .faq-content-grid.open {
+          grid-template-rows: 1fr;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .panel-row {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            transition: none !important;
+          * {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
           }
-        }
-
-        .liquid-pro::before {
-          content: '';
-          position: absolute;
-          inset: -40%;
-          background:
-            radial-gradient(circle at 30% 30%, rgba(200, 245, 90, 0.14), transparent 55%),
-            radial-gradient(circle at 75% 70%, rgba(255, 255, 255, 0.06), transparent 50%);
-          filter: blur(24px);
-          animation: liquidMove 10s ease-in-out infinite alternate;
-          pointer-events: none;
-        }
-
-        @keyframes liquidMove {
-          0% { transform: translate(-4%, -3%) scale(1); }
-          100% { transform: translate(4%, 3%) scale(1.08); }
         }
       `}</style>
 
-      {/* Full-viewport fixed moss-pixel background */}
-      <MossField />
-
-      {/* TOP ANNOUNCEMENT STRIP (Direct Contact) */}
-      <div className="relative z-30 bg-[#12160F] border-b border-[#2C3527]/70 py-1.5 px-4 text-center text-xs text-[#93A38C] flex items-center justify-center gap-4">
-        <span>
-          🇲🇲 {language === "my" ? "တိုက်ရိုက် အကူအညီနှင့် စုံစမ်းရန်:" : "Direct Support & Viber:"}{" "}
-          <a
-            href={viberLink}
-            className="text-[#C8FF4D] font-bold hover:underline inline-flex items-center gap-1 ml-1"
-          >
-            <Phone className="w-3 h-3 inline" />
-            {contactPhone}
-          </a>
-        </span>
+      {/* GROWING VINE TRACK (Active on Desktop & Mobile) */}
+      <div id="vine-track" ref={vineTrackRef} aria-hidden="true">
+        <div id="vine-fill" ref={vineFillRef} />
       </div>
 
-      {/* HEADER / NAVIGATION */}
-      <header className="relative z-20 flex justify-between items-center px-[6vw] py-5 border-b border-[#2C3527]/40 bg-[#0D120D]/80 backdrop-blur-md sticky top-0">
-        <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-[#F2F0E6]">
-          <span className="w-2.5 h-2.5 bg-[#C8FF4D] rounded-xs shadow-[0_0_8px_#C8FF4D]"></span>
-          <span className="display-font tracking-tight text-xl font-bold">Moss QR</span>
-        </Link>
+      {/* NAVIGATION */}
+      <header className="sticky top-0 z-30 bg-[var(--stone)]/80 backdrop-blur-xl border-b border-[var(--border)] shadow-[0_4px_24px_rgba(30,36,23,0.04)] transition-all">
+        {/* Subtle Top Mobile Scroll Progress Indicator */}
+        <div className="md:hidden w-full h-[2.5px] bg-transparent absolute top-0 left-0 overflow-hidden">
+          <div
+            ref={mobileProgressRef}
+            className="h-full bg-[var(--lime)] transition-all duration-100 ease-out shadow-[0_0_8px_rgba(200,240,74,0.9)]"
+            style={{ width: "0%" }}
+          />
+        </div>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8 text-sm text-[#93A38C]">
-          <a href="#how" className="hover:text-[#F2F0E6] transition-colors">
-            {language === "my" ? "အသုံးပြုပုံ" : "How it works"}
-          </a>
-          <a href="#pricing" className="hover:text-[#F2F0E6] transition-colors">
-            {language === "my" ? "စျေးနှုန်းများ" : "Pricing"}
-          </a>
-          <a href="#faq" className="hover:text-[#F2F0E6] transition-colors">
-            {language === "my" ? "မေးလေ့ရှိသောမေးခွန်းများ" : "FAQ"}
-          </a>
-          <Link href="/menu" target="_blank" className="hover:text-[#C8FF4D] transition-colors flex items-center gap-1.5">
-            <span>{language === "my" ? "Demo မီနူး" : "Live Demo"}</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+        <nav className="flex items-center justify-between py-3.5 px-5 sm:px-8 max-w-[1040px] mx-auto">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 font-fraunces font-semibold text-lg text-[var(--ink)] hover:opacity-90 transition-opacity"
+          >
+            <Image
+              src="/moss_logo.jpg"
+              alt="Moss logo"
+              width={30}
+              height={30}
+              className="w-7.5 h-7.5 rounded-lg object-cover shadow-2xs"
+            />
+            <span className="tracking-tight text-xl">Moss</span>
           </Link>
-        </nav>
 
-        <div className="flex items-center gap-3">
-          {/* Language Switcher */}
-          {isMounted && (
-            <div className="flex items-center gap-1 rounded-full border border-[#2C3527] bg-[#12160F] p-1 text-xs font-bold">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-7 text-[13.5px] text-[var(--sub)] font-medium">
+            <a href="#how" className="hover:text-[var(--ink)] transition-colors">
+              {content.nav.howItWorks}
+            </a>
+            <a href="#pricing" className="hover:text-[var(--ink)] transition-colors">
+              {content.nav.pricing}
+            </a>
+            <a href="#faq" className="hover:text-[var(--ink)] transition-colors">
+              {content.nav.faq}
+            </a>
+            <Link
+              href="/menu"
+              target="_blank"
+              className="hover:text-[var(--ink)] transition-colors inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/50 backdrop-blur-sm border border-[var(--border)]"
+            >
+              <span>{content.nav.liveDemo}</span>
+              <ExternalLink className="w-3 h-3 text-[var(--sub)]" />
+            </Link>
+          </div>
+
+          {/* Language Switcher & Action Button */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Language Switcher */}
+            <div className="flex items-center p-1 rounded-full bg-[var(--stone-2)]/80 border border-[var(--border)] text-xs font-semibold">
               <button
+                type="button"
                 onClick={() => setLanguage("en")}
-                className={`px-2 py-0.5 rounded-full transition-all ${
+                className={`px-2.5 py-1 rounded-full transition-all ${
                   language === "en"
-                    ? "bg-[#C8FF4D] text-[#0D120D]"
-                    : "text-[#93A38C] hover:text-[#F2F0E6]"
+                    ? "bg-[var(--moss-deep)] text-white shadow-xs"
+                    : "text-[var(--sub)] hover:text-[var(--ink)]"
                 }`}
               >
-                EN
+                English
               </button>
               <button
+                type="button"
                 onClick={() => setLanguage("my")}
-                className={`px-2 py-0.5 rounded-full transition-all ${
+                className={`px-2.5 py-1 rounded-full transition-all ${
                   language === "my"
-                    ? "bg-[#C8FF4D] text-[#0D120D]"
-                    : "text-[#93A38C] hover:text-[#F2F0E6]"
+                    ? "bg-[var(--moss-deep)] text-white shadow-xs"
+                    : "text-[var(--sub)] hover:text-[var(--ink)]"
                 }`}
               >
                 မြန်မာ
               </button>
             </div>
-          )}
 
-          <Link
-            href="/auth/login"
-            className="hidden sm:inline-block border border-[#2C3527] px-3.5 py-1.5 rounded-lg text-xs sm:text-sm text-[#F2F0E6] hover:bg-[#1A211A] transition-colors"
-          >
-            {language === "my" ? "အကောင့်ဝင်ရန်" : "Log in"}
-          </Link>
+            <Link
+              href="/auth/login"
+              className="text-[13.5px] font-medium text-[var(--sub)] hover:text-[var(--ink)] transition-colors px-3 py-1.5"
+            >
+              {content.nav.logIn}
+            </Link>
+            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-primary">
+              {content.nav.startFree}
+            </Link>
+          </div>
 
-          <Link
-            href="/auth/sign-up"
-            className="hidden sm:inline-block bg-[#C8FF4D] text-[#0D120D] font-semibold px-4 py-1.5 rounded-lg text-xs sm:text-sm hover:brightness-105 transition-all shadow-[0_0_15px_rgba(200,255,77,0.2)]"
-          >
-            {language === "my" ? "အခမဲ့ စတင်ရန်" : "Start free"}
-          </Link>
+          {/* Mobile Right Bar (Switcher + Hamburger) */}
+          <div className="md:hidden flex items-center gap-2">
+            <div className="flex items-center p-0.5 rounded-full bg-[var(--stone-2)]/80 border border-[var(--border)] text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  language === "en"
+                    ? "bg-[var(--moss-deep)] text-white"
+                    : "text-[var(--sub)]"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("my")}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  language === "my"
+                    ? "bg-[var(--moss-deep)] text-white"
+                    : "text-[var(--sub)]"
+                }`}
+              >
+                မြန်မာ
+              </button>
+            </div>
 
-          {/* Mobile Hamburger Button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-[#2C3527] bg-[#12160F] text-[#F2F0E6]"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </header>
+            {/* Mobile Hamburger */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border)] bg-white/60 backdrop-blur-md text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)]"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </nav>
 
-      {/* MOBILE DRAWER */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-[90px] bg-[#0D120D]/95 border-b border-[#2C3527] p-6 z-50 backdrop-blur-xl shadow-2xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <nav className="flex flex-col space-y-3 text-base font-medium">
+        {/* Mobile Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[var(--stone)]/95 backdrop-blur-xl border-b border-[var(--border)] px-6 py-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
             <a
               href="#how"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-[#93A38C] hover:text-[#C8FF4D] py-1"
+              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
             >
-              {language === "my" ? "အသုံးပြုပုံ" : "How it works"}
+              {content.nav.howItWorks}
             </a>
             <a
               href="#pricing"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-[#93A38C] hover:text-[#C8FF4D] py-1"
+              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
             >
-              {language === "my" ? "စျေးနှုန်းများ" : "Pricing"}
+              {content.nav.pricing}
             </a>
             <a
               href="#faq"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-[#93A38C] hover:text-[#C8FF4D] py-1"
+              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
             >
-              {language === "my" ? "မေးလေ့ရှိသောမေးခွန်းများ" : "FAQ"}
+              {content.nav.faq}
             </a>
             <Link
               href="/menu"
               target="_blank"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-[#C8FF4D] py-1 flex items-center gap-1.5"
+              className="block py-1 text-sm font-medium text-[var(--ink)]"
             >
-              <span>{language === "my" ? "Live Demo မီနူး စမ်းသပ်ရန်" : "Live Demo Menu"}</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              {content.nav.liveDemo}
             </Link>
-          </nav>
-
-          <div className="pt-4 border-t border-[#2C3527] flex flex-col gap-2.5">
-            <Link
-              href="/auth/sign-up"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-center bg-[#C8FF4D] text-[#0D120D] font-bold py-2.5 rounded-xl text-sm"
-            >
-              {language === "my" ? "အခမဲ့ စတင်မည်" : "Start Free"}
-            </Link>
-            <Link
-              href="/auth/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-center border border-[#2C3527] text-[#F2F0E6] py-2.5 rounded-xl text-sm"
-            >
-              {language === "my" ? "အကောင့်ဝင်ရန်" : "Log in"}
-            </Link>
+            <div className="pt-3 border-t border-[var(--border)] flex flex-col gap-2">
+              <Link
+                href="/auth/sign-up"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn-editorial btn-editorial-primary w-full text-center"
+              >
+                {content.nav.startFree}
+              </Link>
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn-editorial btn-editorial-outline w-full text-center"
+              >
+                {content.nav.logIn}
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </header>
 
       {/* HERO SECTION */}
-      <Hero />
+      <header
+        className="relative pt-10 pb-16 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] gap-10 items-center"
+        id="s0"
+      >
+        <div className="vine-node" style={{ top: 0 }} />
+        <div>
+          <h1 className="font-fraunces text-4xl sm:text-5xl lg:text-[48px] leading-[1.08] mb-4 tracking-[-0.015em] text-[var(--ink)]">
+            {content.hero.titleLine1}
+            <br />
+            <em className="italic text-[var(--moss-mid)] font-fraunces">{content.hero.titleHighlight}</em> {content.hero.titleLine2}
+            <br />
+            {content.hero.titleLine3}
+          </h1>
+          <p className="text-base text-[var(--sub)] max-w-[420px] mb-7 leading-relaxed font-normal">
+            {content.hero.description}
+          </p>
+          <div className="flex gap-3 mb-5 flex-wrap">
+            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-dark">
+              <span>{content.hero.createMenu}</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Link>
+            <a href="#how" className="btn-editorial btn-editorial-outline">
+              {content.hero.seeHowItWorks}
+            </a>
+          </div>
+          <p className="text-xs text-[var(--sub)] flex items-center gap-4 flex-wrap">
+            <span>
+              <b className="text-[var(--ink)]">{content.hero.pillFree}</b> {content.hero.pillFreeSub}
+            </span>
+            <span>&bull;</span>
+            <span>
+              <b className="text-[var(--ink)]">{content.hero.pillNoApp}</b> {content.hero.pillNoAppSub}
+            </span>
+            <span>&bull;</span>
+            <span>
+              <b className="text-[var(--ink)]">{content.hero.pillLive}</b> {content.hero.pillLiveSub}
+            </span>
+          </p>
+        </div>
 
-      {/* REASSURANCE STRIP */}
-      <div className="relative z-10 border-y border-[#2C3527] py-4 px-[6vw] flex justify-center gap-8 sm:gap-12 flex-wrap text-xs text-[#93A38C] bg-[#12160F]">
-        <span>✦ {language === "my" ? "စတင်ခ မလိုပါ" : "No setup fees"}</span>
-        <span>✦ {language === "my" ? "အချိန်မရွေး ပယ်ဖျက်နိုင်သည်" : "Cancel anytime"}</span>
-        <span>✦ {language === "my" ? "သင့်ဒေတာများ လုံခြုံစိတ်ချရသည်" : "Your data stays yours"}</span>
-        <span>✦ {language === "my" ? "မည်သည့်ဖုန်းကင်မရာဖြင့်မဆို ဖတ်နိုင်သည်" : "Works on any phone camera"}</span>
-      </div>
+        {/* Hero Card Visual with Glassmorphic Floating Badges */}
+        <div className="relative">
+          {/* Floating Glass Pill: Speed */}
+          <div className="hidden sm:flex absolute -top-4 -left-4 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_8px_20px_rgba(30,36,23,0.08)] text-[11px] font-semibold text-[var(--ink)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{content.hero.speedBadge}</span>
+          </div>
+
+          {/* Floating Glass Pill: Dual Language */}
+          <div className="hidden sm:flex absolute -bottom-3 -right-3 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_8px_20px_rgba(30,36,23,0.08)] text-[11px] font-semibold text-[var(--moss-mid)]">
+            <span>🇲🇲</span>
+            <span>{content.hero.dualLangBadge}</span>
+          </div>
+
+          <div
+            className="relative bg-[var(--stone-2)] rounded-[20px] p-7 sm:p-9 border border-[var(--border)] transition-transform duration-300 hover:rotate-0"
+            style={{
+              transform: "rotate(-2.5deg)",
+              boxShadow: "0 24px 50px rgba(30, 36, 23, 0.12)",
+            }}
+          >
+            <svg
+              className="absolute -top-3.5 right-2.5 w-[60px] h-[60px] pointer-events-none"
+              viewBox="0 0 60 60"
+              aria-hidden="true"
+            >
+              <path className="curl-path" d="M5 40 Q 10 10, 35 8 Q 50 6, 52 20" />
+            </svg>
+
+            <div
+              className="w-24 h-24 rounded-full bg-[var(--moss-deep)] mx-auto mb-4.5 flex items-center justify-center relative overflow-hidden shadow-md"
+              style={{
+                boxShadow: "0 0 0 4px var(--stone-2), 0 0 0 5px var(--border)",
+              }}
+            >
+              <Image
+                src="/moss_logo.jpg"
+                alt="Moss QR seal"
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+                priority
+              />
+            </div>
+
+            <p className="text-center text-xs text-[var(--sub)] font-medium mb-1 tracking-wider uppercase">
+              {content.hero.cardScanToOpen}
+            </p>
+            <p className="text-center font-fraunces text-xl text-[var(--ink)] mb-3">
+              {content.hero.cardDemoTitle}
+            </p>
+
+            <div className="flex justify-center">
+              <Link
+                href="/menu"
+                target="_blank"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--moss-mid)] hover:underline"
+              >
+                <span>{content.hero.cardExploreDemo}</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* PROBLEM STATEMENT SECTION */}
+      <section className="py-8 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="bg-[var(--moss-deep)] rounded-[20px] p-7 sm:p-10 text-[var(--stone)] max-w-[940px] shadow-lg">
+          <h2 className="text-xl sm:text-2xl mb-3 max-w-[540px] text-white font-fraunces font-semibold leading-snug">
+            {content.problem.title}
+          </h2>
+          <p className="text-sm text-[#c2c8b8] max-w-[500px] leading-relaxed font-normal">
+            {content.problem.description}
+          </p>
+        </div>
+      </section>
+
+      {/* WHAT YOU GET */}
+      <section className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <h2 className="text-[24px] sm:text-[26px] mb-1.5 font-fraunces text-[var(--ink)]">
+          {content.whatYouGet.title}
+        </h2>
+        <p className="text-sm text-[var(--sub)] mb-7 max-w-[460px] font-normal">
+          {content.whatYouGet.subtitle}
+        </p>
+
+        <div className="space-y-4 max-w-[820px]">
+          {content.whatYouGet.items.map((item, idx) => (
+            <div key={idx}>
+              <div className="flex items-baseline gap-2 py-4 border-b border-dashed border-[var(--border)]">
+                <span className="font-fraunces text-base font-semibold whitespace-nowrap text-[var(--ink)]">
+                  {item.title}
+                </span>
+                <span className="flex-1 border-b border-dotted border-[var(--sub)] opacity-40 -translate-y-1" />
+              </div>
+              <p className="text-[12.5px] text-[var(--sub)] mt-1.5 font-normal">
+                {item.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="relative z-10 py-20 px-[6vw] max-w-7xl mx-auto">
-        <div className="text-[#C8FF4D] text-xs uppercase tracking-widest font-semibold mb-3">
-          {language === "my" ? "အသုံးပြုပုံ" : "How it works"}
-        </div>
-        <h2 className="display-font text-3xl sm:text-4xl font-semibold text-[#F2F0E6] mb-12 sm:mb-14 max-w-md leading-snug">
-          {language === "my" ? "အဆင့် ၃ ဆင့်ဖြင့် အလွယ်တကူ စတင်လိုက်ပါ။" : "Three steps, no technical setup."}
+      <section id="how" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <h2 className="text-[24px] sm:text-[26px] mb-1.5 font-fraunces text-[var(--ink)]">
+          {content.howItWorks.title}
         </h2>
+        <p className="text-sm text-[var(--sub)] mb-8 max-w-[460px] font-normal">
+          {content.howItWorks.subtitle}
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-[#12160F]/60 border border-[#2C3527] rounded-2xl p-7 hover:border-[#C8FF4D]/40 transition-colors">
-            <div className="display-font text-base text-[#C8FF4D] font-bold mb-3">01</div>
-            <h3 className="text-lg font-semibold text-[#F2F0E6] mb-2">
-              {language === "my" ? "ဟင်းပွဲများကို ထည့်သွင်းပါ" : "Add your dishes"}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* Ticket 1 */}
+          <div
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            style={{
+              transform: "rotate(-1.5deg)",
+              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
+            }}
+          >
+            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
+              {content.howItWorks.step1Tag}
+            </p>
+            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
+              {content.howItWorks.step1Title}
             </h3>
-            <p className="text-sm text-[#93A38C] leading-relaxed">
-              {language === "my"
-                ? "ဟင်းပွဲအမည်များကို မြန်မာလို အလွယ်တကူထည့်နိုင်ပြီး English ဘာသာလည်း ထည့်သွင်းနိုင်ပါသည်။ အမျိုးအစားအလိုက် ခွဲခြားနိုင်ပါသည်။"
-                : "Enter names in Burmese — English is optional. Organize into categories as you go."}
+            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+              {content.howItWorks.step1Desc}
             </p>
           </div>
 
-          <div className="bg-[#12160F]/60 border border-[#2C3527] rounded-2xl p-7 hover:border-[#C8FF4D]/40 transition-colors">
-            <div className="display-font text-base text-[#C8FF4D] font-bold mb-3">02</div>
-            <h3 className="text-lg font-semibold text-[#F2F0E6] mb-2">
-              {language === "my" ? "သင့် QR Code ကို ရယူပါ" : "Get your QR code"}
+          {/* Ticket 2 */}
+          <div
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            style={{
+              transform: "rotate(1deg)",
+              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
+            }}
+          >
+            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
+              {content.howItWorks.step2Tag}
+            </p>
+            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
+              {content.howItWorks.step2Title}
             </h3>
-            <p className="text-sm text-[#93A38C] leading-relaxed">
-              {language === "my"
-                ? "သင့်ဆိုင် Logo ပါဝင်သော စားပွဲတင် QR Code ကို download ရယူပြီး Print ထုတ်လိုက်ပါ။"
-                : "Download it with your restaurant's logo already placed in the center."}
+            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+              {content.howItWorks.step2Desc}
             </p>
           </div>
 
-          <div className="bg-[#12160F]/60 border border-[#2C3527] rounded-2xl p-7 hover:border-[#C8FF4D]/40 transition-colors">
-            <div className="display-font text-base text-[#C8FF4D] font-bold mb-3">03</div>
-            <h3 className="text-lg font-semibold text-[#F2F0E6] mb-2">
-              {language === "my" ? "ဧည့်သည်များ စကင်ဖတ်နိုင်ပြီ" : "Guests scan and read"}
+          {/* Ticket 3 */}
+          <div
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            style={{
+              transform: "rotate(-1deg)",
+              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
+            }}
+          >
+            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
+              {content.howItWorks.step3Tag}
+            </p>
+            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
+              {content.howItWorks.step3Title}
             </h3>
-            <p className="text-sm text-[#93A38C] leading-relaxed">
-              {language === "my"
-                ? "App ဒေါင်းရန်မလိုဘဲ ဖုန်းကင်မရာဖြင့် scan ဖတ်လိုက်သည်နှင့် မီနူးတန်းပွင့်လာပါမည်။"
-                : "No app to install. The menu opens straight in their phone's browser."}
+            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+              {content.howItWorks.step3Desc}
             </p>
           </div>
         </div>
       </section>
 
-      {/* FOUNDER / MISSION NOTE */}
-      <section className="relative z-10 py-6 px-[6vw] max-w-7xl mx-auto">
-        <div className="bg-[#12160F] border border-[#2C3527] rounded-3xl p-8 sm:p-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          <div className="md:col-span-2 flex justify-start">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#26301F] to-[#161D15] border border-[#2C3527] flex items-center justify-center text-[#C8FF4D] font-bold text-lg">
-              M
-            </div>
-          </div>
-          <div className="md:col-span-10">
-            <blockquote className="text-base sm:text-lg leading-relaxed text-[#F2F0E6] font-normal">
-              {language === "my"
-                ? "“ကျွန်တော်တို့ Moss QR ကို ဖန်တီးရတဲ့ ရည်ရွယ်ချက်ကတော့ လက်ရှိ menu tools အများစုဟာ မြန်မာစာအတွက် သီးသန့်ရည်ရွယ်မထားတာကြောင့် ဖြစ်ပါတယ်။ ဆိုင်ရှင်ကိုယ်တိုင် မိနစ်ပိုင်းအတွင်း အကူအညီမလိုဘဲ လွယ်လွယ်ကူကူ အသုံးပြုနိုင်စေချင်ပါတယ်။”"
-                : "“We built Moss QR because most menu tools weren't made with Burmese in mind — the language always felt like an afterthought. We wanted restaurant owners to set one up themselves, in minutes, without needing anyone's help.”"}
-              <cite className="block mt-4 not-italic text-xs text-[#93A38C] font-mono">
-                — From the team building Moss QR (Yangon)
-              </cite>
-            </blockquote>
-          </div>
+      {/* TAPED NAPKIN QUOTE */}
+      <section className="py-12 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <div
+          className="bg-[#fffdf7] max-w-[620px] p-7 sm:p-10 relative rounded-xs transition-transform duration-200 hover:rotate-0"
+          style={{
+            transform: "rotate(1deg)",
+            boxShadow: "0 16px 36px rgba(30, 36, 23, 0.10)",
+          }}
+        >
+          {/* Tape Left */}
+          <div
+            className="absolute w-[50px] h-[19px] bg-[rgba(200,240,74,0.65)] -top-2.5 left-6 shadow-2xs pointer-events-none"
+            style={{ transform: "rotate(-8deg)" }}
+          />
+          {/* Tape Right */}
+          <div
+            className="absolute w-[50px] h-[19px] bg-[rgba(200,240,74,0.65)] -top-2.5 right-6 shadow-2xs pointer-events-none"
+            style={{ transform: "rotate(7deg)" }}
+          />
+          <blockquote className="font-caveat text-2xl md:text-[27px] leading-[1.4] text-[var(--ink)] mb-3 font-semibold">
+            &ldquo;{content.napkinQuote.quote}&rdquo;
+          </blockquote>
+          <cite className="block not-italic text-xs text-[var(--sub)] font-semibold font-sans">
+            {content.napkinQuote.author}
+          </cite>
         </div>
       </section>
 
-      {/* PRICING SECTION WITH BILLING TOGGLE */}
-      <section id="pricing" className="relative z-10 py-20 px-[6vw] max-w-7xl mx-auto">
-        <div className="text-[#C8FF4D] text-xs uppercase tracking-widest font-semibold mb-3">
-          {language === "my" ? "စျေးနှုန်းများ" : "Pricing"}
-        </div>
-        <h2 className="display-font text-3xl sm:text-4xl font-semibold text-[#F2F0E6] mb-6 leading-snug">
-          {language === "my" ? "ရှင်းလင်းပြီး ပွင့်လင်းမြင်သာသော စျေးနှုန်း။" : "Simple pricing, shown upfront."}
-        </h2>
+      {/* BURMESE SECTION */}
+      <section
+        id="burmese"
+        className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative"
+      >
+        <div className="vine-node" />
+        <div className="bg-[var(--moss-deep)] rounded-[20px] p-7 sm:p-10 text-[var(--stone)] max-w-[940px]">
+          {/* Burmese heading */}
+          <h2 className="font-fraunces text-[22px] sm:text-[26px] leading-snug text-white mb-2">
+            {content.burmeseSection.title}
+          </h2>
+          <p className="text-sm text-[#c2c8b8] mb-8 max-w-[560px] leading-relaxed font-normal">
+            {content.burmeseSection.description}
+          </p>
 
-        {/* Toggle */}
-        <div className="mb-10 inline-flex items-center gap-2 bg-[#12160F] p-1.5 rounded-full border border-[#2C3527]">
-          <button
-            onClick={() => setBillingPeriod("6months")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-              billingPeriod === "6months"
-                ? "bg-[#C8FF4D] text-[#0D120D]"
-                : "text-[#93A38C] hover:text-[#F2F0E6]"
-            }`}
-          >
-            {language === "my" ? "၆ လ တစ်ကြိမ်" : "6 Months"}
-          </button>
-          <button
-            onClick={() => setBillingPeriod("yearly")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-              billingPeriod === "yearly"
-                ? "bg-[#C8FF4D] text-[#0D120D]"
-                : "text-[#93A38C] hover:text-[#F2F0E6]"
-            }`}
-          >
-            <span>{language === "my" ? "၁ နှစ်စာ (အထူးသက်သာ)" : "1 Year (Save)"}</span>
-            <span className="bg-[#0D120D] text-[#C8FF4D] text-[9px] px-1.5 py-0.5 rounded-full font-extrabold">
-              15% OFF
+          {/* Three feature rows */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+            {content.burmeseSection.features.map((feat, idx) => (
+              <div key={idx} className="bg-white/[0.06] rounded-[14px] px-5 py-5 border border-white/10">
+                <div className="text-[var(--lime)] text-xl mb-2.5">{feat.icon}</div>
+                <p className="text-white text-[14px] font-fraunces font-semibold mb-1 leading-snug">
+                  {feat.title}
+                </p>
+                <p className="text-[#a9b2a2] text-[12.5px] leading-relaxed font-normal">
+                  {feat.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA row */}
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-primary">
+              <span>{content.burmeseSection.cta}</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Link>
+            <span className="text-[12px] text-[#a9b2a2] font-normal">
+              {content.burmeseSection.footnote}
             </span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
-          {/* Free Plan */}
-          <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.015] backdrop-blur-xl border border-white/[0.09] border-t-white/[0.18] rounded-2xl p-8 sm:p-9 shadow-2xl flex flex-col justify-between">
-            <div>
-              <div className="text-xs text-[#93A38C] uppercase tracking-wider mb-2 font-semibold">
-                Free Plan
-              </div>
-              <div className="display-font text-4xl font-bold text-[#F2F0E6] mb-1">
-                0 K <span className="text-sm font-normal text-[#66705F]">/ forever</span>
-              </div>
-              <p className="text-sm text-[#93A38C] mb-6">
-                {language === "my" ? "ပထမဆုံး ဒစ်ဂျစ်တယ် မီနူး စမ်းသပ်စတင်ရန်။" : "For getting your first menu online."}
-              </p>
-
-              <ul className="space-y-3 text-sm text-[#F2F0E6] mb-8">
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "ဟင်းပွဲ ၂၀ အထိ" : "Up to 20 dishes"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "ဘာသာစကားနှစ်မျိုး (MM / EN)" : "Bilingual menu (MM/EN)"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "Logo ပါဝင်သော စားပွဲတင် QR Code" : "QR code with your logo"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "အကန့်အသတ်မရှိ စကင်ဖတ်နိုင်ခြင်း" : "Unlimited customer scans"}</span>
-                </li>
-              </ul>
-            </div>
-
-            <Link
-              href="/auth/sign-up"
-              className="block text-center py-3 rounded-xl border border-[#2C3527] text-sm font-semibold hover:bg-[#1A211A] transition-colors"
-            >
-              {language === "my" ? "အခမဲ့ စတင်မည်" : "Start free"}
-            </Link>
           </div>
+        </div>
+      </section>
 
-          {/* Pro Plan */}
-          <div className="liquid-pro relative overflow-hidden bg-gradient-to-br from-white/[0.08] to-[#C8FF4D]/[0.03] backdrop-blur-2xl border border-[#C8FF4D]/30 border-t-[#C8FF4D]/50 rounded-2xl p-8 sm:p-9 shadow-[0_16px_40px_rgba(0,0,0,0.45)] flex flex-col justify-between">
-            <div className="relative z-10">
-              <div className="inline-block bg-[#C8FF4D]/15 text-[#C8FF4D] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-[#C8FF4D]/30 mb-4">
-                {language === "my" ? "အထူးနှုန်းထား" : "Founding rate"}
-              </div>
-              <div className="text-xs text-[#93A38C] uppercase tracking-wider mb-2 font-semibold">
-                Pro Plan
-              </div>
-              <div className="display-font text-4xl font-bold text-[#F2F0E6] mb-1">
-                {billingPeriod === "yearly" ? "50,000 K" : "30,000 K"}{" "}
-                <span className="text-sm font-normal text-[#66705F]">
-                  {billingPeriod === "yearly" ? "/ year" : "/ 6 months"}
-                </span>
-              </div>
-              <p className="text-sm text-[#93A38C] mb-6">
-                {language === "my"
-                  ? "ဟင်းပွဲစာရင်းများပြားသော စားသောက်ဆိုင်ကြီးများအတွက်။"
-                  : "For restaurants with a bigger menu. KBZPay / WavePay accepted."}
-              </p>
+      {/* PRICING SECTION */}
+      <section id="pricing" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <div className="max-w-[840px]">
+          <h2 className="text-[24px] sm:text-[28px] md:text-[32px] mb-2 font-fraunces text-[var(--ink)] tracking-tight">
+            {content.pricing.title}
+          </h2>
+          <p className="text-sm sm:text-base text-[var(--sub)] mb-8 sm:mb-10 max-w-[520px] font-normal leading-relaxed">
+            {content.pricing.subtitle}
+          </p>
 
-              <ul className="space-y-3 text-sm text-[#F2F0E6] mb-8">
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "ဟင်းပွဲ ၁၀၀ အထိ" : "Up to 100 dishes"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "Free တွင်ပါဝင်သော အရာအားလုံး" : "Everything in Free"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>{language === "my" ? "ဟင်းပွဲ ဓာတ်ပုံများ ထည့်သွင်းနိုင်ခြင်း" : "High-res food photos"}</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <span className="text-[#C8FF4D]">✓</span>
-                  <span>
-                    {language === "my" ? "တိုက်ရိုက် Viber / Phone အကူအညီ (+959969069005)" : "Direct Priority Support (+959969069005)"}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+            {/* Free Plan */}
+            <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[var(--border)] flex flex-col justify-between shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_32px_rgba(30,36,23,0.08)] transition-all duration-300">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--sub)] px-2.5 py-1 rounded-md bg-[var(--stone-2)]">
+                    {content.pricing.freeBadge}
                   </span>
-                </li>
-              </ul>
+                </div>
+                
+                <div className="my-4 pb-4 border-b border-[var(--border)]">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="font-fraunces text-3xl sm:text-4xl font-semibold text-[var(--ink)]">
+                      {content.pricing.freePrice}
+                    </span>
+                    <span className="text-sm font-normal text-[var(--sub)] font-sans">
+                      {content.pricing.freePeriod}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5 text-sm text-[var(--ink)] my-6">
+                  {content.pricing.freeFeatures.map((feat, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[var(--stone-2)] flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="w-3.5 h-3.5 text-[var(--moss-mid)]" />
+                      </div>
+                      <span className="leading-snug">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 mt-auto">
+                <Link
+                  href="/auth/sign-up"
+                  className="btn-editorial btn-editorial-outline w-full py-3.5 justify-center text-sm font-semibold rounded-xl"
+                >
+                  {content.pricing.freeCta}
+                </Link>
+              </div>
             </div>
 
-            <Link
-              href="/auth/sign-up"
-              className="relative z-10 block text-center py-3 rounded-xl bg-[#C8FF4D] text-[#0D120D] text-sm font-bold hover:brightness-105 transition-all shadow-[0_0_15px_rgba(200,255,77,0.25)]"
-            >
-              {language === "my" ? "Pro သို့ အဆင့်မြှင့်မည်" : "Upgrade to Pro"}
-            </Link>
+            {/* Pro Plan Featured */}
+            <div className="bg-[var(--moss-deep)] text-[var(--stone)] rounded-[20px] p-6 sm:p-8 flex flex-col justify-between border-2 border-[var(--lime)] shadow-[0_16px_40px_rgba(27,36,20,0.18)] hover:shadow-[0_20px_48px_rgba(27,36,20,0.28)] transition-all duration-300 relative overflow-hidden">
+              {/* Pro Badge */}
+              <div className="absolute top-4 right-4 sm:top-5 sm:right-5 bg-[var(--lime)] text-[var(--ink)] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
+                {content.pricing.proRecommended}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--lime)] px-2.5 py-1 rounded-md bg-white/[0.08]">
+                    {content.pricing.proBadge}
+                  </span>
+                </div>
+                
+                <div className="my-4 pb-4 border-b border-white/10">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="font-fraunces text-3xl sm:text-4xl font-semibold text-white">
+                      {content.pricing.proPrice}
+                    </span>
+                    <span className="text-sm font-normal text-[#c2c8b8] font-sans">
+                      {content.pricing.proPeriod}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5 text-sm text-[var(--stone)] my-6">
+                  {content.pricing.proFeatures.map((feat, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[var(--lime)]/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="w-3.5 h-3.5 text-[var(--lime)]" />
+                      </div>
+                      <span className="leading-snug">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 mt-auto">
+                <Link
+                  href="/auth/sign-up"
+                  className="btn-editorial btn-editorial-primary w-full py-3.5 justify-center text-sm font-semibold rounded-xl"
+                >
+                  {content.pricing.proCta}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ SECTION */}
-      <section id="faq" className="relative z-10 py-20 px-[6vw] max-w-4xl mx-auto border-t border-[#2C3527]">
-        <div className="text-center mb-12">
-          <div className="text-[#C8FF4D] text-xs uppercase tracking-widest font-semibold mb-2">
-            {language === "my" ? "မေးလေ့ရှိသော မေးခွန်းများ" : "Frequently Asked Questions"}
-          </div>
-          <h2 className="display-font text-3xl sm:text-4xl font-semibold text-[#F2F0E6]">
-            {language === "my" ? "သိရှိလိုသည်များကို ဖြေကြားပေးထားပါသည်" : "Everything you need to know"}
-          </h2>
-        </div>
+      <section id="faq" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <h2 className="text-[24px] sm:text-[26px] mb-7 font-fraunces text-[var(--ink)]">
+          {content.faq.title}
+        </h2>
 
-        <div className="space-y-3.5">
-          {faqs.map((faq, idx) => {
+        <div className="divide-y divide-[var(--border)] border-t border-[var(--border)] max-w-[820px]">
+          {content.faq.items.map((faq, idx) => {
             const isOpen = openFaq === idx;
             return (
-              <div
-                key={idx}
-                className="bg-[#12160F] border border-[#2C3527] rounded-2xl overflow-hidden transition-all"
-              >
+              <div key={idx} className="transition-colors">
                 <button
                   type="button"
-                  onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 text-[#F2F0E6] hover:text-[#C8FF4D] transition-colors"
+                  onClick={() => toggleFaq(idx)}
+                  className="w-full py-4.5 flex justify-between items-center text-left text-[15px] font-fraunces font-semibold text-[var(--ink)] hover:text-[var(--moss-mid)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] rounded-xs"
+                  aria-expanded={isOpen}
                 >
-                  <span className="font-semibold text-sm sm:text-base">{faq.q}</span>
+                  <span className="pr-4">{faq.q}</span>
                   <ChevronDown
-                    className={`w-4 h-4 shrink-0 transition-transform text-[#93A38C] ${
-                      isOpen ? "rotate-180 text-[#C8FF4D]" : ""
+                    className={`w-4 h-4 text-[var(--sub)] shrink-0 transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-[var(--ink)]" : ""
                     }`}
                   />
                 </button>
-                {isOpen && (
-                  <div className="px-5 sm:px-6 pb-6 pt-1 text-sm text-[#93A38C] leading-relaxed border-t border-[#2C3527]/50">
-                    {faq.a}
+                <div className={`faq-content-grid ${isOpen ? "open" : ""}`}>
+                  <div className="overflow-hidden">
+                    <p className="text-[13.5px] text-[var(--sub)] leading-relaxed font-normal pb-4.5 max-w-[700px]">
+                      {faq.a}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
         </div>
+      </section>
 
-        {/* Quick Contact Box */}
-        <div className="mt-10 bg-gradient-to-r from-[#12160F] to-[#1A211A] border border-[#2C3527] rounded-2xl p-6 text-center">
-          <p className="text-sm font-semibold text-[#F2F0E6] mb-1">
-            {language === "my" ? "အခြားသိရှိလိုသည်များ ရှိသေးပါသလား?" : "Still have questions?"}
-          </p>
-          <p className="text-xs text-[#93A38C] mb-4">
-            {language === "my"
-              ? "ကျွန်ုပ်တို့ထံ Viber သို့မဟုတ် ဖုန်းဖြင့် တိုက်ရိုက်ဆက်သွယ် မေးမြန်းနိုင်ပါသည်။"
-              : "Reach our team directly via Viber or Phone."}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={viberLink}
-              className="bg-[#C8FF4D] text-[#0D120D] font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-sm"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Viber: {contactPhone}</span>
-            </a>
-            <a
-              href={telLink}
-              className="border border-[#2C3527] text-[#F2F0E6] text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 hover:bg-[#1A211A]"
-            >
-              <Phone className="w-3.5 h-3.5 text-[#C8FF4D]" />
-              <span>Call: {contactPhone}</span>
-            </a>
+      {/* FINAL CTA SECTION */}
+      <section className="py-10 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" id="lastNode" />
+        <div className="bg-[var(--moss-deep)] text-center py-16 px-6 sm:px-10 rounded-[24px] relative overflow-hidden text-[var(--stone)] shadow-2xl">
+          <div
+            className="w-24 h-24 rounded-full bg-[var(--moss-deep)] mx-auto mb-5 flex items-center justify-center relative overflow-hidden shadow-lg"
+            style={{
+              boxShadow: "0 0 0 4px var(--moss-deep), 0 0 0 5px rgba(200, 240, 74, 0.4)",
+            }}
+          >
+            <Image
+              src="/moss_logo.jpg"
+              alt="Moss logo mark"
+              width={96}
+              height={96}
+              className="w-full h-full object-cover"
+            />
           </div>
+          <h2 className="text-white text-2xl md:text-[30px] mb-2 font-fraunces font-semibold">
+            {content.finalCta.title}
+          </h2>
+          <p className="text-[#c2c8b8] text-sm mb-6 font-normal max-w-md mx-auto">
+            {content.finalCta.description}
+          </p>
+          <Link href="/auth/sign-up" className="btn-editorial btn-editorial-primary text-sm sm:text-base px-8 py-3.5">
+            <span>{content.finalCta.cta}</span>
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="relative z-10 border-t border-[#2C3527] py-10 px-[6vw] flex justify-between items-center flex-wrap gap-4 text-xs text-[#66705F] max-w-7xl mx-auto">
-        <div>
-          &copy; 2026 Moss QR. All rights reserved. • Myanmar (Yangon)
+      <footer className="py-8 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto text-xs text-[var(--sub)] flex items-center justify-between flex-wrap gap-4 border-t border-[var(--border)] mt-8">
+        <div className="flex items-center gap-2">
+          <Image
+            src="/moss_logo.jpg"
+            alt="Moss logo"
+            width={22}
+            height={22}
+            className="w-5.5 h-5.5 rounded-xs object-cover"
+          />
+          <span>{content.footer.copyright}</span>
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/menu" target="_blank" className="hover:text-[#F2F0E6] transition-colors">
-            Demo Menu
-          </Link>
-          <Link href="/auth/login" className="hover:text-[#F2F0E6] transition-colors">
-            Login
-          </Link>
-          <a
-            href={viberLink}
-            className="hover:text-[#C8FF4D] transition-colors flex items-center gap-1 font-semibold"
-          >
-            <Phone className="w-3 h-3 text-[#C8FF4D]" />
-            <span>Viber: {contactPhone}</span>
+        <div className="flex items-center gap-5">
+          <a href="#how" className="hover:text-[var(--ink)] transition-colors">
+            {content.nav.howItWorks}
           </a>
+          <a href="#pricing" className="hover:text-[var(--ink)] transition-colors">
+            {content.nav.pricing}
+          </a>
+          <a href="#faq" className="hover:text-[var(--ink)] transition-colors">
+            {content.nav.faq}
+          </a>
+          <Link href="/auth/login" className="hover:text-[var(--ink)] transition-colors">
+            {content.nav.logIn}
+          </Link>
         </div>
       </footer>
     </div>

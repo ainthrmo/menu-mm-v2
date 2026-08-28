@@ -824,9 +824,15 @@ export default function CustomerMenu({
           9. FOOTER
       ==================================================== */}
       <footer className="mx-auto max-w-xl border-t border-slate-200/80 px-4 pb-12 pt-6 text-center">
-        <p className="text-[11px] font-semibold tracking-wider text-slate-400">
-          POWERED BY <span className="text-slate-900 font-bold">MOSS QR</span>
-        </p>
+        <div className="inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold tracking-wider text-slate-400">
+          <span>POWERED BY</span>
+          <img
+            src="/moss_logo.jpg"
+            alt="Moss QR"
+            className="w-3.5 h-3.5 rounded-xs object-cover inline-block"
+          />
+          <span className="text-slate-900 font-bold">MOSS QR</span>
+        </div>
       </footer>
     </div>
   );

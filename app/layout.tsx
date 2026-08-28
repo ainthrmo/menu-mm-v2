@@ -11,9 +11,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Moss QR — Digital QR Menu for Myanmar Restaurants",
+  title: "Moss QR — A menu that grows with you",
   description:
-    "Moss QR helps restaurants create beautiful digital menus that customers can access instantly by scanning a QR code. Simple, fast, and modern.",
+    "Put your menu online in minutes. No app for guests, no developer for you. Bilingual Burmese/English. Free for up to 20 dishes.",
 };
 
 const inter = Inter({
