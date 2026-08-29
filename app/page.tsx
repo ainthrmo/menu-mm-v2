@@ -44,7 +44,7 @@ export default function LandingPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     // Light up nodes as sections are reached
-    const sections = document.querySelectorAll<HTMLElement>("section, header#s0");
+    const sections = document.querySelectorAll<HTMLElement>("section, header#live-proof, header#s0");
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -462,10 +462,10 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* HERO SECTION */}
+      {/* HERO / LIVE PROOF SECTION */}
       <header
-        className="relative pt-10 pb-16 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] gap-10 items-center"
-        id="s0"
+        className="relative pt-10 pb-16 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-12 items-center"
+        id="live-proof"
       >
         <div className="vine-node" style={{ top: 0 }} />
         <div>
@@ -503,27 +503,32 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Hero Card Visual with Glassmorphic Floating Badges */}
-        <div className="relative">
-          {/* Floating Glass Pill: Speed */}
-          <div className="hidden sm:flex absolute -top-4 -left-4 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_8px_20px_rgba(30,36,23,0.08)] text-[11px] font-semibold text-[var(--ink)]">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{content.hero.speedBadge}</span>
+        {/* Live Proof Demo Card Visual */}
+        <div className="relative flex flex-col items-center">
+          {/* Concrete Proof Metric Badge: 0.8s speed */}
+          <div className="flex sm:absolute -top-3.5 sm:-left-3 z-20 items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--ink)] mb-3 sm:mb-0 self-start sm:self-auto">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="tracking-tight">{content.hero.speedBadge}</span>
           </div>
 
-          {/* Floating Glass Pill: Dual Language */}
-          <div className="hidden sm:flex absolute -bottom-3 -right-3 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_8px_20px_rgba(30,36,23,0.08)] text-[11px] font-semibold text-[var(--moss-mid)]">
-            <span>🇲🇲</span>
+          {/* Dual Language Indicator Badge */}
+          <div className="hidden sm:flex absolute -bottom-3 -right-2 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--moss-mid)]">
+            <span aria-hidden="true">🇲🇲</span>
             <span>{content.hero.dualLangBadge}</span>
           </div>
 
+          {/* Main Demo Card Container */}
           <div
-            className="relative bg-[var(--stone-2)] rounded-[20px] p-7 sm:p-9 border border-[var(--border)] transition-transform duration-300 hover:rotate-0"
+            className="w-full relative bg-[var(--stone-2)] rounded-[24px] p-6 sm:p-8 md:p-9 border border-[var(--border)] transition-all duration-300 hover:rotate-0 hover:shadow-[0_28px_60px_rgba(30,36,23,0.16)] group"
             style={{
-              transform: "rotate(-2.5deg)",
-              boxShadow: "0 24px 50px rgba(30, 36, 23, 0.12)",
+              transform: "rotate(-2deg)",
+              boxShadow: "0 20px 48px rgba(30, 36, 23, 0.12)",
             }}
           >
+            {/* Playful corner curl svg */}
             <svg
               className="absolute -top-3.5 right-2.5 w-[60px] h-[60px] pointer-events-none"
               viewBox="0 0 60 60"
@@ -532,37 +537,48 @@ export default function LandingPage() {
               <path className="curl-path" d="M5 40 Q 10 10, 35 8 Q 50 6, 52 20" />
             </svg>
 
-            <div
-              className="w-24 h-24 rounded-full bg-[var(--moss-deep)] mx-auto mb-4.5 flex items-center justify-center relative overflow-hidden shadow-md"
-              style={{
-                boxShadow: "0 0 0 4px var(--stone-2), 0 0 0 5px var(--border)",
-              }}
-            >
-              <Image
-                src="/moss_logo.jpg"
-                alt="Moss QR seal"
-                width={96}
-                height={96}
-                className="w-full h-full object-cover"
-                priority
-              />
+            {/* QR / Logo Seal with generous contrast & quiet space */}
+            <div className="relative mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[var(--moss-deep)] p-1 mb-4 flex items-center justify-center shadow-md ring-4 ring-[var(--stone-2)] ring-offset-2 ring-offset-[var(--border)]">
+              <div className="w-full h-full rounded-full overflow-hidden relative">
+                <Image
+                  src="/moss_logo.jpg"
+                  alt="Moss QR demo code scan seal"
+                  width={112}
+                  height={112}
+                  className="w-full h-full object-cover"
+                  priority
+                />
+              </div>
             </div>
 
-            <p className="text-center text-xs text-[var(--sub)] font-medium mb-1 tracking-wider uppercase">
+            {/* Scan to open instruction */}
+            <p className="text-center text-[11px] sm:text-xs text-[var(--sub)] font-semibold mb-1 tracking-widest uppercase">
               {content.hero.cardScanToOpen}
             </p>
-            <p className="text-center font-fraunces text-xl text-[var(--ink)] mb-3">
+            <p className="text-center font-fraunces text-xl sm:text-2xl text-[var(--ink)] mb-3">
               {content.hero.cardDemoTitle}
             </p>
 
+            {/* Subtle Step Interaction Cue: Scan -> Open -> Browse */}
+            <div className="flex items-center justify-center gap-2 mb-4 text-[10.5px] font-medium text-[var(--sub)] bg-black/[0.03] py-1 px-3 rounded-full w-fit mx-auto border border-black/[0.04]">
+              <span className="text-[var(--ink)] font-semibold">1. {content.hero.stepScan}</span>
+              <span className="text-[var(--sub)] opacity-50">&rarr;</span>
+              <span className="text-[var(--ink)] font-semibold">2. {content.hero.stepOpen}</span>
+              <span className="text-[var(--sub)] opacity-50">&rarr;</span>
+              <span className="text-[var(--ink)] font-semibold">3. {content.hero.stepBrowse}</span>
+            </div>
+
+            {/* Interactive 'Explore live demo' CTA button */}
             <div className="flex justify-center">
               <Link
                 href="/menu"
                 target="_blank"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--moss-mid)] hover:underline"
+                rel="noopener noreferrer"
+                aria-label="Explore live demo menu (opens in new tab)"
+                className="inline-flex items-center gap-2 text-xs sm:text-[13px] font-semibold text-[var(--ink)] bg-white/90 hover:bg-white px-4 py-2 rounded-full border border-[var(--border)] shadow-2xs hover:shadow-sm hover:border-[var(--moss-mid)] hover:-translate-y-0.5 transition-all focus-visible:outline-2 focus-visible:outline-[var(--ink)] focus-visible:outline-offset-2"
               >
                 <span>{content.hero.cardExploreDemo}</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3.5 h-3.5 text-[var(--moss-mid)]" />
               </Link>
             </div>
           </div>

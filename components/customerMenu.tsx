@@ -249,6 +249,15 @@ export default function CustomerMenu({
           setMenuItems(DEMO_MENU_ITEMS);
         }
 
+        // Record scan event asynchronously (non-blocking)
+        if (targetRestaurantId && targetRestaurantId !== "demo") {
+          fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ restaurantId: targetRestaurantId }),
+          }).catch(() => {});
+        }
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching menu data:", err);

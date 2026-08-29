@@ -26,6 +26,9 @@ export const landingEn = {
     cardScanToOpen: "Scan to open",
     cardDemoTitle: "Moss Demo Menu",
     cardExploreDemo: "Explore live demo",
+    stepScan: "Scan",
+    stepOpen: "Open",
+    stepBrowse: "Browse",
   },
   problem: {
     title: "A price changes. A dish sells out. Now what?",

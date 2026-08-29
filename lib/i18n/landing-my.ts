@@ -28,6 +28,9 @@ export const landingMy: LandingContent = {
     cardScanToOpen: "စကင်ဖတ်ပြီး ဖွင့်ကြည့်ပါ",
     cardDemoTitle: "Moss နမူနာမီနူး",
     cardExploreDemo: "နမူနာမီနူး စမ်းကြည့်ရန်",
+    stepScan: "စကင်ဖတ်",
+    stepOpen: "တိုက်ရိုက်ပွင့်",
+    stepBrowse: "မီနူးကြည့်",
   },
   problem: {
     title: "ဈေးနှုန်းပြောင်းသွားပြီလား? ဟင်းပွဲကုန်သွားပြီလား? ဘာဆက်လုပ်မလဲ?",

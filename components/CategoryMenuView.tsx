@@ -123,6 +123,14 @@ export default function CategoryMenuView({
   const router = useRouter();
   const supabase = createClient();
 
+  // Local active category state for instant 0ms switching
+  const [currentCategorySlug, setCurrentCategorySlug] = useState<string>(categorySlug);
+
+  // Sync if URL param changes (e.g. browser back/forward)
+  useEffect(() => {
+    setCurrentCategorySlug(categorySlug);
+  }, [categorySlug]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [allMenuItems, setAllMenuItems] = useState<MenuItem[]>([]);
   const [storeProfile, setStoreProfile] = useState<StoreProfile | null>(null);
@@ -145,6 +153,7 @@ export default function CategoryMenuView({
 
   /* ----------------------------------------------------------
      DATA FETCHING & MULTI-TENANT RESOLUTION (STRICTLY SCOPED)
+     Fetched ONCE per restaurant; category switching is 100% client-side
   ---------------------------------------------------------- */
   useEffect(() => {
     const fetchData = async () => {
@@ -277,6 +286,15 @@ export default function CategoryMenuView({
           setAllMenuItems(DEMO_MENU_ITEMS);
         }
 
+        // Record scan event asynchronously (non-blocking)
+        if (targetRestaurantId && targetRestaurantId !== "demo") {
+          fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ restaurantId: targetRestaurantId }),
+          }).catch(() => {});
+        }
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching category menu data:", err);
@@ -290,7 +308,7 @@ export default function CategoryMenuView({
     };
 
     fetchData();
-  }, [categorySlug, supabase]);
+  }, [supabase]);
 
   // Persist cart per restaurant tenant
   useEffect(() => {
@@ -304,10 +322,10 @@ export default function CategoryMenuView({
   ---------------------------------------------------------- */
   const activeCategory = useMemo(() => {
     if (categories.length === 0) return null;
-    return categories.find((c) => categoryMatchesSlug(c, categorySlug)) || null;
-  }, [categories, categorySlug]);
+    return categories.find((c) => categoryMatchesSlug(c, currentCategorySlug)) || null;
+  }, [categories, currentCategorySlug]);
 
-  const activeCategoryName = activeCategory?.name || decodeURIComponent(categorySlug);
+  const activeCategoryName = activeCategory?.name || decodeURIComponent(currentCategorySlug);
 
   // Dishes strictly belonging to this category and restaurant
   const categoryDishes = useMemo(() => {
@@ -520,6 +538,17 @@ export default function CategoryMenuView({
                 <Link
                   key={cat.id}
                   href={catUrl}
+                  onClick={(e) => {
+                    // Instant 0ms client-side category switch
+                    if (currentCategorySlug !== cat.name && !e.metaKey && !e.ctrlKey) {
+                      e.preventDefault();
+                      setCurrentCategorySlug(cat.name);
+                      setSearchQuery("");
+                      if (typeof window !== "undefined") {
+                        window.history.pushState({}, "", catUrl);
+                      }
+                    }
+                  }}
                   className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all min-h-[34px] flex items-center gap-1.5 ${
                     isSelected
                       ? "bg-[#CDF22B] text-[#111111] shadow-sm border border-[#CDF22B]"
