@@ -48,27 +48,16 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Use getSession() instead of getUser() in the proxy/middleware context.
-  //
-  // Reason: getUser() makes a live server-to-server network call to Supabase's
-  // auth endpoint to re-validate the JWT. In the proxy context this call does
-  // NOT go through the /supabase-proxy browser rewrite (that rewrite only
-  // applies to client-side fetch). When this network call stalls, times out,
-  // or is affected by connectivity issues, getUser() can return a stale or
-  // incorrect result — causing an unauthenticated visitor to be wrongly
-  // redirected to /protected.
-  //
-  // getSession() reads the session directly from the request cookies with zero
-  // network round-trips. autoRefreshToken is explicitly set to false above so
-  // getSession() will NEVER trigger server-to-server token refresh network requests.
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+  // Verify user server-side with Supabase Auth
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Define public routes that do NOT require authentication
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/menu") ||
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/api/leads") ||
+    pathname.startsWith("/api/scan") ||
     pathname.startsWith("/supabase-proxy");
 
   // If the user is NOT logged in and trying to access a protected route,

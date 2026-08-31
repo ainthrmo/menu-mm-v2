@@ -1,15 +1,42 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/supabase';
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserRole } from '@/lib/admin-auth';
+import { getRestaurantSubscription } from '@/lib/subscription';
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Please log in to use the AI menu parser.' },
+        { status: 401 }
+      );
+    }
+
+    // Verify user authorization: super-admin/staff OR owner with a valid restaurant
+    const { isAdminOrStaff } = await getCurrentUserRole(supabase);
+    if (!isAdminOrStaff) {
+      const { data: restaurant } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (!restaurant) {
+        return NextResponse.json(
+          { error: 'Forbidden: No restaurant owned by this account.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY မရှိသေးပါ။ .env.local တွင် စစ်ဆေးပါ' },
+        { error: 'GEMINI_API_KEY is not configured on the server.' },
         { status: 500 }
       );
     }
@@ -19,7 +46,7 @@ export async function POST(req: Request) {
 
     if (!file) {
       return NextResponse.json(
-        { error: 'ပုံ ထည့်သွင်းထားခြင်း မရှိပါ' },
+        { error: 'No menu image file provided.' },
         { status: 400 }
       );
     }

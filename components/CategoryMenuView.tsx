@@ -186,38 +186,24 @@ export default function CategoryMenuView({
 
         // If explicitly demo mode, or if no restaurant ID is found at all, load Live Demo Menu
         if (isDemoMode || !targetRestaurantId) {
-          if (!isDemoMode) {
-            const { data: publicRest } = await supabase
-              .from("restaurants")
-              .select("id")
-              .limit(1)
-              .maybeSingle();
-
-            if (publicRest) {
-              targetRestaurantId = publicRest.id;
-            }
-          }
-
-          if (!targetRestaurantId || isDemoMode) {
-            setCurrentRestaurantId("demo");
-            setStoreProfile(DEMO_STORE_PROFILE);
-            setCategories(DEMO_CATEGORIES);
-            setAllMenuItems(DEMO_MENU_ITEMS);
-            if (typeof window !== "undefined") {
-              const savedCart = sessionStorage.getItem("menu_cart_demo");
-              if (savedCart) {
-                try {
-                  setCart(JSON.parse(savedCart));
-                } catch {
-                  setCart({});
-                }
-              } else {
+          setCurrentRestaurantId("demo");
+          setStoreProfile(DEMO_STORE_PROFILE);
+          setCategories(DEMO_CATEGORIES);
+          setAllMenuItems(DEMO_MENU_ITEMS);
+          if (typeof window !== "undefined") {
+            const savedCart = sessionStorage.getItem("menu_cart_demo");
+            if (savedCart) {
+              try {
+                setCart(JSON.parse(savedCart));
+              } catch {
                 setCart({});
               }
+            } else {
+              setCart({});
             }
-            setLoading(false);
-            return;
           }
+          setLoading(false);
+          return;
         }
 
         setCurrentRestaurantId(targetRestaurantId);

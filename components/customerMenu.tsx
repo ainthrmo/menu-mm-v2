@@ -173,35 +173,20 @@ export default function CustomerMenu({
 
         // If explicitly demo mode, or if no restaurant ID is found at all, load Live Demo Menu
         if (isDemoMode || !targetRestaurantId) {
-          // Check if any restaurant exists in database first if not explicit demo
-          if (!isDemoMode) {
-            const { data: publicRest } = await supabase
-              .from("restaurants")
-              .select("id")
-              .limit(1)
-              .maybeSingle();
-
-            if (publicRest) {
-              targetRestaurantId = publicRest.id;
+          setCurrentRestaurantId("demo");
+          setStoreProfile(DEMO_STORE_PROFILE);
+          setCategories(DEMO_CATEGORIES);
+          setMenuItems(DEMO_MENU_ITEMS);
+          if (typeof window !== "undefined") {
+            const savedCart = sessionStorage.getItem("menu_cart_demo");
+            if (savedCart) {
+              try { setCart(JSON.parse(savedCart)); } catch { setCart({}); }
+            } else {
+              setCart({});
             }
           }
-
-          if (!targetRestaurantId || isDemoMode) {
-            setCurrentRestaurantId("demo");
-            setStoreProfile(DEMO_STORE_PROFILE);
-            setCategories(DEMO_CATEGORIES);
-            setMenuItems(DEMO_MENU_ITEMS);
-            if (typeof window !== "undefined") {
-              const savedCart = sessionStorage.getItem("menu_cart_demo");
-              if (savedCart) {
-                try { setCart(JSON.parse(savedCart)); } catch { setCart({}); }
-              } else {
-                setCart({});
-              }
-            }
-            setLoading(false);
-            return;
-          }
+          setLoading(false);
+          return;
         }
 
         setCurrentRestaurantId(targetRestaurantId);
