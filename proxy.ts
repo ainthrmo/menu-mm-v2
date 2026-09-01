@@ -11,11 +11,10 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico, robots.txt, sitemap.xml
      * - supabase-proxy (rewrite proxy endpoint)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     * Feel free to modify this pattern to include more paths.
+     * - static files - .svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .txt, .xml, .html
      */
-    "/((?!_next/static|_next/image|favicon.ico|supabase-proxy|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|supabase-proxy|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|html)$).*)",
   ],
 };

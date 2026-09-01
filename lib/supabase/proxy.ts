@@ -55,10 +55,16 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/menu") ||
+    pathname.startsWith("/category") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/api/leads") ||
     pathname.startsWith("/api/scan") ||
-    pathname.startsWith("/supabase-proxy");
+    pathname.startsWith("/supabase-proxy") ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".txt") ||
+    pathname.endsWith(".xml");
 
   // If the user is NOT logged in and trying to access a protected route,
   // redirect to login. This does NOT apply to /auth/* routes — unauthenticated
