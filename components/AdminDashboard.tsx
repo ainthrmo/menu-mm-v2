@@ -142,6 +142,11 @@ export const AdminDashboard: React.FC = () => {
 
   // Dish Form State
   const [editingItem, setEditingItem] = useState<AdminMenuItem | null>(null);
+  const [nameLang, setNameLang] = useState<"MM" | "EN">("MM");
+  const [descLang, setDescLang] = useState<"MM" | "EN">("MM");
+  const [catLang, setCatLang] = useState<"MM" | "EN">("MM");
+  const [isAddingNewCategoryInline, setIsAddingNewCategoryInline] = useState(false);
+  const [savingInlineCategory, setSavingInlineCategory] = useState(false);
   const [newItemNameMm, setNewItemNameMm] = useState("");
   const [newItemNameEn, setNewItemNameEn] = useState("");
   const [selectedCategoryChoice, setSelectedCategoryChoice] = useState("");
@@ -553,6 +558,10 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenAddDishModal = () => {
     setEditingItem(null);
+    setNameLang("MM");
+    setDescLang("MM");
+    setCatLang("MM");
+    setIsAddingNewCategoryInline(false);
     setNewItemNameMm("");
     setNewItemNameEn("");
     if (categories.length > 0) {
@@ -561,6 +570,7 @@ export const AdminDashboard: React.FC = () => {
       setNewCategoryNameEn("");
     } else {
       setSelectedCategoryChoice("__NEW__");
+      setIsAddingNewCategoryInline(true);
       setNewCategoryNameMm("");
       setNewCategoryNameEn("");
     }
@@ -576,6 +586,10 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenEditDishModal = (item: AdminMenuItem) => {
     setEditingItem(item);
+    setNameLang("MM");
+    setDescLang("MM");
+    setCatLang("MM");
+    setIsAddingNewCategoryInline(false);
     // Treat existing single name/description as Burmese value (Requirement 4)
     const burmeseName = item.name_mm?.trim() || item.name || "";
     const englishName = (item.name_mm && item.name !== item.name_mm) ? item.name : "";
@@ -596,6 +610,51 @@ export const AdminDashboard: React.FC = () => {
     setImagePreview(item.image);
     setFormError(null);
     setIsDishModalOpen(true);
+  };
+
+  const handleSaveInlineCategory = async () => {
+    if (!newCategoryNameMm.trim()) {
+      setFormError("Burmese Category Name is required.");
+      return;
+    }
+
+    const isDuplicate = categories.some(
+      (c) => (c.name_mm || c.name).trim().toLowerCase() === newCategoryNameMm.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setFormError(`A category named "${newCategoryNameMm.trim()}" already exists.`);
+      return;
+    }
+
+    setSavingInlineCategory(true);
+    setFormError(null);
+
+    const createdCatName = newCategoryNameEn.trim() || newCategoryNameMm.trim();
+    const newCatPayload = {
+      name: createdCatName,
+      name_mm: newCategoryNameMm.trim(),
+      restaurant_id: restaurantId,
+      sort_order: categories.length,
+    };
+
+    const { data: newCatData, error: catError } = await supabase
+      .from("categories")
+      .insert([newCatPayload])
+      .select();
+
+    if (catError) {
+      console.error("INLINE CATEGORY CREATION ERROR:", catError);
+      setFormError("Failed to create category: " + catError.message);
+    } else if (newCatData && newCatData.length > 0) {
+      const createdCategory = newCatData[0];
+      setCategories((prev) => [...prev, createdCategory]);
+      setSelectedCategoryChoice(createdCategory.name);
+      setIsAddingNewCategoryInline(false);
+      setNewCategoryNameMm("");
+      setNewCategoryNameEn("");
+      toast.success(`Category "${createdCategory.name_mm || createdCategory.name}" created`);
+    }
+    setSavingInlineCategory(false);
   };
 
   const handleSaveStoreProfile = async (e: React.FormEvent) => {
@@ -2028,7 +2087,7 @@ export const AdminDashboard: React.FC = () => {
 
             <form onSubmit={handleSaveDish} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">Dish Image</label>
+                <label className="block text-xs font-bold text-[#111111] mb-1.5">Dish Photo</label>
                 <div className="relative border-2 border-dashed border-[#E5E5E5] rounded-2xl p-4 text-center bg-white cursor-pointer hover:border-[#1E45FB] transition-colors">
                   <input
                     type="file"
@@ -2047,23 +2106,45 @@ export const AdminDashboard: React.FC = () => {
                   ) : (
                     <div className="space-y-1.5 py-2 text-xs text-[#666666]">
                       <Upload className="w-5 h-5 mx-auto text-[#1E45FB]" />
-                      <p className="font-medium">Upload Dish Photo</p>
+                      <p className="font-medium">Upload dish photo (optional)</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Dish Name: Side-by-Side (Burmese Required, English Optional) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                      <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
-                      <span>Dish Name (မြန်မာ)</span>
-                      <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[10px] font-bold text-rose-500">Required</span>
+              {/* Dish Name with Language Toggle */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-[#111111]">
+                    Dish Name {nameLang === "MM" && <span className="text-rose-500">*</span>}
+                  </label>
+                  <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                    <button
+                      type="button"
+                      onClick={() => setNameLang("MM")}
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                        nameLang === "MM"
+                          ? "bg-[#111111] text-white shadow-xs"
+                          : "text-[#666666] hover:text-[#111111]"
+                      }`}
+                    >
+                      MM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNameLang("EN")}
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                        nameLang === "EN"
+                          ? "bg-[#111111] text-white shadow-xs"
+                          : "text-[#666666] hover:text-[#111111]"
+                      }`}
+                    >
+                      EN
+                    </button>
                   </div>
+                </div>
+
+                {nameLang === "MM" ? (
                   <input
                     type="text"
                     required
@@ -2072,16 +2153,7 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="ဥပမာ - ရှမ်းခေါက်ဆွဲ"
                     className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
                   />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                      <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
-                      <span>Dish Name (English)</span>
-                    </label>
-                    <span className="text-[10px] text-[#888888]">Optional</span>
-                  </div>
+                ) : (
                   <input
                     type="text"
                     value={newItemNameEn}
@@ -2089,118 +2161,167 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="e.g. Shan Noodles"
                     className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
                   />
-                </div>
+                )}
               </div>
 
-              {/* Category (Dropdown + Inline Creation) & Price */}
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-bold text-[#111111]">
-                        Category <span className="text-rose-500">*</span>
-                      </label>
-                      {selectedCategoryChoice === "__NEW__" && (
-                        <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded">
-                          New Category
-                        </span>
-                      )}
-                    </div>
+              {/* Combined Category + Price in one row on screens >= 360px */}
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3.5 items-start">
+                {/* Category Dropdown or Inline Creation Expand */}
+                <div>
+                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                    Category <span className="text-rose-500">*</span>
+                  </label>
+
+                  {!isAddingNewCategoryInline ? (
                     <select
                       value={selectedCategoryChoice}
-                      onChange={(e) => setSelectedCategoryChoice(e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value === "__NEW__") {
+                          setIsAddingNewCategoryInline(true);
+                          setCatLang("MM");
+                          setNewCategoryNameMm("");
+                          setNewCategoryNameEn("");
+                        } else {
+                          setSelectedCategoryChoice(e.target.value);
+                        }
+                      }}
                       className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs font-medium"
                     >
-                      <option value="__NEW__" className="font-bold text-[#1E45FB]">
-                        + Add New Category...
-                      </option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>
                           {cat.name_mm && cat.name !== cat.name_mm ? `${cat.name_mm} (${cat.name})` : (cat.name_mm || cat.name)}
                         </option>
                       ))}
+                      <option value="__NEW__" className="font-bold text-[#1E45FB]">
+                        + Add new category
+                      </option>
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#111111] mb-1.5">
-                      Price (MMK) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      value={newItemPrice}
-                      onChange={(e) => setNewItemPrice(e.target.value)}
-                      placeholder="e.g. 3500"
-                      className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
-                    />
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-[#111111]">
+                          New category {catLang === "MM" && <span className="text-rose-500">*</span>}
+                        </span>
+                        <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                          <button
+                            type="button"
+                            onClick={() => setCatLang("MM")}
+                            className={`px-1.5 py-0.5 text-[9px] font-bold rounded transition-all ${
+                              catLang === "MM"
+                                ? "bg-[#111111] text-white shadow-xs"
+                                : "text-[#666666] hover:text-[#111111]"
+                            }`}
+                          >
+                            MM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCatLang("EN")}
+                            className={`px-1.5 py-0.5 text-[9px] font-bold rounded transition-all ${
+                              catLang === "EN"
+                                ? "bg-[#111111] text-white shadow-xs"
+                                : "text-[#666666] hover:text-[#111111]"
+                            }`}
+                          >
+                            EN
+                          </button>
+                        </div>
+                      </div>
+
+                      {catLang === "MM" ? (
+                        <input
+                          type="text"
+                          value={newCategoryNameMm}
+                          onChange={(e) => setNewCategoryNameMm(e.target.value)}
+                          placeholder="ဥပမာ - မနက်စာ"
+                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={newCategoryNameEn}
+                          onChange={(e) => setNewCategoryNameEn(e.target.value)}
+                          placeholder="e.g. Breakfast"
+                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                        />
+                      )}
+
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={handleSaveInlineCategory}
+                          disabled={savingInlineCategory || !newCategoryNameMm.trim()}
+                          className="px-3 py-1.5 bg-[#1E45FB] text-white text-[11px] font-bold rounded-lg hover:bg-[#1737C9] disabled:opacity-50 transition-all flex items-center gap-1 shadow-xs"
+                        >
+                          {savingInlineCategory && <Loader2 className="w-3 h-3 animate-spin" />}
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingNewCategoryInline(false);
+                            if (categories.length > 0) {
+                              setSelectedCategoryChoice(categories[0].name);
+                            }
+                          }}
+                          className="px-3 py-1.5 text-[#666666] hover:text-[#111111] text-[11px] font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price (MMK) */}
+                <div>
+                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                    Price (MMK) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={newItemPrice}
+                    onChange={(e) => setNewItemPrice(e.target.value)}
+                    placeholder="e.g. 3500"
+                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Description with Language Toggle */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-[#111111]">
+                    Description {descLang === "MM" && <span className="text-rose-500">*</span>}
+                  </label>
+                  <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                    <button
+                      type="button"
+                      onClick={() => setDescLang("MM")}
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                        descLang === "MM"
+                          ? "bg-[#111111] text-white shadow-xs"
+                          : "text-[#666666] hover:text-[#111111]"
+                      }`}
+                    >
+                      MM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDescLang("EN")}
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                        descLang === "EN"
+                          ? "bg-[#111111] text-white shadow-xs"
+                          : "text-[#666666] hover:text-[#111111]"
+                      }`}
+                    >
+                      EN
+                    </button>
                   </div>
                 </div>
 
-                {/* Inline Category Creation Fields (Revealed when "+ Add New Category..." is selected) */}
-                {selectedCategoryChoice === "__NEW__" && (
-                  <div className="p-3.5 rounded-2xl border border-[#1E45FB]/30 bg-[#1E45FB]/5 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-[#1E45FB] flex items-center gap-1.5">
-                        <FolderPlus className="w-3.5 h-3.5" />
-                        <span>New Category Details</span>
-                      </p>
-                      <span className="text-[10px] text-[#666666]">
-                        Created and assigned automatically on save
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                            <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
-                            <span>Category (မြန်မာ)</span>
-                            <span className="text-rose-500">*</span>
-                          </label>
-                          <span className="text-[10px] font-bold text-rose-500">Required</span>
-                        </div>
-                        <input
-                          type="text"
-                          required={selectedCategoryChoice === "__NEW__"}
-                          placeholder="ဥပမာ - ခေါက်ဆွဲများ"
-                          value={newCategoryNameMm}
-                          onChange={(e) => setNewCategoryNameMm(e.target.value)}
-                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                            <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
-                            <span>Category (English)</span>
-                          </label>
-                          <span className="text-[10px] text-[#888888]">Optional</span>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="e.g. Noodles"
-                          value={newCategoryNameEn}
-                          onChange={(e) => setNewCategoryNameEn(e.target.value)}
-                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Dish Description: Side-by-Side (Burmese Required, English Optional, all plans) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                      <span className="bg-[#111111] text-white text-[9px] font-black px-1.5 py-0.5 rounded">MM</span>
-                      <span>Description (မြန်မာ)</span>
-                      <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[10px] font-bold text-rose-500">Required</span>
-                  </div>
+                {descLang === "MM" ? (
                   <textarea
                     rows={3}
                     required
@@ -2209,16 +2330,7 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="ဥပမာ - ကြက်သား၊ ငရုတ်ဆီ၊ ရှမ်းချဥ်တို့ဖြင့် တွဲဖက်ထားသော ရှမ်းရိုးရာခေါက်ဆွဲ"
                     className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
                   />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                      <span className="bg-neutral-200 text-neutral-800 text-[9px] font-black px-1.5 py-0.5 rounded">EN</span>
-                      <span>Description (English)</span>
-                    </label>
-                    <span className="text-[10px] text-[#888888]">Optional</span>
-                  </div>
+                ) : (
                   <textarea
                     rows={3}
                     value={newItemDescriptionEn}
@@ -2226,45 +2338,38 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="e.g. Traditional sticky rice noodles with spiced chicken, chili oil and pickled mustard greens"
                     className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
                   />
-                </div>
+                )}
               </div>
 
-              {/* Popular / Featured Item Toggle */}
-              <div>
-                <div className="flex items-center justify-between p-3 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA]">
-                  <div className="space-y-0.5 pr-2">
-                    <div className="flex items-center gap-1.5">
-                      <label htmlFor="dish-popular-toggle" className="text-xs font-bold text-[#111111] cursor-pointer">
-                        Feature as Popular Dish
-                      </label>
-                      {isFreePlan && (
-                        <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5" /> Pro
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-[#666666]">
-                      Showcase this dish in the Popular & Spotlight section of your menu.
-                    </p>
-                  </div>
-
-                  {isFreePlan ? (
-                    <input
-                      type="checkbox"
-                      disabled
-                      checked={false}
-                      className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] cursor-not-allowed opacity-50 shrink-0"
-                    />
-                  ) : (
-                    <input
-                      type="checkbox"
-                      id="dish-popular-toggle"
-                      checked={newItemIsPopular}
-                      onChange={(e) => setNewItemIsPopular(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] focus:ring-[#1E45FB] cursor-pointer accent-[#1E45FB] shrink-0"
-                    />
+              {/* Popular Dish Toggle (Single clean row) */}
+              <div className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-1.5">
+                  <label htmlFor="dish-popular-toggle" className="text-xs font-bold text-[#111111] cursor-pointer">
+                    Feature as popular dish
+                  </label>
+                  {isFreePlan && (
+                    <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <Sparkles className="w-2.5 h-2.5" /> Pro
+                    </span>
                   )}
                 </div>
+
+                {isFreePlan ? (
+                  <input
+                    type="checkbox"
+                    disabled
+                    checked={false}
+                    className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] cursor-not-allowed opacity-50 shrink-0"
+                  />
+                ) : (
+                  <input
+                    type="checkbox"
+                    id="dish-popular-toggle"
+                    checked={newItemIsPopular}
+                    onChange={(e) => setNewItemIsPopular(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] focus:ring-[#1E45FB] cursor-pointer accent-[#1E45FB] shrink-0"
+                  />
+                )}
               </div>
 
               <button

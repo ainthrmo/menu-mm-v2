@@ -10,6 +10,9 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: ["ui-ux-pro-max-skill/**", "scripts/**", ".next/**"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

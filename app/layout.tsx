@@ -5,15 +5,94 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+const getBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  if (process.env.NODE_ENV === "production") {
+    return "https://getmossqr.com";
+  }
+  return process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+};
+
+const siteUrl = getBaseUrl();
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Moss QR — A menu that grows with you",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    template: "%s | MOSSQR",
+  },
   description:
-    "Put your menu online in minutes. No app for guests, no developer for you. Bilingual Burmese/English. Free for up to 20 dishes.",
+    "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+  alternates: {
+    canonical: "https://getmossqr.com",
+  },
+  openGraph: {
+    title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    description:
+      "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+    url: "https://getmossqr.com",
+    siteName: "MOSSQR",
+    locale: "en_US",
+    alternateLocale: ["my_MM"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    description:
+      "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://getmossqr.com/#website",
+      "url": "https://getmossqr.com",
+      "name": "MOSSQR",
+      "description": "Digital QR Menus for Restaurants & Cafés",
+      "inLanguage": ["en", "my"],
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://getmossqr.com/#software",
+      "name": "MOSSQR",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All modern web browsers",
+      "description":
+        "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "MMK",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://getmossqr.com/#organization",
+      "name": "MOSSQR",
+      "url": "https://getmossqr.com",
+      "logo": "https://getmossqr.com/moss_logo.jpg",
+    },
+  ],
 };
 
 const inter = Inter({
@@ -51,6 +130,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansMyanmar.variable} font-sans antialiased`}
       >
@@ -69,4 +154,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+}
