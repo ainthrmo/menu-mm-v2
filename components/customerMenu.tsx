@@ -381,11 +381,21 @@ export default function CustomerMenu({
     storeProfile?.city ||
     null;
 
+  const primarySocialLink =
+    storeProfile?.social_facebook ||
+    storeProfile?.social_instagram ||
+    storeProfile?.social_tiktok ||
+    storeProfile?.social_messenger ||
+    null;
+
   const showWifi = Boolean(
-    storeProfile?.wifi_password?.trim() && storeProfile?.show_wifi !== false
+    (storeProfile?.wifi_password?.trim() || storeProfile?.wifi_name?.trim()) &&
+      storeProfile?.show_wifi !== false
   );
 
-  const hasAnyInfo = Boolean(locationText || storeProfile?.social_phone || showWifi);
+  const hasAnyInfo = Boolean(
+    locationText || storeProfile?.social_phone || primarySocialLink || showWifi
+  );
 
   /* ----------------------------------------------------------
      RENDER
@@ -507,9 +517,27 @@ export default function CustomerMenu({
                 <div className="flex items-center gap-1.5">
                   <Wifi className="h-3.5 w-3.5 text-[#888888] shrink-0" />
                   <span>
-                    WiFi: <strong className="text-[#111111] font-bold">{storeProfile?.wifi_password}</strong>
+                    WiFi:{" "}
+                    {storeProfile?.wifi_name && (
+                      <span className="text-[#525252] mr-1">{storeProfile.wifi_name} &bull;</span>
+                    )}
+                    <strong className="text-[#111111] font-bold">
+                      {storeProfile?.wifi_password || "Open"}
+                    </strong>
                   </span>
                 </div>
+              )}
+
+              {primarySocialLink && (
+                <a
+                  href={primarySocialLink.startsWith("http") ? primarySocialLink : `https://${primarySocialLink}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 hover:text-[#111111] transition-colors"
+                >
+                  <Globe className="h-3.5 w-3.5 text-[#888888] shrink-0" />
+                  <span>Social</span>
+                </a>
               )}
             </div>
           )}

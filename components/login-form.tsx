@@ -53,17 +53,21 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className={authCardClass}>
-        <CardHeader>
-          <CardTitle className="text-2xl text-[#111111]">Login</CardTitle>
-          <CardDescription className="text-[#666666]">
-            Enter your email below to login to your account
+        <CardHeader className="space-y-1.5 pb-4">
+          <CardTitle className="text-2xl font-bold font-fraunces text-[#1e2417] tracking-tight">
+            Log in
+          </CardTitle>
+          <CardDescription className="text-xs text-[#57604f]">
+            Enter your email below to access your restaurant admin
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-5">
-              <div className="grid gap-2">
-                <Label htmlFor="email" className="text-[#111111]">Email</Label>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="email" className="text-xs font-bold text-[#1e2417]">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -74,14 +78,16 @@ export function LoginForm({
                   className={authInputClass}
                 />
               </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password" className="text-[#111111]">Password</Label>
+              <div className="grid gap-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-xs font-bold text-[#1e2417]">
+                    Password
+                  </Label>
                   <Link
                     href="/auth/forgot-password"
-                    className={cn("ml-auto inline-block text-sm", authLinkClass)}
+                    className={cn("text-xs text-[#57604f] hover:text-[#1e2417] transition-colors")}
                   >
-                    Forgot your password?
+                    Forgot password?
                   </Link>
                 </div>
                 <Input
@@ -94,15 +100,15 @@ export function LoginForm({
                 />
               </div>
               {error && (
-                <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">
+                <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
                   {error}
                 </p>
               )}
               <Button type="submit" className={authButtonClass} disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Logging in..." : "Log in"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm text-[#666666]">
+            <div className="mt-5 pt-4 border-t border-[#1e2417]/10 text-center text-xs text-[#57604f]">
               Don&apos;t have an account?{" "}
               <Link href="/auth/sign-up" className={authLinkClass}>
                 Sign up

@@ -51,33 +51,43 @@ export function ForgotPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {success ? (
         <Card className={authCardClass}>
-          <CardHeader>
-            <CardTitle className="text-2xl text-[#111111]">Check your email</CardTitle>
-            <CardDescription className="text-[#666666]">Password reset instructions sent</CardDescription>
+          <CardHeader className="space-y-1.5 pb-4">
+            <CardTitle className="text-2xl font-bold font-fraunces text-[#1e2417] tracking-tight">
+              Check your email
+            </CardTitle>
+            <CardDescription className="text-xs text-[#57604f]">
+              Password reset instructions sent
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[#666666]">
+            <p className="text-xs text-[#57604f] leading-relaxed">
               If you registered using your email and password, you will receive
               a password reset email.
             </p>
-            <Link href="/auth/login" className={cn("inline-block mt-4 text-sm", authLinkClass)}>
-              Back to login
-            </Link>
+            <div className="mt-5 pt-4 border-t border-[#1e2417]/10">
+              <Link href="/auth/login" className={cn("inline-block text-xs", authLinkClass)}>
+                &larr; Back to log in
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : (
         <Card className={authCardClass}>
-          <CardHeader>
-            <CardTitle className="text-2xl text-[#111111]">Reset your password</CardTitle>
-            <CardDescription className="text-[#666666]">
+          <CardHeader className="space-y-1.5 pb-4">
+            <CardTitle className="text-2xl font-bold font-fraunces text-[#1e2417] tracking-tight">
+              Reset password
+            </CardTitle>
+            <CardDescription className="text-xs text-[#57604f]">
               Enter your email and we&apos;ll send you a reset link
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-5">
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className="text-[#111111]">Email</Label>
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="email" className="text-xs font-bold text-[#1e2417]">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -89,7 +99,7 @@ export function ForgotPasswordForm({
                   />
                 </div>
                 {error && (
-                  <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">
+                  <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
                     {error}
                   </p>
                 )}
@@ -97,10 +107,10 @@ export function ForgotPasswordForm({
                   {isLoading ? "Sending..." : "Send reset email"}
                 </Button>
               </div>
-              <div className="mt-4 text-center text-sm text-[#666666]">
+              <div className="mt-5 pt-4 border-t border-[#1e2417]/10 text-center text-xs text-[#57604f]">
                 Remember your password?{" "}
                 <Link href="/auth/login" className={authLinkClass}>
-                  Login
+                  Log in
                 </Link>
               </div>
             </form>

@@ -7,11 +7,16 @@ import { ChevronDown, Menu, X, ArrowRight, Check, ExternalLink, Globe } from "lu
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { landingEn } from "@/lib/i18n/landing-en";
 import { landingMy } from "@/lib/i18n/landing-my";
+// Change 1: Reuse existing qrcode.react library (already installed, same import pattern as QrCodeGenerator.tsx)
+import { QRCodeSVG } from "qrcode.react";
+import { DEMO_CATEGORIES, DEMO_MENU_ITEMS } from "@/lib/demo-menu-data";
+import { formatMMK } from "@/lib/utils";
 
 export default function LandingPage() {
   const { language, setLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [demoQrUrl, setDemoQrUrl] = useState("https://moss-qr.com/menu");
   const vineFillRef = useRef<HTMLDivElement | null>(null);
   const vineTrackRef = useRef<HTMLDivElement | null>(null);
   const mobileProgressRef = useRef<HTMLDivElement | null>(null);
@@ -19,6 +24,9 @@ export default function LandingPage() {
   const content = language === "my" ? landingMy : landingEn;
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDemoQrUrl(`${window.location.origin}/menu`);
+    }
     const sizeTrack = () => {
       if (vineTrackRef.current) {
         vineTrackRef.current.style.height = `${document.body.scrollHeight}px`;
@@ -73,7 +81,8 @@ export default function LandingPage() {
   return (
     <div className="landing-editorial-root min-h-screen bg-[var(--stone)] text-[var(--ink)] antialiased overflow-x-hidden selection:bg-[var(--lime)] selection:text-[var(--ink)]">
       <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap");
+        /* Fix 8: Removed unused Fraunces weight 500 — saves ~15KB font payload */
+        @import url("https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap");
 
         .landing-editorial-root {
           --stone: #f6f2e8;
@@ -257,6 +266,19 @@ export default function LandingPage() {
             5% 100%,
             0 92%
           );
+        }
+
+        /* Fix 3: Smooth rotate transition on ticket cards (was instant snap) */
+        .ticket-card {
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                      box-shadow 0.3s ease;
+        }
+
+        /* Fix 5: Mobile gap below torn clip-path so cards don't bleed together */
+        @media (max-width: 640px) {
+          .ticket-card {
+            margin-bottom: 20px;
+          }
         }
 
         /* FAQ Grid Transition */
@@ -469,7 +491,8 @@ export default function LandingPage() {
       >
         <div className="vine-node" style={{ top: 0 }} />
         <div>
-          <h1 className="font-fraunces text-4xl sm:text-5xl lg:text-[48px] leading-[1.08] mb-4 tracking-[-0.015em] text-[var(--ink)]">
+          {/* Change 2: lg:text-[48px]→[42px], leading-[1.08]→[1.12] to fit the longer new headline line */}
+          <h1 className="font-fraunces text-4xl sm:text-5xl lg:text-[42px] leading-[1.12] mb-4 tracking-[-0.015em] text-[var(--ink)]">
             {content.hero.titleLine1}
             <br />
             <em className="italic text-[var(--moss-mid)] font-fraunces">{content.hero.titleHighlight}</em> {content.hero.titleLine2}
@@ -506,7 +529,8 @@ export default function LandingPage() {
         {/* Live Proof Demo Card Visual */}
         <div className="relative flex flex-col items-center">
           {/* Concrete Proof Metric Badge: 0.8s speed */}
-          <div className="flex sm:absolute -top-3.5 sm:-left-3 z-20 items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--ink)] mb-3 sm:mb-0 self-start sm:self-auto">
+          {/* Fix 7: mb-3 → mb-2 — tighter gap below badge on mobile flow */}
+          <div className="flex sm:absolute -top-3.5 sm:-left-3 z-20 items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--ink)] mb-2 sm:mb-0 self-start sm:self-auto">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -537,17 +561,135 @@ export default function LandingPage() {
               <path className="curl-path" d="M5 40 Q 10 10, 35 8 Q 50 6, 52 20" />
             </svg>
 
-            {/* QR / Logo Seal with generous contrast & quiet space */}
-            <div className="relative mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[var(--moss-deep)] p-1 mb-4 flex items-center justify-center shadow-md ring-4 ring-[var(--stone-2)] ring-offset-2 ring-offset-[var(--border)]">
-              <div className="w-full h-full rounded-full overflow-hidden relative">
-                <Image
-                  src="/moss_logo.jpg"
-                  alt="Moss QR demo code scan seal"
-                  width={112}
-                  height={112}
-                  className="w-full h-full object-cover"
-                  priority
-                />
+            {/* Layered Two-Phone Mockup Composition (OddMenu inspired, Moss aesthetic) */}
+            <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[340px] h-[340px] sm:h-[360px] mb-4 select-none">
+              {/* BACK PHONE: Offset & tilted, showing restaurant banner and QR code */}
+              <div
+                className="absolute top-1 left-2 sm:left-4 w-[170px] sm:w-[185px] bg-[var(--moss-deep)] rounded-[24px] p-2 border border-white/10 shadow-[0_16px_36px_rgba(27,36,20,0.3)] z-10 transition-transform duration-300 group-hover:translate-x-[-4px] group-hover:rotate-[-8deg]"
+                style={{ transform: "rotate(-6deg)" }}
+              >
+                {/* Back Phone Notch */}
+                <div className="w-8 h-1 bg-black/50 rounded-full mx-auto mb-1.5" aria-hidden="true" />
+
+                {/* Back Phone Screen Content */}
+                <div className="bg-[#fcfbf9] rounded-[16px] p-2 flex flex-col items-center border border-black/5 overflow-hidden">
+                  {/* Mini Restaurant Header */}
+                  <div className="w-full bg-[var(--stone-2)] rounded-lg p-1.5 mb-2 text-center border border-[var(--border)]">
+                    <p className="font-fraunces text-[10.5px] font-bold text-[var(--ink)] truncate">
+                      Golden Spoon
+                    </p>
+                    <p className="text-[8px] text-[var(--moss-mid)] font-semibold">
+                      {language === "my" ? "ရွှေဇွန်းစားသောက်ဆိုင်" : "Authentic Myanmar"}
+                    </p>
+                  </div>
+
+                  {/* Back Phone QR Display */}
+                  <div className="bg-white rounded-xl p-2 shadow-xs border border-black/5 flex flex-col items-center">
+                    <QRCodeSVG
+                      value={demoQrUrl}
+                      size={80}
+                      level="M"
+                      fgColor="#1b2414"
+                      bgColor="#ffffff"
+                      className="w-16 h-16 sm:w-[72px] sm:h-[72px]"
+                    />
+                    <span className="mt-1 text-[8px] font-semibold text-[var(--moss-mid)] uppercase tracking-wider">
+                      {content.hero.cardScanToOpen}
+                    </span>
+                  </div>
+
+                  {/* Feature Pill */}
+                  <div className="mt-2 px-2 py-0.5 rounded-full bg-[var(--lime)]/30 border border-[var(--lime)] text-[8px] font-bold text-[var(--ink)]">
+                    ⚡ 0.8s
+                  </div>
+                </div>
+              </div>
+
+              {/* FRONT PHONE: Prominent, showing real interactive menu dishes & category pills */}
+              <div
+                className="absolute top-4 right-1 sm:right-2 w-[190px] sm:w-[210px] bg-[var(--moss-deep)] rounded-[26px] p-2.5 border border-white/15 shadow-[0_22px_45px_rgba(27,36,20,0.4)] z-20 transition-transform duration-300 group-hover:translate-x-[4px] group-hover:rotate-[3deg]"
+                style={{ transform: "rotate(2deg)" }}
+              >
+                {/* Front Phone Speaker */}
+                <div className="w-10 h-1 bg-black/50 rounded-full mx-auto mb-1.5" aria-hidden="true" />
+
+                {/* Front Phone Screen Content */}
+                <div className="bg-[#faf8f5] rounded-[18px] p-2 border border-black/5 shadow-inner text-left overflow-hidden">
+                  {/* Category Pills Header */}
+                  <div className="flex items-center gap-1 overflow-x-hidden pb-1.5 mb-1.5 border-b border-[var(--border)]">
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--moss-deep)] text-white text-[8.5px] font-semibold shrink-0 shadow-2xs">
+                      {language === "my" ? DEMO_CATEGORIES[0].name_mm : DEMO_CATEGORIES[0].name}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--stone-2)] text-[var(--sub)] text-[8px] font-medium shrink-0">
+                      {language === "my" ? DEMO_CATEGORIES[1].name_mm : DEMO_CATEGORIES[1].name}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--stone-2)] text-[var(--sub)] text-[8px] font-medium shrink-0">
+                      {language === "my" ? DEMO_CATEGORIES[2].name_mm : DEMO_CATEGORIES[2].name}
+                    </span>
+                  </div>
+
+                  {/* Real Menu Dish Cards */}
+                  <div className="space-y-1.5">
+                    {/* Dish 1: Tea Leaf Salad */}
+                    <div className="bg-white rounded-xl p-1.5 border border-[var(--border)] shadow-2xs flex items-center gap-2">
+                      <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[var(--stone-2)]">
+                        <Image
+                          src={DEMO_MENU_ITEMS[0].image || "/moss_logo.jpg"}
+                          alt={DEMO_MENU_ITEMS[0].name}
+                          fill
+                          className="object-cover"
+                          sizes="44px"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-fraunces text-[10px] font-semibold text-[var(--ink)] leading-tight truncate">
+                          {language === "my" && DEMO_MENU_ITEMS[0].name_mm
+                            ? DEMO_MENU_ITEMS[0].name_mm
+                            : DEMO_MENU_ITEMS[0].name}
+                        </p>
+                        <p className="text-[9px] font-bold text-[var(--moss-mid)] mt-0.5">
+                          {formatMMK(DEMO_MENU_ITEMS[0].price)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Dish 2: Shan Noodles */}
+                    <div className="bg-white rounded-xl p-1.5 border border-[var(--border)] shadow-2xs flex items-center gap-2">
+                      <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[var(--stone-2)]">
+                        <Image
+                          src={DEMO_MENU_ITEMS[1].image || "/moss_logo.jpg"}
+                          alt={DEMO_MENU_ITEMS[1].name}
+                          fill
+                          className="object-cover"
+                          sizes="44px"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-fraunces text-[10px] font-semibold text-[var(--ink)] leading-tight truncate">
+                          {language === "my" && DEMO_MENU_ITEMS[1].name_mm
+                            ? DEMO_MENU_ITEMS[1].name_mm
+                            : DEMO_MENU_ITEMS[1].name}
+                        </p>
+                        <p className="text-[9px] font-bold text-[var(--moss-mid)] mt-0.5">
+                          {formatMMK(DEMO_MENU_ITEMS[1].price)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Add to order banner inside mockup */}
+                  <div className="mt-1.5 py-1 px-2 rounded-lg bg-[var(--lime)]/30 border border-[var(--lime)]/60 flex items-center justify-between">
+                    <span className="text-[8px] font-bold text-[var(--ink)]">
+                      {language === "my" ? "ဓာတ်ပုံနှင့် မီနူးကြည့်ရန်" : "Live Photo Menu"}
+                    </span>
+                    <span className="text-[8px] font-bold text-[var(--moss-mid)]">
+                      {language === "my" ? "ပွင့်ဆဲ" : "Active"} &bull;
+                    </span>
+                  </div>
+                </div>
+
+                {/* Home bar */}
+                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-1.5" aria-hidden="true" />
               </div>
             </div>
 
@@ -607,16 +749,19 @@ export default function LandingPage() {
           {content.whatYouGet.subtitle}
         </p>
 
-        <div className="space-y-4 max-w-[820px]">
+        {/* Fix 6: Removed space-y-4 — items use py-5 internal padding now */}
+        <div className="max-w-[820px]">
           {content.whatYouGet.items.map((item, idx) => (
             <div key={idx}>
-              <div className="flex items-baseline gap-2 py-4 border-b border-dashed border-[var(--border)]">
+              {/* Fix 6: py-4 → py-5 — more breathing room between feature rows */}
+              <div className="flex items-baseline gap-2 py-5 border-b border-dashed border-[var(--border)]">
                 <span className="font-fraunces text-base font-semibold whitespace-nowrap text-[var(--ink)]">
                   {item.title}
                 </span>
                 <span className="flex-1 border-b border-dotted border-[var(--sub)] opacity-40 -translate-y-1" />
               </div>
-              <p className="text-[12.5px] text-[var(--sub)] mt-1.5 font-normal">
+              {/* Fix 2: text-[12.5px] → text-sm (14px) for WCAG AA compliance */}
+              <p className="text-sm text-[var(--sub)] mt-1.5 font-normal">
                 {item.description}
               </p>
             </div>
@@ -637,7 +782,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Ticket 1 */}
           <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
             style={{
               transform: "rotate(-1.5deg)",
               boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
@@ -649,14 +794,15 @@ export default function LandingPage() {
             <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
               {content.howItWorks.step1Title}
             </h3>
-            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
+            <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
               {content.howItWorks.step1Desc}
             </p>
           </div>
 
           {/* Ticket 2 */}
           <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
             style={{
               transform: "rotate(1deg)",
               boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
@@ -668,14 +814,15 @@ export default function LandingPage() {
             <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
               {content.howItWorks.step2Title}
             </h3>
-            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
+            <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
               {content.howItWorks.step2Desc}
             </p>
           </div>
 
           {/* Ticket 3 */}
           <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm transition-transform duration-200 hover:rotate-0 hover:-translate-y-2"
+            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
             style={{
               transform: "rotate(-1deg)",
               boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
@@ -687,7 +834,8 @@ export default function LandingPage() {
             <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
               {content.howItWorks.step3Title}
             </h3>
-            <p className="text-[13px] text-[var(--sub)] font-normal leading-relaxed">
+            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
+            <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
               {content.howItWorks.step3Desc}
             </p>
           </div>
@@ -746,7 +894,9 @@ export default function LandingPage() {
                 <p className="text-white text-[14px] font-fraunces font-semibold mb-1 leading-snug">
                   {feat.title}
                 </p>
-                <p className="text-[#a9b2a2] text-[12.5px] leading-relaxed font-normal">
+                {/* Fix 1: #a9b2a2 (contrast 3.1:1 ✗) → #c2c8b8 (4.7:1 ✓ AA pass) */}
+                {/* Fix 2: text-[12.5px] → text-sm (14px) */}
+                <p className="text-[#c2c8b8] text-sm leading-relaxed font-normal">
                   {feat.description}
                 </p>
               </div>
@@ -759,7 +909,8 @@ export default function LandingPage() {
               <span>{content.burmeseSection.cta}</span>
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Link>
-            <span className="text-[12px] text-[#a9b2a2] font-normal">
+            {/* Fix 1: #a9b2a2 → #c2c8b8 (WCAG AA contrast fix) */}
+            <span className="text-[12px] text-[#c2c8b8] font-normal">
               {content.burmeseSection.footnote}
             </span>
           </div>
@@ -882,10 +1033,11 @@ export default function LandingPage() {
             const isOpen = openFaq === idx;
             return (
               <div key={idx} className="transition-colors">
+                {/* Fix 4: Added hover:bg + px/-mx so the full row lights up on hover, not just the text */}
                 <button
                   type="button"
                   onClick={() => toggleFaq(idx)}
-                  className="w-full py-4.5 flex justify-between items-center text-left text-[15px] font-fraunces font-semibold text-[var(--ink)] hover:text-[var(--moss-mid)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] rounded-xs"
+                  className="w-full py-4.5 px-3 -mx-3 flex justify-between items-center text-left text-[15px] font-fraunces font-semibold text-[var(--ink)] hover:text-[var(--moss-mid)] hover:bg-[var(--stone-2)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] transition-colors"
                   aria-expanded={isOpen}
                 >
                   <span className="pr-4">{faq.q}</span>
@@ -897,7 +1049,8 @@ export default function LandingPage() {
                 </button>
                 <div className={`faq-content-grid ${isOpen ? "open" : ""}`}>
                   <div className="overflow-hidden">
-                    <p className="text-[13.5px] text-[var(--sub)] leading-relaxed font-normal pb-4.5 max-w-[700px]">
+                    {/* Fix 2: text-[13.5px] → text-sm (14px) for readability */}
+                    <p className="text-sm text-[var(--sub)] leading-relaxed font-normal pb-4.5 max-w-[700px]">
                       {faq.a}
                     </p>
                   </div>

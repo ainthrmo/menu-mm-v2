@@ -12,10 +12,11 @@ export const landingMy: LandingContent = {
   hero: {
     speedBadge: "Myanmar 4G မှာ ၀.၈ စက္ကန့်",
     dualLangBadge: "မြန်မာ / English နှစ်ဘာသာ",
-    titleLine1: "သင့်စားသောက်ဆိုင်မီနူးကို",
-    titleHighlight: "မိနစ်ပိုင်းအတွင်း",
-    titleLine2: "အွန်လိုင်းပေါ်တင်ပြီး",
-    titleLine3: "အလွယ်တကူ စီမံခန့်ခွဲပါ။",
+    // Change 2: Burmese translation of new headline — real-time menu, no reprint, no app, fast on Myanmar 4G
+    titleLine1: "ပြန်ပုံနှိပ်ဖြုန်းစရာမလို —",
+    titleHighlight: "Live မီနူး",
+    titleLine2: "QR Scan ဖတ်ပြီး ကြည့်နိုင်မည်",
+    titleLine3: "App မလို၊ Myanmar 4G မှာ စက္ကန့်ပိုင်းအတွင်း။",
     description: "ဟင်းပွဲတွေထည့်မယ်၊ QR code ထုတ်ပြီး စားပွဲပေါ်တင်မယ်၊ ဈေးနှုန်းတွေကို ဖုန်းထဲကနေ ကိုယ်တိုင်ချက်ချင်း ပြောင်းလဲနိုင်ပါတယ်။",
     createMenu: "မီနူးစတင်ပြုလုပ်မည်",
     seeHowItWorks: "အသုံးပြုပုံ ကြည့်ရန်",

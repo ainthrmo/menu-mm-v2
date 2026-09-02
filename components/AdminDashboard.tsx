@@ -19,9 +19,6 @@ import {
   CheckCircle2,
   QrCode,
   ExternalLink,
-  Facebook,
-  Instagram,
-  MessageCircle,
   Phone,
   Copy,
   Download,
@@ -33,6 +30,14 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
+  BarChart3,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Wifi,
+  Globe,
+  User,
+  Mail,
+  Facebook,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -74,13 +79,37 @@ export interface Category {
   sort_order?: number;
 }
 
-type DashboardSection = "menu" | "qr";
+type DashboardSection = "menu" | "qr" | "analytics" | "settings";
 
 export const AdminDashboard: React.FC = () => {
   const supabase = createClient();
   const router = useRouter();
   const toast = useToast();
   const [activeSection, setActiveSection] = useState<DashboardSection>("menu");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("moss_admin_sidebar_collapsed");
+      if (saved !== null) {
+        setIsSidebarCollapsed(saved === "true");
+      }
+    } catch (e) {
+      // ignore localstorage errors
+    }
+  }, []);
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("moss_admin_sidebar_collapsed", String(next));
+      } catch (e) {
+        // ignore
+      }
+      return next;
+    });
+  };
   const [profileError, setProfileError] = useState(false);
   const [menuItems, setMenuItems] = useState<AdminMenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -91,6 +120,7 @@ export const AdminDashboard: React.FC = () => {
   
   // Store Profile & Plan State
   const [storeName, setStoreName] = useState("My Restaurant");
+  const [userEmail, setUserEmail] = useState<string>("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -99,17 +129,17 @@ export const AdminDashboard: React.FC = () => {
   const [plan, setPlan] = useState<Plan>(DEFAULT_FREE_PLAN);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
 
-  // Social & Contact State
-  const [socialFacebook, setSocialFacebook] = useState("");
-  const [socialInstagram, setSocialInstagram] = useState("");
-  const [socialTiktok, setSocialTiktok] = useState("");
-  const [socialMessenger, setSocialMessenger] = useState("");
+  // WiFi Credentials State
+  const [wifiName, setWifiName] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+
+  // Social & Contact State (Consolidated to generic socialLink + socialPhone)
+  const [socialLink, setSocialLink] = useState("");
   const [socialPhone, setSocialPhone] = useState("");
 
   // Modals state
   const [isDishModalOpen, setIsDishModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -194,6 +224,9 @@ export const AdminDashboard: React.FC = () => {
       }
 
       const userId = session.user.id;
+      if (session.user.email) {
+        setUserEmail(session.user.email);
+      }
 
       // 1. Find restaurant owned by current authenticated user
       const { data: userRest, error: restError } = await supabase
@@ -260,10 +293,18 @@ export const AdminDashboard: React.FC = () => {
           setStorePlan(profileData.subscription_plan || "Free");
         }
 
-        setSocialFacebook(profileData.social_facebook || "");
-        setSocialInstagram(profileData.social_instagram || "");
-        setSocialTiktok(profileData.social_tiktok || "");
-        setSocialMessenger(profileData.social_messenger || "");
+        // WiFi credentials
+        setWifiName(profileData.wifi_name || "");
+        setWifiPassword(profileData.wifi_password || "");
+
+        // Priority fallback migration for generic social link: Facebook > Instagram > TikTok > Messenger
+        const primarySocial =
+          profileData.social_facebook ||
+          profileData.social_instagram ||
+          profileData.social_tiktok ||
+          profileData.social_messenger ||
+          "";
+        setSocialLink(primarySocial);
         setSocialPhone(profileData.social_phone || "");
       }
 
@@ -687,15 +728,19 @@ export const AdminDashboard: React.FC = () => {
       }
     }
 
+    const trimmedSocial = socialLink.trim() || null;
     const { error } = await supabase
       .from("store_profile")
       .update({
         store_name: storeName,
         logo_url: updatedLogo,
-        social_facebook: socialFacebook.trim() || null,
-        social_instagram: socialInstagram.trim() || null,
-        social_tiktok: socialTiktok.trim() || null,
-        social_messenger: socialMessenger.trim() || null,
+        wifi_name: wifiName.trim() || null,
+        wifi_password: wifiPassword.trim() || null,
+        show_wifi: Boolean(wifiPassword.trim()),
+        social_facebook: trimmedSocial,
+        social_instagram: trimmedSocial,
+        social_tiktok: trimmedSocial,
+        social_messenger: trimmedSocial,
         social_phone: socialPhone.trim() || null,
         updated_at: new Date().toISOString(),
       })
@@ -713,8 +758,20 @@ export const AdminDashboard: React.FC = () => {
       toast.error("Failed to update store settings: " + error.message);
     } else {
       setLogoUrl(updatedLogo);
-      setIsSettingsOpen(false);
-      toast.success("Store profile & social links updated!");
+      setStoreProfile((prev: any) => ({
+        ...prev,
+        store_name: storeName,
+        logo_url: updatedLogo,
+        wifi_name: wifiName.trim() || null,
+        wifi_password: wifiPassword.trim() || null,
+        show_wifi: Boolean(wifiPassword.trim()),
+        social_facebook: trimmedSocial,
+        social_instagram: trimmedSocial,
+        social_tiktok: trimmedSocial,
+        social_messenger: trimmedSocial,
+        social_phone: socialPhone.trim() || null,
+      }));
+      toast.success("Store settings updated successfully!");
     }
     setSubmitting(false);
   };
@@ -1090,97 +1147,137 @@ export const AdminDashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row">
-      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-[#E5E5E5] flex flex-col justify-between shrink-0 sticky top-0 md:h-screen z-30">
-        <div className="p-5 space-y-6">
-          <div className="flex items-center justify-between md:justify-start gap-3">
-            <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-slate-50 text-[#1e2417] font-sans flex flex-col md:flex-row">
+      <aside
+        className={`w-full bg-white border-b md:border-b-0 md:border-r border-slate-200/80 flex flex-col justify-between shrink-0 sticky top-0 md:h-screen z-30 transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? "md:w-[72px]" : "md:w-64"
+        }`}
+      >
+        <div className={`space-y-6 overflow-hidden ${isSidebarCollapsed ? "p-3.5" : "p-5"}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div className={`flex items-center gap-3 min-w-0 ${isSidebarCollapsed ? "md:justify-center md:w-full" : ""}`}>
               {logoUrl ? (
-                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-10 h-10 rounded-2xl object-cover border border-[#E5E5E5] shadow-xs" />
+                <img
+                  src={getImageUrl(logoUrl)}
+                  alt="Logo"
+                  className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
+                />
               ) : (
-                <div className="w-10 h-10 rounded-2xl bg-[#1E45FB] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-[#1b2414] text-[#c8f04a] flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
                   {storeName.charAt(0)}
                 </div>
               )}
-              <div>
-                <h1 className="text-sm font-bold text-[#111111] tracking-tight">{storeName}</h1>
-                <p className="text-[11px] text-[#666666] font-medium">Moss QR Admin</p>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0 flex-1 hidden md:block">
+                  <h1 className="text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
+                  <p className="text-[11px] text-[#57604f] font-medium truncate">Moss QR Admin</p>
+                </div>
+              )}
+              <div className="min-w-0 flex-1 md:hidden">
+                <h1 className="text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
+                <p className="text-[11px] text-[#57604f] font-medium">Moss QR Admin</p>
               </div>
             </div>
             <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="md:hidden p-2 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-[#111111]"
-              title="Edit Restaurant"
+              onClick={() => setActiveSection("settings")}
+              className={`md:hidden p-2 rounded-xl border border-[#1e2417]/10 transition-colors ${
+                activeSection === "settings" ? "bg-[#1b2414] text-[#c8f04a]" : "bg-white hover:bg-[#f6f2e8] text-[#1e2417]"
+              }`}
+              title="Store Settings"
             >
               <Edit3 className="w-4 h-4" />
             </button>
           </div>
 
           <nav className="hidden md:flex flex-col space-y-1">
-            <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-[#888888]">Overview</div>
+            {!isSidebarCollapsed && (
+              <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-[#57604f]">Overview</div>
+            )}
             <button
               onClick={() => setActiveSection("menu")}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors text-left w-full ${
+              title={isSidebarCollapsed ? "Menu Dashboard" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-semibold transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
                 activeSection === "menu"
-                  ? "bg-[#1E45FB]/10 text-[#1E45FB]"
-                  : "text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111]"
+                  ? "bg-[#1b2414] text-[#c8f04a]"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" /> Menu Dashboard
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">Menu Dashboard</span>}
             </button>
             <button
               onClick={() => setActiveSection("qr")}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+              title={isSidebarCollapsed ? "QR Code" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
                 activeSection === "qr"
-                  ? "bg-[#1E45FB]/10 text-[#1E45FB] font-semibold"
-                  : "text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111]"
+                  ? "bg-[#1b2414] text-[#c8f04a] font-semibold"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
               }`}
             >
-              <QrCode className="w-4 h-4" /> QR Code
+              <QrCode className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">QR Code</span>}
             </button>
             <button
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111] transition-colors text-left w-full"
+              onClick={() => setActiveSection("analytics")}
+              title={isSidebarCollapsed ? "Sales Insights" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
+                activeSection === "analytics"
+                  ? "bg-[#1b2414] text-[#c8f04a] font-semibold"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
+              }`}
             >
-              <FolderPlus className="w-4 h-4" /> Manage Categories
+              <BarChart3 className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">Sales Insights</span>}
             </button>
             <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111] transition-colors text-left w-full"
+              onClick={() => setActiveSection("settings")}
+              title={isSidebarCollapsed ? "Store Settings" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
+                activeSection === "settings"
+                  ? "bg-[#1b2414] text-[#c8f04a] font-semibold"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
+              }`}
             >
-              <Store className="w-4 h-4" /> Store Settings
+              <Store className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">Store Settings</span>}
             </button>
           </nav>
         </div>
 
-        <div className="hidden md:block p-5 border-t border-[#E5E5E5] bg-[#F5F5F5]/60 space-y-3">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] text-[#666666] font-medium">Subscription</span>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#1E45FB]/10 text-[#1E45FB] uppercase">
-                {storePlan} Plan
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-bold text-[#111111] mt-2">
-              <span>Menu Items</span>
-              <span className="bg-[#CDF22B] text-[#111111] px-2 py-0.5 rounded-md font-bold">
-                {menuItems.length} / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items}
-              </span>
-            </div>
-          </div>
-          {isFreePlan && (
-            <button
-              onClick={() => setShowUpgradeModal(true)}
-              className="w-full bg-[#1E45FB] text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:bg-[#1737C9] transition-all shadow-xs"
-            >
-              <Sparkles className="w-3.5 h-3.5" /> Upgrade to Pro
-            </button>
-          )}
+        <div className={`hidden md:flex flex-col border-t border-slate-200 bg-slate-50/70 space-y-2 ${isSidebarCollapsed ? "p-2 items-center" : "p-4"}`}>
+          <button
+            onClick={toggleSidebarCollapse}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={`flex items-center gap-2 w-full rounded-xl text-xs font-medium text-[#57604f] hover:bg-white hover:text-[#1e2417] border border-transparent hover:border-slate-200 transition-all ${
+              isSidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
+            }`}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="w-4 h-4 shrink-0 text-[#1b2414]" />
+            ) : (
+              <>
+                <PanelLeftClose className="w-4 h-4 shrink-0 text-[#57604f]" />
+                <span className="truncate">Collapse Sidebar</span>
+              </>
+            )}
+          </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-medium text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111] transition-colors"
+            title={isSidebarCollapsed ? "Sign out" : undefined}
+            className={`flex items-center gap-2 w-full rounded-xl text-xs font-medium text-[#57604f] hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-transparent transition-all ${
+              isSidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2"
+            }`}
           >
-            <LogOut className="w-3.5 h-3.5" /> Sign out
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!isSidebarCollapsed && <span className="truncate">Sign out</span>}
           </button>
         </div>
       </aside>
@@ -1190,68 +1287,68 @@ export const AdminDashboard: React.FC = () => {
           <>
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#CDF22B] text-slate-950 border border-[#CDF22B]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" /> Published Menu
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#c8f04a] text-[#1b2414] border border-[#c8f04a]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#1b2414]" /> Published Menu
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60 uppercase">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#1b2414]/10 text-[#1b2414] border border-[#1b2414]/20 uppercase">
                   {storePlan} Plan
                 </span>
               </div>
-              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-                Limit: <strong className="text-slate-900 font-bold">{menuItems.length}</strong> / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
+              <span className="text-xs text-[#57604f] font-medium hidden sm:inline">
+                Limit: <strong className="text-[#1e2417] font-bold">{menuItems.length}</strong> / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
               </span>
             </div>
           
             {/* Stat Cards with Modern SaaS Hierarchy */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4">
-              <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
+              <div className="bg-white border border-[#1e2417]/10 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-slate-500">Total Dishes</p>
-                  <p className="text-2xl font-black text-slate-950 mt-1">{menuItems.length}</p>
+                  <p className="text-xs font-medium text-[#57604f]">Total Dishes</p>
+                  <p className="text-2xl font-black text-[#1e2417] mt-1">{menuItems.length}</p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                <div className="h-10 w-10 rounded-xl bg-[#f6f2e8] flex items-center justify-center text-[#1b2414]">
                   <UtensilsCrossed className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
+              <div className="bg-white border border-[#1e2417]/10 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-slate-500">Categories</p>
-                  <p className="text-2xl font-black text-slate-950 mt-1">{categories.length}</p>
+                  <p className="text-xs font-medium text-[#57604f]">Categories</p>
+                  <p className="text-2xl font-black text-[#1e2417] mt-1">{categories.length}</p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                <div className="h-10 w-10 rounded-xl bg-[#f6f2e8] flex items-center justify-center text-[#1b2414]">
                   <Tag className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 bg-white border border-blue-100/80 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between bg-gradient-to-br from-white to-blue-50/30">
+              <div className="col-span-2 sm:col-span-1 bg-white border border-[#1b2414]/15 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between bg-gradient-to-br from-white to-[#f6f2e8]/60">
                 <div>
-                  <p className="text-xs font-medium text-blue-900">Live On Menu</p>
-                  <p className="text-2xl font-black text-blue-600 mt-1">{availableCount} <span className="text-xs font-normal text-slate-500">items</span></p>
+                  <p className="text-xs font-medium text-[#1b2414]">Live On Menu</p>
+                  <p className="text-2xl font-black text-[#1b2414] mt-1">{availableCount} <span className="text-xs font-normal text-[#57604f]">items</span></p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                <div className="h-10 w-10 rounded-xl bg-[#c8f04a]/40 flex items-center justify-center text-[#1b2414]">
                   <EyeIcon className="w-5 h-5" />
                 </div>
               </div>
             </div>
 
             {/* Controls & Filter Bar */}
-            <div className="bg-white border border-slate-200/90 p-3.5 sm:p-4 rounded-3xl space-y-3.5 shadow-2xs">
+            <div className="bg-white border border-[#1e2417]/10 p-3.5 sm:p-4 rounded-3xl space-y-3.5 shadow-2xs">
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
                   <div className="relative flex-1 sm:w-60 md:w-68">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57604f]" />
                     <input
                       type="text"
                       placeholder="Search dishes or drinks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all placeholder:text-slate-400"
+                      className="w-full bg-[#f6f2e8]/40 border border-[#1e2417]/15 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-[#1e2417] focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414] transition-all placeholder:text-[#57604f]"
                     />
                   </div>
                   <button
                     onClick={handleOpenAddDishModal}
-                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-700 active:scale-95 transition-all shrink-0 shadow-xs min-h-[42px]"
+                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-[#1b2414] text-[#c8f04a] px-3.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-black active:scale-95 transition-all shrink-0 shadow-xs min-h-[42px]"
                   >
                     <Plus className="w-4 h-4" /> Add Dish
                   </button>
@@ -1262,8 +1359,8 @@ export const AdminDashboard: React.FC = () => {
                     onClick={() => setSelectedCategoryFilter("All")}
                     className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
                       selectedCategoryFilter === "All"
-                        ? "bg-slate-950 text-white shadow-2xs"
-                        : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
+                        ? "bg-[#1b2414] text-[#c8f04a] shadow-2xs"
+                        : "bg-[#f6f2e8] text-[#57604f] hover:text-[#1e2417] hover:bg-[#efe9da]"
                     }`}
                   >
                     All Categories ({menuItems.length})
@@ -1276,8 +1373,8 @@ export const AdminDashboard: React.FC = () => {
                         onClick={() => setSelectedCategoryFilter(cat.name)}
                         className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
                           selectedCategoryFilter === cat.name
-                            ? "bg-slate-950 text-white shadow-2xs"
-                            : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
+                            ? "bg-[#1b2414] text-[#c8f04a] shadow-2xs"
+                            : "bg-[#f6f2e8] text-[#57604f] hover:text-[#1e2417] hover:bg-[#efe9da]"
                         }`}
                       >
                         {cat.name_mm || cat.name} ({catCount})
@@ -1288,7 +1385,7 @@ export const AdminDashboard: React.FC = () => {
 
                 <button
                   onClick={handleOpenAddDishModal}
-                  className="hidden sm:inline-flex items-center justify-center gap-1.5 bg-blue-600 text-white px-4.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-700 active:scale-95 transition-all shrink-0 shadow-sm min-h-[42px]"
+                  className="hidden sm:inline-flex items-center justify-center gap-1.5 bg-[#1b2414] text-[#c8f04a] px-4.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-black active:scale-95 transition-all shrink-0 shadow-sm min-h-[42px]"
                 >
                   <Plus className="w-4 h-4" /> Add Dish
                 </button>
@@ -1296,109 +1393,75 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {loading ? (
-              <div className="py-20 text-center text-xs text-slate-500 flex items-center justify-center gap-2 bg-white border border-slate-200/80 rounded-3xl">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-600" /> Loading menu items...
+              <div className="py-20 text-center text-xs text-[#57604f] flex items-center justify-center gap-2 bg-white border border-[#1e2417]/10 rounded-3xl">
+                <Loader2 className="w-5 h-5 animate-spin text-[#1b2414]" /> Loading menu items...
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="py-16 text-center bg-white border border-slate-200/80 rounded-3xl space-y-3 px-6">
-                <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-                  <UtensilsCrossed className="w-6 h-6" aria-hidden="true" />
+              <div className="py-20 text-center bg-white border border-dashed border-[#1e2417]/15 rounded-3xl p-8 space-y-4 shadow-2xs">
+                <div className="w-14 h-14 rounded-2xl bg-[#f6f2e8] text-[#1b2414] flex items-center justify-center mx-auto">
+                  <UtensilsCrossed className="w-7 h-7" />
                 </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {menuItems.length === 0 ? "Your menu is empty" : "No menu items found"}
-                </p>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {menuItems.length === 0
-                    ? "Add your first dish to make your digital menu live for customers."
-                    : "Try adjusting your search query or selecting another category filter."}
-                </p>
-                {menuItems.length === 0 && (
-                  <button
-                    onClick={handleOpenAddDishModal}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-4.5 py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all mt-2 min-h-[42px] shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" /> Add your first item
-                  </button>
-                )}
+                <div className="space-y-1 max-w-sm mx-auto">
+                  <p className="text-base font-bold text-[#1e2417]">No dishes match your filter</p>
+                  <p className="text-xs text-[#57604f] leading-relaxed">
+                    {searchQuery ? `No results found for "${searchQuery}". Try a different keyword or reset filters.` : "Get started by adding your first food item or drink to the digital menu."}
+                  </p>
+                </div>
+                <button
+                  onClick={handleOpenAddDishModal}
+                  className="inline-flex items-center gap-2 bg-[#1b2414] text-[#c8f04a] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-xs"
+                >
+                  <Plus className="w-4 h-4" /> Create New Dish
+                </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {filteredItems.map((item) => (
                   <article
                     key={item.id}
-                    className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all group"
+                    className={`bg-white border rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between transition-all group ${
+                      item.is_available
+                        ? "border-[#1e2417]/10 shadow-2xs hover:shadow-xs hover:border-[#1e2417]/25"
+                        : "border-[#1e2417]/10 opacity-60 bg-[#f6f2e8]/30"
+                    }`}
                   >
-                    <div className="flex items-stretch">
-                      <div className="relative w-28 sm:w-32 shrink-0 bg-slate-100">
-                        <img
-                          src={getImageUrl(item.image)}
-                          alt={item.name_mm || item.name}
-                          className="w-full h-full min-h-[110px] object-cover"
-                        />
-                        {!item.is_available && (
-                          <span className="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white px-2 py-0.5 rounded-md shadow-xs">
-                            Hidden
+                    <div className="flex gap-3">
+                      <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
+                        {item.image ? (
+                          <img
+                            src={getImageUrl(item.image)}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-[#57604f] text-[10px] font-medium p-1 text-center bg-[#f6f2e8]/50">
+                            <UtensilsCrossed className="w-5 h-5 mb-0.5 text-[#57604f]/60" />
+                            No photo
+                          </div>
+                        )}
+                        {item.is_popular && (
+                          <span className="absolute top-1 left-1 bg-[#c8f04a] text-[#1b2414] text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                            Popular
                           </span>
                         )}
                       </div>
 
-                      <div className="flex-1 min-w-0 p-3.5 sm:p-4 flex flex-col justify-between">
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-bold text-blue-600 tracking-wider uppercase">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[10px] font-bold text-[#1b2414] bg-[#f6f2e8] px-2 py-0.5 rounded-md truncate max-w-[120px]">
                               {item.category}
                             </span>
-                            {item.is_popular && (
-                              <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">
-                                Popular
-                              </span>
-                            )}
                           </div>
-                          <h3 className="text-sm font-bold text-slate-900 truncate mt-1 burmese-title">
+                          <h3 className="font-bold text-sm text-[#1e2417] leading-snug line-clamp-1">
                             {item.name_mm || item.name}
                           </h3>
                           {item.name && item.name_mm && item.name !== item.name_mm && (
-                            <p className="text-xs text-slate-500 truncate font-medium">
+                            <p className="text-xs text-[#57604f] truncate font-medium">
                               {item.name}
                             </p>
                           )}
-                          {(item.description_mm || item.description) && (
-                            <p className="text-xs text-slate-600 line-clamp-1 mt-0.5 burmese-body">
-                              {item.description_mm || item.description}
-                            </p>
-                          )}
-                          <p className="text-sm font-black text-slate-950 mt-1.5">
-                            {formatMMK(item.price)}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
-                          <button
-                            onClick={() => handleOpenEditDishModal(item)}
-                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
-                            aria-label={`Edit ${item.name}`}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => toggleAvailability(item.id, item.is_available)}
-                            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all min-h-[38px] flex items-center gap-1.5 ${
-                              item.is_available
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 border-rose-200/80 hover:bg-rose-100"
-                            }`}
-                            aria-label={item.is_available ? `Hide ${item.name} from menu` : `Show ${item.name} on menu`}
-                          >
-                            {item.is_available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            <span className="hidden xs:inline text-[11px]">{item.is_available ? "Live" : "Hidden"}</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
-                            aria-label={`Delete ${item.name}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -1407,25 +1470,25 @@ export const AdminDashboard: React.FC = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : activeSection === "qr" ? (
           <div className="space-y-6">
-              <div className="bg-white border border-slate-200/80 p-6 rounded-3xl shadow-2xs">
+              <div className="bg-white border border-[#1e2417]/10 p-6 rounded-3xl shadow-2xs">
                 <div className="flex items-center gap-2.5 mb-1.5">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                  <div className="p-2 rounded-xl bg-[#f6f2e8] text-[#1b2414]">
                     <QrCode className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">QR Code Studio</h2>
-                    <p className="text-xs text-slate-500">
-                      Scan or download the high-resolution QR code for <strong className="text-slate-900 font-semibold">{storeName}</strong>
+                    <h2 className="text-xl font-bold text-[#1e2417] tracking-tight">QR Code Studio</h2>
+                    <p className="text-xs text-[#57604f]">
+                      Scan or download the high-resolution QR code for <strong className="text-[#1e2417] font-semibold">{storeName}</strong>
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xs">
-                  <div className="relative bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="bg-white border border-[#1e2417]/10 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xs">
+                  <div className="relative bg-white p-5 rounded-3xl border border-[#1e2417]/10 shadow-sm">
                     {menuUrl && (
                       <QRCodeCanvas
                         ref={qrRef}
@@ -1434,12 +1497,12 @@ export const AdminDashboard: React.FC = () => {
                         level="H"
                         includeMargin
                         bgColor="#FFFFFF"
-                        fgColor="#0f172a"
+                        fgColor="#1b2414"
                       />
                     )}
                     {logoUrl && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-12 h-12 rounded-xl bg-white p-1 shadow-md border border-slate-200">
+                        <div className="w-12 h-12 rounded-xl bg-white p-1 shadow-md border border-[#1e2417]/10">
                           <img
                             src={getImageUrl(logoUrl)}
                             alt=""
@@ -1455,29 +1518,29 @@ export const AdminDashboard: React.FC = () => {
                       <img
                         src={getImageUrl(logoUrl)}
                         alt=""
-                        className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-slate-200"
+                        className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-[#1e2417]/10"
                       />
                     )}
-                    <p className="text-sm font-bold text-slate-900">{storeName}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Scan to open digital menu</p>
+                    <p className="text-sm font-bold text-[#1e2417]">{storeName}</p>
+                    <p className="text-xs text-[#57604f] mt-0.5 font-medium">Scan to open digital menu</p>
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-5 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white border border-[#1e2417]/10 rounded-3xl p-6 space-y-5 shadow-2xs flex flex-col justify-between">
                   <div>
-                    <label className="block text-xs font-bold text-slate-900 mb-2">Live Menu URL</label>
+                    <label className="block text-xs font-bold text-[#1e2417] mb-2">Live Menu URL</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         readOnly
                         value={menuUrl}
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-mono focus:outline-none"
+                        className="flex-1 bg-[#f6f2e8]/40 border border-[#1e2417]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#1e2417] font-mono focus:outline-none"
                       />
                       <button
                         onClick={handleCopyMenuUrl}
-                        className="shrink-0 bg-white border border-slate-200 text-slate-900 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50 active:scale-95 transition-all min-h-[42px] shadow-2xs"
+                        className="shrink-0 bg-white border border-[#1e2417]/15 text-[#1e2417] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-[#f6f2e8] active:scale-95 transition-all min-h-[42px] shadow-2xs"
                       >
-                        <Copy className="w-4 h-4 text-slate-500" />
+                        <Copy className="w-4 h-4 text-[#57604f]" />
                         {copied ? "Copied!" : "Copy"}
                       </button>
                     </div>
@@ -1488,21 +1551,21 @@ export const AdminDashboard: React.FC = () => {
                       href={menuUrl || "/menu"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-[0.99] transition-all shadow-sm min-h-[46px]"
+                      className="w-full bg-[#1b2414] text-[#c8f04a] font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-black active:scale-[0.99] transition-all shadow-sm min-h-[46px]"
                     >
                       <ExternalLink className="w-4 h-4" /> Preview Diner Experience
                     </a>
                     <button
                       onClick={handleDownloadQr}
-                      className="w-full bg-white border border-slate-200 text-slate-900 font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-blue-600 active:scale-[0.99] transition-all min-h-[46px] shadow-2xs"
+                      className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-[#f6f2e8] hover:text-[#1b2414] active:scale-[0.99] transition-all min-h-[46px] shadow-2xs"
                     >
                       <Download className="w-4 h-4" /> Download Printable QR
                     </button>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-                    <p className="text-xs font-bold text-slate-900 mb-1.5">How to deploy:</p>
-                    <ol className="text-xs text-slate-600 space-y-1 list-decimal list-inside font-medium leading-relaxed">
+                  <div className="bg-[#f6f2e8]/40 border border-[#1e2417]/10 rounded-2xl p-4">
+                    <p className="text-xs font-bold text-[#1e2417] mb-1.5">How to deploy:</p>
+                    <ol className="text-xs text-[#57604f] space-y-1 list-decimal list-inside font-medium leading-relaxed">
                       <li>Download and print your QR code on acrylic table stands or counter cards.</li>
                       <li>Diners scan directly with any iOS or Android camera (zero app download).</li>
                       <li>Any dish price or availability changes update instantaneously for all diners.</li>
@@ -1511,18 +1574,253 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-          )}
+        ) : activeSection === "analytics" ? (
+          /* Sales Insights / Analytics Coming Soon Placeholder */
+          <div className="space-y-6">
+            <div className="bg-white border border-[#1e2417]/10 p-6 rounded-3xl shadow-2xs">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="p-2 rounded-xl bg-[#f6f2e8] text-[#1b2414]">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[#1e2417] tracking-tight">Sales Insights</h2>
+                  <p className="text-xs text-[#57604f]">
+                    Real-time order tracking, popular dish analytics, and revenue insights.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-dashed border-[#1e2417]/20 rounded-3xl p-12 text-center space-y-4 shadow-2xs">
+              <div className="w-16 h-16 rounded-2xl bg-[#f6f2e8] border border-[#1e2417]/10 flex items-center justify-center mx-auto text-[#1b2414]">
+                <BarChart3 className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-base font-bold text-[#1e2417]">Sales insights, coming soon</h3>
+                <p className="text-xs text-[#57604f] leading-relaxed">
+                  We are building automated dish view metrics, scan analytics, and popular item trends to help you optimize menu pricing.
+                </p>
+              </div>
+              <div className="pt-2">
+                <button
+                  onClick={() => setActiveSection("menu")}
+                  className="inline-flex items-center gap-2 bg-[#1b2414] text-[#c8f04a] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-xs"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> Back to Menu Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Store Settings Full Page */
+          <div className="space-y-6">
+            <div className="bg-white border border-[#1e2417]/10 p-6 rounded-3xl shadow-2xs">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="p-2 rounded-xl bg-[#f6f2e8] text-[#1b2414]">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[#1e2417] tracking-tight">Store Settings</h2>
+                  <p className="text-xs text-[#57604f]">
+                    Manage your restaurant branding, subscription plan, and customer contact links.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#1e2417]/10 rounded-3xl p-6 sm:p-8 shadow-2xs">
+              <form onSubmit={handleSaveStoreProfile} className="space-y-6 max-w-2xl">
+                {/* Signed-in Account Info (Read-only) */}
+                <div className="p-4 rounded-2xl bg-white border border-[#1e2417]/10 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#f6f2e8] text-[#1b2414] flex items-center justify-center shrink-0">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-[#57604f]">Signed-in Account</p>
+                      <p className="text-xs font-bold text-[#1e2417] truncate">{userEmail || "Authenticated User"}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#1b2414]/5 text-[#57604f] border border-[#1e2417]/10">
+                    Active Session
+                  </span>
+                </div>
+
+                {/* Subscription & Plan Card */}
+                <div className="p-5 rounded-2xl bg-[#f6f2e8] border border-[#1e2417]/10 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#1b2414]" />
+                      <span className="text-xs font-bold text-[#1e2417]">Current Subscription</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#1b2414]/10 text-[#1b2414] uppercase tracking-wide border border-[#1b2414]/20">
+                      {storePlan} Plan
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#1e2417]/10">
+                    <span className="text-[#57604f] font-medium">Menu Items Used</span>
+                    <span className="font-bold text-[#1e2417]">
+                      <span className="text-[#1b2414] font-black">{menuItems.length}</span> / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : `${plan.max_menu_items} dishes`}
+                    </span>
+                  </div>
+
+                  {isFreePlan && (
+                    <button
+                      type="button"
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="w-full bg-[#1b2414] text-[#c8f04a] font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:bg-black active:scale-[0.99] transition-all shadow-xs"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> Upgrade to Pro Plan (Up to 100 dishes)
+                    </button>
+                  )}
+                </div>
+
+                {/* Store Logo */}
+                <div>
+                  <label className="block text-xs font-bold text-[#1e2417] mb-1.5">Store Logo</label>
+                  <div className="relative border-2 border-dashed border-[#1e2417]/15 rounded-2xl p-5 text-center bg-slate-50/50 cursor-pointer hover:border-[#1b2414] transition-colors max-w-sm">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setLogoFile(file);
+                          setLogoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    {logoPreview || logoUrl ? (
+                      <div className="space-y-2">
+                        <img
+                          src={logoPreview || getImageUrl(logoUrl!)}
+                          alt="Logo Preview"
+                          className="w-20 h-20 mx-auto rounded-full object-cover border border-[#1e2417]/10 shadow-xs"
+                        />
+                        <p className="text-[11px] font-medium text-[#57604f]">Click to change photo</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 py-2 text-xs text-[#57604f]">
+                        <Upload className="w-5 h-5 mx-auto text-[#1b2414]" />
+                        <p className="font-medium">Upload Store Logo</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Restaurant Name */}
+                <div>
+                  <label className="block text-xs font-bold text-[#1e2417] mb-1.5">Restaurant Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414]"
+                  />
+                </div>
+
+                {/* Core Store Info: WiFi Credentials */}
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-bold text-[#1e2417] mb-0.5">
+                      <Wifi className="w-3.5 h-3.5 text-[#1b2414]" /> In-Store WiFi Credentials
+                    </label>
+                    <p className="text-[11px] text-[#57604f]">
+                      Displayed on the live customer menu so diners can connect seamlessly (optional).
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#1e2417] mb-1">
+                        WiFi Network Name (SSID)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. GoldenSpoon-Guest"
+                        value={wifiName}
+                        onChange={(e) => setWifiName(e.target.value)}
+                        className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#1e2417] mb-1">
+                        WiFi Password
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. goldenspoon2026"
+                        value={wifiPassword}
+                        onChange={(e) => setWifiPassword(e.target.value)}
+                        className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information (Two Fields Only: Social Link + Phone Number) */}
+                <div className="space-y-3.5 pt-4 border-t border-[#1e2417]/10">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1e2417] mb-0.5">Contact Information</label>
+                    <p className="text-[11px] text-[#57604f]">Connect with customers via social media and phone (optional)</p>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1e2417] mb-1.5">
+                      <Globe className="w-3.5 h-3.5 text-[#57604f]" /> Social Media Link
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://facebook.com/yourrestaurant or your Instagram/TikTok link"
+                      value={socialLink}
+                      onChange={(e) => setSocialLink(e.target.value)}
+                      className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1e2417] mb-1.5">
+                      <Phone className="w-3.5 h-3.5 text-[#1b2414]" /> Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+959xxxxxxxx"
+                      value={socialPhone}
+                      onChange={(e) => setSocialPhone(e.target.value)}
+                      className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center justify-center gap-2 bg-[#1b2414] text-[#c8f04a] px-6 py-3 rounded-xl text-xs font-bold hover:bg-black disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
+                  >
+                    {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Save Settings
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         </main>
 
         <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-safe"
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#1e2417]/10 pb-safe"
           aria-label="Dashboard navigation"
         >
           <div className="flex items-center justify-around px-2 py-2">
             <button
               onClick={() => setActiveSection("menu")}
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-                activeSection === "menu" ? "text-blue-600 font-bold" : "text-slate-500 font-medium"
+                activeSection === "menu" ? "text-[#1b2414] font-bold" : "text-[#57604f] font-medium"
               }`}
             >
             <LayoutDashboard className="w-5 h-5" />
@@ -1531,23 +1829,25 @@ export const AdminDashboard: React.FC = () => {
           <button
             onClick={() => setActiveSection("qr")}
             className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              activeSection === "qr" ? "text-[#1E45FB]" : "text-[#666666]"
+              activeSection === "qr" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
             }`}
           >
             <QrCode className="w-5 h-5" />
             <span className="text-[10px] font-semibold">QR Code</span>
           </button>
           <button
-            onClick={() => setIsCategoryModalOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] text-[#666666] transition-colors"
+            onClick={() => setActiveSection("analytics")}
+            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
+              activeSection === "analytics" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
+            }`}
           >
-            <FolderPlus className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">Categories</span>
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-[10px] font-semibold">Insights</span>
           </button>
           <button
             onClick={() => setIsMobileSettingsOpen(true)}
             className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              isMobileSettingsOpen ? "text-[#1E45FB]" : "text-[#666666]"
+              isMobileSettingsOpen ? "text-[#1b2414] font-bold" : "text-[#57604f]"
             }`}
           >
             <Settings className="w-5 h-5" />
@@ -1563,38 +1863,38 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setIsMobileSettingsOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl my-0 sm:my-8 max-h-[85vh] overflow-y-auto"
+            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#1e2417]/10 p-6 space-y-5 shadow-xl my-0 sm:my-8 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
+            <div className="flex items-center justify-between border-b border-[#1e2417]/10 pb-3">
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-[#1E45FB]" />
-                <h2 className="text-base font-bold text-[#111111]">Account & Settings</h2>
+                <Settings className="w-5 h-5 text-[#1b2414]" />
+                <h2 className="text-base font-bold text-[#1e2417]">Account & Settings</h2>
               </div>
               <button
                 onClick={() => setIsMobileSettingsOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-[#F5F5F5]"
+                className="p-1.5 rounded-xl hover:bg-[#f6f2e8]"
               >
-                <X className="w-4 h-4 text-[#666666]" />
+                <X className="w-4 h-4 text-[#57604f]" />
               </button>
             </div>
 
             {/* Store Account Summary */}
-            <div className="flex items-center gap-3 p-3.5 bg-[#F5F5F5] rounded-2xl border border-[#E5E5E5]">
+            <div className="flex items-center gap-3 p-3.5 bg-[#f6f2e8] rounded-2xl border border-[#1e2417]/10">
               {logoUrl ? (
-                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-12 h-12 rounded-2xl object-cover border border-[#E5E5E5]" />
+                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-12 h-12 rounded-2xl object-cover border border-[#1e2417]/10" />
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-[#1E45FB] text-white flex items-center justify-center font-bold text-base">
+                <div className="w-12 h-12 rounded-2xl bg-[#1b2414] text-[#c8f04a] flex items-center justify-center font-bold text-base">
                   {storeName.charAt(0)}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-[#111111] truncate">{storeName}</h3>
+                <h3 className="text-sm font-bold text-[#1e2417] truncate">{storeName}</h3>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#1E45FB]/10 text-[#1E45FB] uppercase">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#1b2414]/10 text-[#1b2414] uppercase">
                     {storePlan} Plan
                   </span>
-                  <span className="text-[11px] text-[#666666]">
+                  <span className="text-[11px] text-[#57604f]">
                     {menuItems.length} / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
                   </span>
                 </div>
@@ -1603,13 +1903,13 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Upgrade to Pro option ONLY for FREE PLAN accounts */}
             {isFreePlan && (
-              <div className="bg-gradient-to-br from-[#1E45FB]/10 via-[#1E45FB]/5 to-transparent border border-[#1E45FB]/20 p-4 rounded-2xl space-y-3">
+              <div className="bg-[#f6f2e8] border border-[#1b2414]/15 p-4 rounded-2xl space-y-3">
                 <div>
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#1E45FB]">
-                    <Sparkles className="w-4 h-4" />
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#1b2414]">
+                    <Sparkles className="w-4 h-4 text-[#1b2414]" />
                     <span>Upgrade to Pro Plan</span>
                   </div>
-                  <p className="text-xs text-[#666666] mt-1">
+                  <p className="text-xs text-[#57604f] mt-1">
                     Unlock up to 100 menu items, custom branding, and priority support.
                   </p>
                 </div>
@@ -1618,7 +1918,7 @@ export const AdminDashboard: React.FC = () => {
                     setIsMobileSettingsOpen(false);
                     setShowUpgradeModal(true);
                   }}
-                  className="w-full bg-[#1E45FB] text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] transition-all shadow-xs"
+                  className="w-full bg-[#1b2414] text-[#c8f04a] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-black transition-all shadow-xs"
                 >
                   <Sparkles className="w-4 h-4" /> Upgrade to Pro
                 </button>
@@ -1626,24 +1926,24 @@ export const AdminDashboard: React.FC = () => {
             )}
 
             {/* Account Options */}
-            <div className="space-y-2 pt-2 border-t border-[#E5E5E5]">
-              <p className="text-[10px] font-bold tracking-wider uppercase text-[#888888] px-1 mb-1">Account Options</p>
+            <div className="space-y-2 pt-2 border-t border-[#1e2417]/10">
+              <p className="text-[10px] font-bold tracking-wider uppercase text-[#57604f] px-1 mb-1">Account Options</p>
               
               <button
                 onClick={() => {
                   setIsMobileSettingsOpen(false);
-                  setIsSettingsOpen(true);
+                  setActiveSection("settings");
                 }}
-                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-left transition-colors"
+                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Store className="w-4 h-4 text-[#666666]" />
+                  <Store className="w-4 h-4 text-[#57604f]" />
                   <div>
-                    <p className="text-xs font-bold text-[#111111]">Edit Restaurant Profile</p>
-                    <p className="text-[11px] text-[#666666]">Logo, store name, social & contact links</p>
+                    <p className="text-xs font-bold text-[#1e2417]">Edit Restaurant Profile</p>
+                    <p className="text-[11px] text-[#57604f]">Logo, store name, social & contact links</p>
                   </div>
                 </div>
-                <Edit3 className="w-4 h-4 text-[#888888]" />
+                <Edit3 className="w-4 h-4 text-[#57604f]" />
               </button>
 
               <button
@@ -1651,13 +1951,29 @@ export const AdminDashboard: React.FC = () => {
                   setIsMobileSettingsOpen(false);
                   setIsCategoryModalOpen(true);
                 }}
-                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-left transition-colors"
+                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <FolderPlus className="w-4 h-4 text-[#666666]" />
+                  <FolderPlus className="w-4 h-4 text-[#57604f]" />
                   <div>
-                    <p className="text-xs font-bold text-[#111111]">Manage Categories</p>
-                    <p className="text-[11px] text-[#666666]">Add or remove menu categories</p>
+                    <p className="text-xs font-bold text-[#1e2417]">Manage Categories</p>
+                    <p className="text-[11px] text-[#57604f]">Add or remove menu categories</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileSettingsOpen(false);
+                  setActiveSection("analytics");
+                }}
+                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="w-4 h-4 text-[#57604f]" />
+                  <div>
+                    <p className="text-xs font-bold text-[#1e2417]">Sales Insights</p>
+                    <p className="text-[11px] text-[#57604f]">View sales analytics & metrics</p>
                   </div>
                 </div>
               </button>
@@ -1667,13 +1983,13 @@ export const AdminDashboard: React.FC = () => {
                   href={menuUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-left transition-colors"
+                  className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <ExternalLink className="w-4 h-4 text-[#666666]" />
+                    <ExternalLink className="w-4 h-4 text-[#57604f]" />
                     <div>
-                      <p className="text-xs font-bold text-[#111111]">Preview Live Menu</p>
-                      <p className="text-[11px] text-[#666666]">Open customer menu view</p>
+                      <p className="text-xs font-bold text-[#1e2417]">Preview Live Menu</p>
+                      <p className="text-[11px] text-[#57604f]">Open customer menu view</p>
                     </div>
                   </div>
                 </a>
@@ -1681,7 +1997,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Sign Out */}
-            <div className="pt-3 border-t border-[#E5E5E5]">
+            <div className="pt-3 border-t border-[#1e2417]/10">
               <button
                 onClick={handleLogout}
                 className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
@@ -1689,156 +2005,6 @@ export const AdminDashboard: React.FC = () => {
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Store Settings Modal */}
-      {isSettingsOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
-          onClick={() => setIsSettingsOpen(false)}
-        >
-          <div
-            className="bg-white w-full max-w-lg rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl my-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
-              <h2 className="text-base font-bold text-[#111111]">Store Settings</h2>
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-[#F5F5F5]"
-              >
-                <X className="w-4 h-4 text-[#666666]" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveStoreProfile} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-              <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">Store Logo</label>
-                <div className="relative border-2 border-dashed border-[#E5E5E5] rounded-2xl p-4 text-center bg-white cursor-pointer hover:border-[#1E45FB] transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setLogoFile(file);
-                        setLogoPreview(URL.createObjectURL(file));
-                      }
-                    }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                  {logoPreview || logoUrl ? (
-                    <img
-                      src={logoPreview || getImageUrl(logoUrl!)}
-                      alt="Logo Preview"
-                      className="w-20 h-20 mx-auto rounded-full object-cover border border-[#E5E5E5]"
-                    />
-                  ) : (
-                    <div className="space-y-1.5 py-2 text-xs text-[#666666]">
-                      <Upload className="w-5 h-5 mx-auto text-[#1E45FB]" />
-                      <p className="font-medium">Upload Store Logo</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">Restaurant Name</label>
-                <input
-                  type="text"
-                  required
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                />
-              </div>
-
-              <div className="space-y-3 pt-3 border-t border-[#E5E5E5]">
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-0.5">Social & Contact Links</label>
-                  <p className="text-[11px] text-[#666666]">Help customers find you online (optional)</p>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] mb-1.5">
-                    <Facebook className="w-3.5 h-3.5 text-[#1877F2]" /> Facebook
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://facebook.com/yourrestaurant"
-                    value={socialFacebook}
-                    onChange={(e) => setSocialFacebook(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] mb-1.5">
-                    <Instagram className="w-3.5 h-3.5 text-[#E4405F]" /> Instagram
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://instagram.com/yourrestaurant"
-                    value={socialInstagram}
-                    onChange={(e) => setSocialInstagram(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] mb-1.5">
-                    <svg className="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.6a6.34 6.34 0 0 0 10.86 4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.06z"/>
-                    </svg>
-                    TikTok
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://tiktok.com/@yourrestaurant"
-                    value={socialTiktok}
-                    onChange={(e) => setSocialTiktok(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] mb-1.5">
-                    <MessageCircle className="w-3.5 h-3.5 text-[#0084FF]" /> Messenger
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://m.me/yourrestaurant"
-                    value={socialMessenger}
-                    onChange={(e) => setSocialMessenger(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] mb-1.5">
-                    <Phone className="w-3.5 h-3.5 text-[#1E45FB]" /> Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+959xxxxxxxx"
-                    value={socialPhone}
-                    onChange={(e) => setSocialPhone(e.target.value)}
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB]"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] disabled:opacity-50 transition-all shadow-xs mt-4"
-              >
-                {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Save Settings
-              </button>
-            </form>
           </div>
         </div>
       )}
@@ -1854,13 +2020,13 @@ export const AdminDashboard: React.FC = () => {
           }}
         >
           <div
-            className="bg-white w-full max-w-xl rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[85vh] flex flex-col"
+            className="bg-white w-full max-w-xl rounded-3xl border border-[#1e2417]/10 p-6 space-y-5 shadow-xl max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 shrink-0">
+            <div className="flex items-center justify-between border-b border-[#1e2417]/10 pb-3 shrink-0">
               <div>
-                <h2 className="text-base font-bold text-[#111111]">Manage Categories</h2>
-                <p className="text-xs text-[#666666] mt-0.5">
+                <h2 className="text-base font-bold text-[#1e2417]">Manage Categories</h2>
+                <p className="text-xs text-[#57604f] mt-0.5">
                   Edit names, reorder sequence, or delete unused categories.
                 </p>
               </div>
@@ -1870,9 +2036,9 @@ export const AdminDashboard: React.FC = () => {
                   setEditingCategoryId(null);
                   setCategoryError(null);
                 }}
-                className="p-1.5 rounded-xl hover:bg-[#F5F5F5] shrink-0"
+                className="p-1.5 rounded-xl hover:bg-[#f6f2e8] shrink-0"
               >
-                <X className="w-4 h-4 text-[#666666]" />
+                <X className="w-4 h-4 text-[#57604f]" />
               </button>
             </div>
 
@@ -1885,10 +2051,10 @@ export const AdminDashboard: React.FC = () => {
             {/* List of categories with edit, reorder, delete & dish count */}
             <div className="space-y-2.5 overflow-y-auto flex-1 pr-1">
               {categories.length === 0 ? (
-                <div className="py-10 text-center bg-[#F8F8F8] border border-dashed border-[#E5E5E5] rounded-2xl space-y-2 px-4">
-                  <FolderPlus className="w-7 h-7 mx-auto text-[#888888]" />
-                  <p className="text-xs font-semibold text-[#111111]">No categories found</p>
-                  <p className="text-[11px] text-[#666666]">
+                <div className="py-10 text-center bg-[#f6f2e8] border border-dashed border-[#1e2417]/15 rounded-2xl space-y-2 px-4">
+                  <FolderPlus className="w-7 h-7 mx-auto text-[#57604f]" />
+                  <p className="text-xs font-semibold text-[#1e2417]">No categories found</p>
+                  <p className="text-[11px] text-[#57604f]">
                     Categories will be created automatically when you add dishes in the Add Dish form.
                   </p>
                 </div>
@@ -1901,19 +2067,19 @@ export const AdminDashboard: React.FC = () => {
                     return (
                       <div
                         key={cat.id}
-                        className="bg-[#FAFAFA] border-2 border-[#1E45FB] p-3.5 rounded-2xl space-y-3 shadow-xs"
+                        className="bg-[#f6f2e8]/40 border-2 border-[#1b2414] p-3.5 rounded-2xl space-y-3 shadow-xs"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#1E45FB]">Editing Category</span>
-                          <span className="text-[10px] text-[#666666]">
+                          <span className="text-xs font-bold text-[#1b2414]">Editing Category</span>
+                          <span className="text-[10px] text-[#57604f]">
                             {dishCount} {dishCount === 1 ? "dish" : "dishes"} assigned
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div>
-                            <label className="text-[11px] font-bold text-[#111111] flex items-center gap-1 mb-1">
-                              <span className="bg-[#111111] text-white text-[8px] font-black px-1 rounded">MM</span>
+                            <label className="text-[11px] font-bold text-[#1e2417] flex items-center gap-1 mb-1">
+                              <span className="bg-[#1b2414] text-[#c8f04a] text-[8px] font-black px-1 rounded">MM</span>
                               <span>Name (မြန်မာ) *</span>
                             </label>
                             <input
@@ -1921,19 +2087,19 @@ export const AdminDashboard: React.FC = () => {
                               required
                               value={editCategoryNameMm}
                               onChange={(e) => setEditCategoryNameMm(e.target.value)}
-                              className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1E45FB]"
+                              className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1b2414]"
                             />
                           </div>
                           <div>
-                            <label className="text-[11px] font-bold text-[#111111] flex items-center gap-1 mb-1">
-                              <span className="bg-neutral-200 text-neutral-800 text-[8px] font-black px-1 rounded">EN</span>
+                            <label className="text-[11px] font-bold text-[#1e2417] flex items-center gap-1 mb-1">
+                              <span className="bg-[#f6f2e8] text-[#1e2417] text-[8px] font-black px-1 rounded border border-[#1e2417]/10">EN</span>
                               <span>Name (English)</span>
                             </label>
                             <input
                               type="text"
                               value={editCategoryNameEn}
                               onChange={(e) => setEditCategoryNameEn(e.target.value)}
-                              className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1E45FB]"
+                              className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#1b2414]"
                             />
                           </div>
                         </div>
@@ -1942,7 +2108,7 @@ export const AdminDashboard: React.FC = () => {
                           <button
                             type="button"
                             onClick={handleCancelEditCategory}
-                            className="px-3 py-1.5 rounded-xl border border-[#E5E5E5] bg-white text-xs font-semibold text-[#666666] hover:bg-[#F5F5F5]"
+                            className="px-3 py-1.5 rounded-xl border border-[#1e2417]/15 bg-white text-xs font-semibold text-[#57604f] hover:bg-[#f6f2e8]"
                           >
                             Cancel
                           </button>
@@ -1950,7 +2116,7 @@ export const AdminDashboard: React.FC = () => {
                             type="button"
                             disabled={submitting}
                             onClick={(e) => handleSaveEditCategory(e, cat)}
-                            className="px-4 py-1.5 rounded-xl bg-[#1E45FB] text-white text-xs font-bold hover:bg-[#1737C9] flex items-center gap-1.5"
+                            className="px-4 py-1.5 rounded-xl bg-[#1b2414] text-[#c8f04a] text-xs font-bold hover:bg-black flex items-center gap-1.5"
                           >
                             {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                             <span>Save Changes</span>
@@ -1963,7 +2129,7 @@ export const AdminDashboard: React.FC = () => {
                   return (
                     <div
                       key={cat.id}
-                      className="flex items-center justify-between bg-white border border-[#E5E5E5] p-3 rounded-2xl text-xs shadow-2xs hover:border-[#CCCCCC] transition-all gap-3"
+                      className="flex items-center justify-between bg-white border border-[#1e2417]/10 p-3 rounded-2xl text-xs shadow-2xs hover:border-[#1e2417]/25 transition-all gap-3"
                     >
                       {/* Reorder Buttons */}
                       <div className="flex items-center gap-1 shrink-0">
@@ -1971,7 +2137,7 @@ export const AdminDashboard: React.FC = () => {
                           type="button"
                           disabled={index === 0}
                           onClick={() => handleReorderCategory(index, "up")}
-                          className="p-1 rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                          className="p-1 rounded-lg text-[#57604f] hover:text-[#1e2417] hover:bg-[#f6f2e8] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                           title="Move Up"
                           aria-label="Move Up"
                         >
@@ -1981,7 +2147,7 @@ export const AdminDashboard: React.FC = () => {
                           type="button"
                           disabled={index === categories.length - 1}
                           onClick={() => handleReorderCategory(index, "down")}
-                          className="p-1 rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                          className="p-1 rounded-lg text-[#57604f] hover:text-[#1e2417] hover:bg-[#f6f2e8] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                           title="Move Down"
                           aria-label="Move Down"
                         >
@@ -1991,15 +2157,15 @@ export const AdminDashboard: React.FC = () => {
 
                       {/* Category Info */}
                       <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-[#111111] truncate text-[13px]">
+                        <span className="font-bold text-[#1e2417] truncate text-[13px]">
                           {cat.name_mm || cat.name}
                         </span>
                         {cat.name && cat.name_mm && cat.name !== cat.name_mm && (
-                          <span className="text-xs text-[#888888] font-medium truncate">
+                          <span className="text-xs text-[#57604f] font-medium truncate">
                             ({cat.name})
                           </span>
                         )}
-                        <span className="rounded-full bg-[#F5F5F5] border border-[#E5E5E5] px-2 py-0.5 text-[10px] font-semibold text-[#666666]">
+                        <span className="rounded-full bg-[#f6f2e8] border border-[#1e2417]/10 px-2 py-0.5 text-[10px] font-semibold text-[#57604f]">
                           {dishCount} {dishCount === 1 ? "dish" : "dishes"}
                         </span>
                       </div>
@@ -2009,7 +2175,7 @@ export const AdminDashboard: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleStartEditCategory(cat)}
-                          className="p-1.5 rounded-xl border border-[#E5E5E5] bg-white text-[#525252] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors flex items-center gap-1 text-[11px] font-semibold"
+                          className="p-1.5 rounded-xl border border-[#1e2417]/10 bg-white text-[#57604f] hover:text-[#1e2417] hover:bg-[#f6f2e8] transition-colors flex items-center gap-1 text-[11px] font-semibold"
                           title="Edit Category"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -2021,7 +2187,7 @@ export const AdminDashboard: React.FC = () => {
                           onClick={() => handleDeleteCategory(cat)}
                           className={`p-1.5 rounded-xl border transition-colors flex items-center gap-1 text-[11px] font-semibold ${
                             dishCount > 0
-                              ? "border-[#E5E5E5] text-[#AAAAAA] hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50/50"
+                              ? "border-[#1e2417]/10 text-[#57604f]/40 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50/50"
                               : "border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
                           }`}
                           title={
@@ -2040,7 +2206,7 @@ export const AdminDashboard: React.FC = () => {
               )}
             </div>
 
-            <div className="border-t border-[#E5E5E5] pt-3 flex justify-end shrink-0">
+            <div className="border-t border-[#1e2417]/10 pt-3 flex justify-end shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -2048,7 +2214,7 @@ export const AdminDashboard: React.FC = () => {
                   setEditingCategoryId(null);
                   setCategoryError(null);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-[#111111] text-white text-xs font-bold hover:bg-black transition-all min-h-[38px]"
+                className="px-5 py-2.5 rounded-xl bg-[#1b2414] text-[#c8f04a] text-xs font-bold hover:bg-black transition-all min-h-[38px]"
               >
                 Done
               </button>
@@ -2064,18 +2230,18 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setIsDishModalOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-[#E5E5E5] p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto"
+            className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-[#1e2417]/10 p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3 sticky top-0 bg-white z-10 -mt-6 -mx-6 px-6 pt-6">
-              <h2 className="text-base font-bold text-[#111111]">
+            <div className="flex items-center justify-between border-b border-[#1e2417]/10 pb-3 sticky top-0 bg-white z-10 -mt-6 -mx-6 px-6 pt-6">
+              <h2 className="text-base font-bold text-[#1e2417]">
                 {editingItem ? "Edit Dish" : "Add New Dish"}
               </h2>
               <button
                 onClick={() => setIsDishModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-[#F5F5F5]"
+                className="p-1.5 rounded-xl hover:bg-[#f6f2e8]"
               >
-                <X className="w-4 h-4 text-[#666666]" />
+                <X className="w-4 h-4 text-[#57604f]" />
               </button>
             </div>
 
@@ -2087,8 +2253,8 @@ export const AdminDashboard: React.FC = () => {
 
             <form onSubmit={handleSaveDish} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">Dish Photo</label>
-                <div className="relative border-2 border-dashed border-[#E5E5E5] rounded-2xl p-4 text-center bg-white cursor-pointer hover:border-[#1E45FB] transition-colors">
+                <label className="block text-xs font-bold text-[#1e2417] mb-1.5">Dish Photo</label>
+                <div className="relative border-2 border-dashed border-[#1e2417]/15 rounded-2xl p-4 text-center bg-white cursor-pointer hover:border-[#1b2414] transition-colors">
                   <input
                     type="file"
                     accept="image/*"
@@ -2102,10 +2268,10 @@ export const AdminDashboard: React.FC = () => {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   {imagePreview ? (
-                    <img src={getImageUrl(imagePreview)} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-[#E5E5E5]" />
+                    <img src={getImageUrl(imagePreview)} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-[#1e2417]/10" />
                   ) : (
-                    <div className="space-y-1.5 py-2 text-xs text-[#666666]">
-                      <Upload className="w-5 h-5 mx-auto text-[#1E45FB]" />
+                    <div className="space-y-1.5 py-2 text-xs text-[#57604f]">
+                      <Upload className="w-5 h-5 mx-auto text-[#1b2414]" />
                       <p className="font-medium">Upload dish photo (optional)</p>
                     </div>
                   )}
@@ -2115,17 +2281,17 @@ export const AdminDashboard: React.FC = () => {
               {/* Dish Name with Language Toggle */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-[#111111]">
+                  <label className="text-xs font-bold text-[#1e2417]">
                     Dish Name {nameLang === "MM" && <span className="text-rose-500">*</span>}
                   </label>
-                  <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                  <div className="flex items-center p-0.5 bg-[#f6f2e8] rounded-lg border border-[#1e2417]/10">
                     <button
                       type="button"
                       onClick={() => setNameLang("MM")}
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
                         nameLang === "MM"
-                          ? "bg-[#111111] text-white shadow-xs"
-                          : "text-[#666666] hover:text-[#111111]"
+                          ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                          : "text-[#57604f] hover:text-[#1e2417]"
                       }`}
                     >
                       MM
@@ -2135,8 +2301,8 @@ export const AdminDashboard: React.FC = () => {
                       onClick={() => setNameLang("EN")}
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
                         nameLang === "EN"
-                          ? "bg-[#111111] text-white shadow-xs"
-                          : "text-[#666666] hover:text-[#111111]"
+                          ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                          : "text-[#57604f] hover:text-[#1e2417]"
                       }`}
                     >
                       EN
@@ -2151,7 +2317,7 @@ export const AdminDashboard: React.FC = () => {
                     value={newItemNameMm}
                     onChange={(e) => setNewItemNameMm(e.target.value)}
                     placeholder="ဥပမာ - ရှမ်းခေါက်ဆွဲ"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs"
                   />
                 ) : (
                   <input
@@ -2159,7 +2325,7 @@ export const AdminDashboard: React.FC = () => {
                     value={newItemNameEn}
                     onChange={(e) => setNewItemNameEn(e.target.value)}
                     placeholder="e.g. Shan Noodles"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs"
                   />
                 )}
               </div>
@@ -2168,7 +2334,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3.5 items-start">
                 {/* Category Dropdown or Inline Creation Expand */}
                 <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1e2417] mb-1.5">
                     Category <span className="text-rose-500">*</span>
                   </label>
 
@@ -2185,31 +2351,31 @@ export const AdminDashboard: React.FC = () => {
                           setSelectedCategoryChoice(e.target.value);
                         }
                       }}
-                      className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs font-medium"
+                      className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs font-medium"
                     >
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>
                           {cat.name_mm && cat.name !== cat.name_mm ? `${cat.name_mm} (${cat.name})` : (cat.name_mm || cat.name)}
                         </option>
                       ))}
-                      <option value="__NEW__" className="font-bold text-[#1E45FB]">
+                      <option value="__NEW__" className="font-bold text-[#1b2414]">
                         + Add new category
                       </option>
                     </select>
                   ) : (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-semibold text-[#111111]">
+                        <span className="text-[11px] font-semibold text-[#1e2417]">
                           New category {catLang === "MM" && <span className="text-rose-500">*</span>}
                         </span>
-                        <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                        <div className="flex items-center p-0.5 bg-[#f6f2e8] rounded-lg border border-[#1e2417]/10">
                           <button
                             type="button"
                             onClick={() => setCatLang("MM")}
                             className={`px-1.5 py-0.5 text-[9px] font-bold rounded transition-all ${
                               catLang === "MM"
-                                ? "bg-[#111111] text-white shadow-xs"
-                                : "text-[#666666] hover:text-[#111111]"
+                                ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                                : "text-[#57604f] hover:text-[#1e2417]"
                             }`}
                           >
                             MM
@@ -2219,8 +2385,8 @@ export const AdminDashboard: React.FC = () => {
                             onClick={() => setCatLang("EN")}
                             className={`px-1.5 py-0.5 text-[9px] font-bold rounded transition-all ${
                               catLang === "EN"
-                                ? "bg-[#111111] text-white shadow-xs"
-                                : "text-[#666666] hover:text-[#111111]"
+                                ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                                : "text-[#57604f] hover:text-[#1e2417]"
                             }`}
                           >
                             EN
@@ -2234,7 +2400,7 @@ export const AdminDashboard: React.FC = () => {
                           value={newCategoryNameMm}
                           onChange={(e) => setNewCategoryNameMm(e.target.value)}
                           placeholder="ဥပမာ - မနက်စာ"
-                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                          className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs"
                         />
                       ) : (
                         <input
@@ -2242,7 +2408,7 @@ export const AdminDashboard: React.FC = () => {
                           value={newCategoryNameEn}
                           onChange={(e) => setNewCategoryNameEn(e.target.value)}
                           placeholder="e.g. Breakfast"
-                          className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                          className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs"
                         />
                       )}
 
@@ -2251,7 +2417,7 @@ export const AdminDashboard: React.FC = () => {
                           type="button"
                           onClick={handleSaveInlineCategory}
                           disabled={savingInlineCategory || !newCategoryNameMm.trim()}
-                          className="px-3 py-1.5 bg-[#1E45FB] text-white text-[11px] font-bold rounded-lg hover:bg-[#1737C9] disabled:opacity-50 transition-all flex items-center gap-1 shadow-xs"
+                          className="px-3 py-1.5 bg-[#1b2414] text-[#c8f04a] text-[11px] font-bold rounded-lg hover:bg-black disabled:opacity-50 transition-all flex items-center gap-1 shadow-xs"
                         >
                           {savingInlineCategory && <Loader2 className="w-3 h-3 animate-spin" />}
                           Save
@@ -2264,7 +2430,7 @@ export const AdminDashboard: React.FC = () => {
                               setSelectedCategoryChoice(categories[0].name);
                             }
                           }}
-                          className="px-3 py-1.5 text-[#666666] hover:text-[#111111] text-[11px] font-medium transition-colors"
+                          className="px-3 py-1.5 text-[#57604f] hover:text-[#1e2417] text-[11px] font-medium transition-colors"
                         >
                           Cancel
                         </button>
@@ -2275,7 +2441,7 @@ export const AdminDashboard: React.FC = () => {
 
                 {/* Price (MMK) */}
                 <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1e2417] mb-1.5">
                     Price (MMK) <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -2284,7 +2450,7 @@ export const AdminDashboard: React.FC = () => {
                     value={newItemPrice}
                     onChange={(e) => setNewItemPrice(e.target.value)}
                     placeholder="e.g. 3500"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] shadow-xs"
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] shadow-xs"
                   />
                 </div>
               </div>
@@ -2292,17 +2458,17 @@ export const AdminDashboard: React.FC = () => {
               {/* Description with Language Toggle */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-[#111111]">
+                  <label className="text-xs font-bold text-[#1e2417]">
                     Description {descLang === "MM" && <span className="text-rose-500">*</span>}
                   </label>
-                  <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+                  <div className="flex items-center p-0.5 bg-[#f6f2e8] rounded-lg border border-[#1e2417]/10">
                     <button
                       type="button"
                       onClick={() => setDescLang("MM")}
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
                         descLang === "MM"
-                          ? "bg-[#111111] text-white shadow-xs"
-                          : "text-[#666666] hover:text-[#111111]"
+                          ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                          : "text-[#57604f] hover:text-[#1e2417]"
                       }`}
                     >
                       MM
@@ -2312,8 +2478,8 @@ export const AdminDashboard: React.FC = () => {
                       onClick={() => setDescLang("EN")}
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
                         descLang === "EN"
-                          ? "bg-[#111111] text-white shadow-xs"
-                          : "text-[#666666] hover:text-[#111111]"
+                          ? "bg-[#1b2414] text-[#c8f04a] shadow-xs"
+                          : "text-[#57604f] hover:text-[#1e2417]"
                       }`}
                     >
                       EN
@@ -2328,7 +2494,7 @@ export const AdminDashboard: React.FC = () => {
                     value={newItemDescriptionMm}
                     onChange={(e) => setNewItemDescriptionMm(e.target.value)}
                     placeholder="ဥပမာ - ကြက်သား၊ ငရုတ်ဆီ၊ ရှမ်းချဥ်တို့ဖြင့် တွဲဖက်ထားသော ရှမ်းရိုးရာခေါက်ဆွဲ"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] resize-none shadow-xs"
                   />
                 ) : (
                   <textarea
@@ -2336,7 +2502,7 @@ export const AdminDashboard: React.FC = () => {
                     value={newItemDescriptionEn}
                     onChange={(e) => setNewItemDescriptionEn(e.target.value)}
                     placeholder="e.g. Traditional sticky rice noodles with spiced chicken, chili oil and pickled mustard greens"
-                    className="w-full bg-white border border-[#E5E5E5] text-[#111111] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1E45FB] resize-none shadow-xs"
+                    className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1b2414] resize-none shadow-xs"
                   />
                 )}
               </div>
@@ -2344,11 +2510,11 @@ export const AdminDashboard: React.FC = () => {
               {/* Popular Dish Toggle (Single clean row) */}
               <div className="flex items-center justify-between py-1">
                 <div className="flex items-center gap-1.5">
-                  <label htmlFor="dish-popular-toggle" className="text-xs font-bold text-[#111111] cursor-pointer">
+                  <label htmlFor="dish-popular-toggle" className="text-xs font-bold text-[#1e2417] cursor-pointer">
                     Feature as popular dish
                   </label>
                   {isFreePlan && (
-                    <span className="text-[10px] font-bold text-[#1E45FB] bg-[#1E45FB]/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                    <span className="text-[10px] font-bold text-[#1b2414] bg-[#1b2414]/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                       <Sparkles className="w-2.5 h-2.5" /> Pro
                     </span>
                   )}
@@ -2359,7 +2525,7 @@ export const AdminDashboard: React.FC = () => {
                     type="checkbox"
                     disabled
                     checked={false}
-                    className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] cursor-not-allowed opacity-50 shrink-0"
+                    className="w-4 h-4 rounded text-[#1b2414] border-[#1e2417]/20 cursor-not-allowed opacity-50 shrink-0"
                   />
                 ) : (
                   <input
@@ -2367,7 +2533,7 @@ export const AdminDashboard: React.FC = () => {
                     id="dish-popular-toggle"
                     checked={newItemIsPopular}
                     onChange={(e) => setNewItemIsPopular(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#1E45FB] border-[#E5E5E5] focus:ring-[#1E45FB] cursor-pointer accent-[#1E45FB] shrink-0"
+                    className="w-4 h-4 rounded text-[#1b2414] border-[#1e2417]/20 focus:ring-[#1b2414] cursor-pointer accent-[#1b2414] shrink-0"
                   />
                 )}
               </div>
@@ -2375,7 +2541,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#1E45FB] text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#1737C9] disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
+                className="w-full bg-[#1b2414] text-[#c8f04a] font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-black disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {editingItem ? "Update Changes" : "Save Dish"}
@@ -2392,13 +2558,13 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setShowUpgradeModal(false)}
         >
           <div
-            className="bg-white w-full max-w-md rounded-3xl border border-[#E5E5E5] p-6 sm:p-8 space-y-6 shadow-xl relative"
+            className="bg-white w-full max-w-md rounded-3xl border border-[#1e2417]/10 p-6 sm:p-8 space-y-6 shadow-xl relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Icon Button */}
             <button
               onClick={() => setShowUpgradeModal(false)}
-              className="absolute top-4 right-4 p-2 text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5] rounded-full transition-colors"
+              className="absolute top-4 right-4 p-2 text-[#57604f] hover:text-[#1e2417] hover:bg-[#f6f2e8] rounded-full transition-colors"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />
@@ -2406,18 +2572,18 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Header / Description */}
             <div className="text-center space-y-3">
-              <div className="w-14 h-14 bg-[#1E45FB]/10 text-[#1E45FB] rounded-2xl flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 bg-[#1b2414] text-[#c8f04a] rounded-2xl flex items-center justify-center mx-auto shadow-xs">
                 <Sparkles className="w-7 h-7" />
               </div>
-              <h2 className="text-xl font-bold text-[#111111]">Upgrade to Pro</h2>
-              <p className="text-sm text-[#666666] leading-relaxed">
-                Contact Moss QR to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#111111]">{storeName}</span>.
+              <h2 className="text-xl font-bold text-[#1e2417]">Upgrade to Pro</h2>
+              <p className="text-sm text-[#57604f] leading-relaxed">
+                Contact Moss QR to upgrade your plan and unlock up to 100 menu items, custom branding, and priority support for <span className="font-bold text-[#1e2417]">{storeName}</span>.
               </p>
             </div>
 
             {/* Contact Options */}
             <div className="space-y-3 pt-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#888888]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#57604f]">
                 Contact Us to Upgrade
               </p>
 
@@ -2426,7 +2592,7 @@ export const AdminDashboard: React.FC = () => {
                 href={MENUU_VIBER_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E5E5E5] hover:border-[#7360F2] bg-[#FAFAFA] hover:bg-[#7360F2]/5 transition-all group"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-[#1e2417]/10 hover:border-[#7360F2] bg-[#f6f2e8]/40 hover:bg-[#7360F2]/5 transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#7360F2] text-white flex items-center justify-center shadow-xs">
@@ -2436,13 +2602,13 @@ export const AdminDashboard: React.FC = () => {
                     </svg>
                   </div>
                   <div className="text-left">
-                    <div className="text-sm font-bold text-[#111111] group-hover:text-[#7360F2] transition-colors">
+                    <div className="text-sm font-bold text-[#1e2417] group-hover:text-[#7360F2] transition-colors">
                       Viber
                     </div>
-                    <div className="text-xs text-[#666666]">Contact Moss QR on Viber</div>
+                    <div className="text-xs text-[#57604f]">Contact Moss QR on Viber</div>
                   </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-[#888888] group-hover:text-[#7360F2] transition-colors" />
+                <ExternalLink className="w-4 h-4 text-[#57604f] group-hover:text-[#7360F2] transition-colors" />
               </a>
 
               {/* Facebook Page Contact Link */}
@@ -2450,28 +2616,28 @@ export const AdminDashboard: React.FC = () => {
                 href={MENUU_FB_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E5E5E5] hover:border-[#1877F2] bg-[#FAFAFA] hover:bg-[#1877F2]/5 transition-all group"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-[#1e2417]/10 hover:border-[#1877F2] bg-[#f6f2e8]/40 hover:bg-[#1877F2]/5 transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#1877F2] text-white flex items-center justify-center shadow-xs">
                     <Facebook className="w-5 h-5 fill-current" />
                   </div>
                   <div className="text-left">
-                    <div className="text-sm font-bold text-[#111111] group-hover:text-[#1877F2] transition-colors">
+                    <div className="text-sm font-bold text-[#1e2417] group-hover:text-[#1877F2] transition-colors">
                       Facebook Page
                     </div>
-                    <div className="text-xs text-[#666666]">Message our Facebook Page</div>
+                    <div className="text-xs text-[#57604f]">Message our Facebook Page</div>
                   </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-[#888888] group-hover:text-[#1877F2] transition-colors" />
+                <ExternalLink className="w-4 h-4 text-[#57604f] group-hover:text-[#1877F2] transition-colors" />
               </a>
             </div>
 
             {/* Close / Cancel Action */}
-            <div className="pt-2 border-t border-[#E5E5E5]">
+            <div className="pt-2 border-t border-[#1e2417]/10">
               <button
                 onClick={() => setShowUpgradeModal(false)}
-                className="w-full bg-white border border-[#E5E5E5] text-[#111111] font-bold py-3 rounded-xl text-sm hover:bg-[#F5F5F5] transition-all"
+                className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] font-bold py-3 rounded-xl text-sm hover:bg-[#f6f2e8] transition-all"
               >
                 Cancel
               </button>

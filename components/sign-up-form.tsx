@@ -60,17 +60,21 @@ export function SignUpForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className={authCardClass}>
-        <CardHeader>
-          <CardTitle className="text-2xl text-[#111111]">Sign up</CardTitle>
-          <CardDescription className="text-[#666666]">
-            Create your restaurant account
+        <CardHeader className="space-y-1.5 pb-4">
+          <CardTitle className="text-2xl font-bold font-fraunces text-[#1e2417] tracking-tight">
+            Sign up
+          </CardTitle>
+          <CardDescription className="text-xs text-[#57604f]">
+            Create your restaurant account to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-5">
-              <div className="grid gap-2">
-                <Label htmlFor="email" className="text-[#111111]">Email</Label>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="email" className="text-xs font-bold text-[#1e2417]">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -81,8 +85,10 @@ export function SignUpForm({
                   className={authInputClass}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password" className="text-[#111111]">Password</Label>
+              <div className="grid gap-1.5">
+                <Label htmlFor="password" className="text-xs font-bold text-[#1e2417]">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -92,8 +98,10 @@ export function SignUpForm({
                   className={authInputClass}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="repeat-password" className="text-[#111111]">Confirm password</Label>
+              <div className="grid gap-1.5">
+                <Label htmlFor="repeat-password" className="text-xs font-bold text-[#1e2417]">
+                  Confirm password
+                </Label>
                 <Input
                   id="repeat-password"
                   type="password"
@@ -104,7 +112,7 @@ export function SignUpForm({
                 />
               </div>
               {error && (
-                <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">
+                <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
                   {error}
                 </p>
               )}
@@ -112,10 +120,10 @@ export function SignUpForm({
                 {isLoading ? "Creating account..." : "Create account"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm text-[#666666]">
+            <div className="mt-5 pt-4 border-t border-[#1e2417]/10 text-center text-xs text-[#57604f]">
               Already have an account?{" "}
               <Link href="/auth/login" className={authLinkClass}>
-                Login
+                Log in
               </Link>
             </div>
           </form>

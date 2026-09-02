@@ -43,17 +43,21 @@ export function UpdatePasswordForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className={authCardClass}>
-        <CardHeader>
-          <CardTitle className="text-2xl text-[#111111]">Set new password</CardTitle>
-          <CardDescription className="text-[#666666]">
+        <CardHeader className="space-y-1.5 pb-4">
+          <CardTitle className="text-2xl font-bold font-fraunces text-[#1e2417] tracking-tight">
+            Set new password
+          </CardTitle>
+          <CardDescription className="text-xs text-[#57604f]">
             Choose a strong password for your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdatePassword}>
-            <div className="flex flex-col gap-5">
-              <div className="grid gap-2">
-                <Label htmlFor="password" className="text-[#111111]">New password</Label>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="password" className="text-xs font-bold text-[#1e2417]">
+                  New password
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -65,7 +69,7 @@ export function UpdatePasswordForm({
                 />
               </div>
               {error && (
-                <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">
+                <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
                   {error}
                 </p>
               )}

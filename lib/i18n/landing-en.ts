@@ -10,10 +10,15 @@ export const landingEn = {
   hero: {
     speedBadge: "0.8s on Myanmar 4G",
     dualLangBadge: "Dual EN / မြန်မာ",
-    titleLine1: "Your menu,",
-    titleHighlight: "growing",
-    titleLine2: "online",
-    titleLine3: "in minutes.",
+    // Change 2: Rewritten headline — specific value props: real-time edits, no reprint, no app for guests, fast on Myanmar 4G
+    // Candidates considered:
+    //   A) "Change your menu live. No reprint, no app, loads in under a second on Myanmar 4G." (good but too listy)
+    //   B) "Edit prices and sold-outs instantly. Your guests scan the QR — no app, opens in under a second." (literal)
+    //   C ✅ CHOSEN) "Live menu, no reprint. Scan to browse — no app, under a second on Myanmar 4G." (tight, specific, all 3 props)
+    titleLine1: "Live menu,",
+    titleHighlight: "no reprint.",
+    titleLine2: "Scan to browse —",
+    titleLine3: "no app, under a second on Myanmar 4G.",
     description: "Add your dishes, print your QR code, and change prices yourself whenever you need to.",
     createMenu: "Create your menu",
     seeHowItWorks: "See how it works",
