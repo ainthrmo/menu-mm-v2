@@ -22,30 +22,49 @@ const siteUrl = getBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  applicationName: "MOSSQR",
   title: {
     default: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
     template: "%s | MOSSQR",
   },
   description:
-    "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+    "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
+  keywords: [
+    "MOSSQR",
+    "QR menu",
+    "digital menu",
+    "restaurant QR code",
+    "restaurant menu",
+    "café menu",
+  ],
+  category: "Restaurant Technology",
   alternates: {
-    canonical: "https://getmossqr.com",
+    canonical: "/",
   },
   openGraph: {
     title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
     description:
-      "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+      "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
     url: "https://getmossqr.com",
     siteName: "MOSSQR",
     locale: "en_US",
     alternateLocale: ["my_MM"],
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "MOSSQR",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
     description:
-      "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
+      "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,

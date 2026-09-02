@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import { Suspense, use } from "react";
 import CategoryMenuView from "@/components/CategoryMenuView";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    alternates: {
+      canonical: `/category/${id}`,
+    },
+  };
+}
 
 function CategoryContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
