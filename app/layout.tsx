@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     "café menu",
   ],
   category: "Restaurant Technology",
+  verification: {
+    google: "xisl7u0CYigB9g1S0Iv8E1anb9XjUqKoE_jFpZY4Okw",
+  },
   alternates: {
     canonical: "/",
   },
@@ -176,4 +179,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+}
