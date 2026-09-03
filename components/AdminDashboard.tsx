@@ -365,7 +365,10 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Call the server action so the session cookie is cleared server-side,
+    // then redirect. Client-only signOut() does not reliably clear the cookie.
+    const { signOutAction } = await import("@/app/auth/actions");
+    await signOutAction();
     router.push("/auth/login");
   };
 
@@ -1426,12 +1429,13 @@ export const AdminDashboard: React.FC = () => {
                     }`}
                   >
                     <div className="flex gap-3">
-                      <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
+                      {/* Thumbnail: w-16 (4rem) on mobile, w-20 (5rem) on sm+ — explicit fixed dimensions prevent overflow */}
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
                         {item.image ? (
                           <img
                             src={getImageUrl(item.image)}
                             alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
                           />
                         ) : (
@@ -1464,6 +1468,40 @@ export const AdminDashboard: React.FC = () => {
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Action buttons: Edit | Show/Hide | Delete — always visible on mobile and desktop */}
+                    <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-[#1e2417]/8">
+                      <button
+                        onClick={() => handleOpenEditDishModal(item)}
+                        className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-[#f6f2e8] text-[#1e2417] hover:bg-[#efe9da] hover:text-[#1b2414] transition-colors min-h-[32px]"
+                        title="Edit dish"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => toggleAvailability(item.id, item.is_available)}
+                        className={`flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-colors min-h-[32px] ${
+                          item.is_available
+                            ? "bg-[#f6f2e8] text-[#57604f] hover:bg-amber-50 hover:text-amber-700"
+                            : "bg-[#f6f2e8] text-[#57604f] hover:bg-emerald-50 hover:text-emerald-700"
+                        }`}
+                        title={item.is_available ? "Hide from menu" : "Show on menu"}
+                      >
+                        {item.is_available ? (
+                          <><EyeOff className="w-3.5 h-3.5 shrink-0" /><span>Hide</span></>
+                        ) : (
+                          <><Eye className="w-3.5 h-3.5 shrink-0" /><span>Show</span></>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="inline-flex items-center justify-center p-1.5 rounded-lg text-[#57604f] hover:bg-rose-50 hover:text-rose-600 transition-colors min-h-[32px] min-w-[32px]"
+                        title="Delete dish"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </article>
                 ))}

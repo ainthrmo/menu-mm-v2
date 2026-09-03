@@ -37,10 +37,10 @@ export const DEFAULT_PRO_PLAN: Plan = {
   id: "pro",
   name: "Pro",
   price_usd: 0,
-  price_mmk: 5000,
-  billing_interval: "monthly",
-  max_menu_items: 2147483647, // unlimited — matches dashboard's >= 2000000000 "Unlimited" display check
-  features: ["Unlimited Menu Items", "Food Photos", "Full Customization", "Custom Theme Color", "Bilingual Menu", "Social Links", "Cart", "Mark Popular Items"],
+  price_mmk: 50000, // 50,000 MMK/year — matches landing page pricing
+  billing_interval: "yearly",
+  max_menu_items: 100, // matches DB plans table seed — NOT unlimited
+  features: ["Up to 100 Menu Items", "Food Photos", "Full Customization", "Custom Theme Color", "Bilingual Menu", "Social Links", "Cart", "Mark Popular Items"],
 };
 
 export const DEFAULT_BUSINESS_PLAN: Plan = {

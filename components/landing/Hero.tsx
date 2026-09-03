@@ -1,248 +1,392 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function Hero() {
-  const words = ["menu.", "sushi.", "pasta."];
-  const [wordIndex, setWordIndex] = useState(0);
-  const [fadeState, setFadeState] = useState<"in" | "out">("in");
+// ─── Phone Mockup sub-component ─────────────────────────────────────────────
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeState("out");
-      setTimeout(() => {
-        setWordIndex((prev) => (prev + 1) % words.length);
-        setFadeState("in");
-      }, 200);
-    }, 1800);
-
-    return () => clearInterval(interval);
-  }, [words.length]);
-
+function PhoneMockup({
+  rotation,
+  style,
+  shadow,
+  children,
+}: {
+  rotation: number;
+  style?: React.CSSProperties;
+  shadow?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section
-      className="relative z-10 bg-[#10140f] text-[#dfe3da] overflow-hidden"
-      aria-label="Hero section"
+    <div
+      style={{
+        transform: `rotate(${rotation}deg)`,
+        borderRadius: 28,
+        border: "2.5px solid #2B2A26",
+        background: "#2B2A26",
+        width: 190,
+        padding: "10px 8px 14px",
+        boxShadow: shadow ?? "none",
+        flexShrink: 0,
+        position: "absolute",
+        ...style,
+      }}
+      aria-hidden="true"
     >
-      <style jsx>{`
-        @keyframes sweepBeam {
-          0% {
-            opacity: 0;
-            transform: translateY(24px) scaleX(0.8);
-          }
-          15% {
-            opacity: 0.9;
-          }
-          65% {
-            opacity: 0.9;
-            transform: translateY(-36px) scaleX(1.15);
-          }
-          85%,
-          100% {
-            opacity: 0;
-            transform: translateY(-48px) scaleX(1.2);
-          }
-        }
-
-        @keyframes cornerGlow {
-          0%,
-          40% {
-            opacity: 0.2;
-            filter: drop-shadow(0 0 0px rgba(200, 240, 74, 0));
-          }
-          60%,
-          85% {
-            opacity: 1;
-            filter: drop-shadow(0 0 6px rgba(200, 240, 74, 0.8));
-          }
-          100% {
-            opacity: 0.2;
-            filter: drop-shadow(0 0 0px rgba(200, 240, 74, 0));
-          }
-        }
-
-        @keyframes toastCycle {
-          0%,
-          45% {
-            opacity: 0;
-            transform: translateY(8px) scale(0.98);
-          }
-          58%,
-          88% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-          96%,
-          100% {
-            opacity: 0;
-            transform: translateY(-4px) scale(0.98);
-          }
-        }
-
-        @keyframes trustFadeIn {
-          0% {
-            opacity: 0;
-            transform: translateY(6px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .beam-pulse {
-          animation: sweepBeam 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-        }
-
-        .corner-pulse {
-          animation: cornerGlow 3.2s ease-in-out infinite;
-        }
-
-        .toast-pulse {
-          animation: toastCycle 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-        }
-
-        .trust-item-1 {
-          animation: trustFadeIn 0.5s ease-out 0.1s forwards;
-        }
-        .trust-item-2 {
-          animation: trustFadeIn 0.5s ease-out 0.25s forwards;
-        }
-        .trust-item-3 {
-          animation: trustFadeIn 0.5s ease-out 0.4s forwards;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .beam-pulse,
-          .corner-pulse,
-          .toast-pulse,
-          .trust-item-1,
-          .trust-item-2,
-          .trust-item-3 {
-            animation: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
-
-      <div className="max-w-[1360px] mx-auto px-6 sm:px-8 lg:px-12 py-16 sm:py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[640px] lg:min-h-[720px]">
-        {/* Left Column — Text */}
-        <div className="lg:col-span-6 flex flex-col items-start text-left z-10">
-          <h1 className="text-3xl sm:text-5xl xl:text-6xl font-medium tracking-tight text-white leading-[1.15] mb-6">
-            Your{" "}
-            <span
-              className={`inline-block text-[#c8f04a] transition-all duration-200 ${
-                fadeState === "in"
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 -translate-y-1"
-              }`}
-            >
-              {words[wordIndex]}
-            </span>
-            <br />
-            online in minutes.
-          </h1>
-
-          <p className="text-base sm:text-lg text-[#a9b0a3] leading-relaxed max-w-xl mb-8 font-normal">
-            Add your dishes, print your QR code, and change prices yourself
-            whenever you need to.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3.5 w-full sm:w-auto mb-9">
-            <Link
-              href="/auth/sign-up"
-              className="w-full sm:w-auto bg-[#c8f04a] text-[#1c2417] font-medium px-6 py-3 rounded-lg text-sm sm:text-base hover:brightness-105 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2"
-            >
-              <span>Create your menu</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <a
-              href="#how"
-              className="w-full sm:w-auto border border-white/20 bg-transparent text-[#dfe3da] font-medium px-5 py-3 rounded-lg text-sm sm:text-base hover:bg-white/5 hover:border-white/30 transition-all inline-flex items-center justify-center gap-2"
-            >
-              <span>See how it works</span>
-            </a>
-          </div>
-
-          {/* Trust line */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-[#a9b0a3]">
-            <div className="inline-flex items-center gap-2 opacity-0 trust-item-1">
-              <Check className="w-4 h-4 text-[#c8f04a] shrink-0" />
-              <span>Free up to 20 dishes</span>
-            </div>
-            <div className="inline-flex items-center gap-2 opacity-0 trust-item-2">
-              <Check className="w-4 h-4 text-[#c8f04a] shrink-0" />
-              <span>No app for guests</span>
-            </div>
-            <div className="inline-flex items-center gap-2 opacity-0 trust-item-3">
-              <Check className="w-4 h-4 text-[#c8f04a] shrink-0" />
-              <span>Live in 5 minutes</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column — Hero Visual */}
-        <div className="lg:col-span-6 relative flex items-center justify-center lg:justify-end">
-          <div className="relative w-full max-w-[620px] rounded-xl overflow-hidden bg-[#161c14] border border-white/10">
-            <Image
-              src="/hero-restaurant.png"
-              alt="Restaurant table scene with QR code table tent and phone showing instant digital menu"
-              width={1000}
-              height={750}
-              priority
-              quality={92}
-              className="w-full h-auto object-cover object-center"
-            />
-
-            {/* Sweep light beam overlay element */}
-            <div
-              className="absolute inset-0 pointer-events-none flex items-center justify-center"
-              aria-hidden="true"
-            >
-              {/* Beam line from phone to QR stand */}
-              <div
-                className="beam-pulse absolute w-[140px] sm:w-[180px] h-[70px] sm:h-[90px] rounded-full blur-[10px]"
-                style={{
-                  top: "42%",
-                  left: "38%",
-                  background:
-                    "linear-gradient(135deg, rgba(200,240,74,0.45) 0%, rgba(200,240,74,0.1) 100%)",
-                }}
-              />
-
-              {/* Corner focus brackets over QR code tent */}
-              <div
-                className="corner-pulse absolute w-14 h-14 sm:w-18 sm:h-18"
-                style={{ top: "34%", left: "46%" }}
-              >
-                <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#c8f04a]" />
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#c8f04a]" />
-                <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#c8f04a]" />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#c8f04a]" />
-              </div>
-            </div>
-
-            {/* Animated toast status badge */}
-            <div className="toast-pulse absolute bottom-5 left-5 sm:bottom-6 sm:left-6 z-20 bg-[#10140f]/95 border border-[#c8f04a]/30 rounded-lg px-3.5 py-2.5 flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-[#c8f04a] shrink-0" />
-              <div>
-                <div className="text-white text-xs font-medium leading-tight">
-                  Scan → menu opens instantly
-                </div>
-                <div className="text-[#a9b0a3] text-[11px] mt-0.5">
-                  No app for guests
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Notch */}
+      <div
+        style={{
+          width: 52,
+          height: 6,
+          background: "#2B2A26",
+          borderRadius: 8,
+          margin: "0 auto 8px",
+        }}
+      />
+      {/* Screen */}
+      <div
+        style={{
+          background: "#FBFAF6",
+          borderRadius: 18,
+          overflow: "hidden",
+          minHeight: 320,
+        }}
+      >
+        {children}
       </div>
-    </section>
+    </div>
   );
 }
 
+// ─── Menu list screen ────────────────────────────────────────────────────────
+
+function MenuListScreen({ lang }: { lang: "en" | "my" }) {
+  const dishes = [
+    {
+      name: lang === "my" ? "သိုးသားရာဂူ" : "Lamb ragu",
+      kcal: lang === "my" ? "၅၂၀ ကယ်လိုရီ" : "520 kcal",
+      bg: "#C4694E",
+    },
+    {
+      name: lang === "my" ? "ဆေးမွှေးကြက်" : "Herb chicken",
+      kcal: lang === "my" ? "၄၁၀ ကယ်လိုရီ" : "410 kcal",
+      bg: "#7D8C48",
+    },
+    {
+      name: lang === "my" ? "မှိုတင်မုန့်" : "Mushroom toast",
+      kcal: lang === "my" ? "၃၁၀ ကယ်လိုရီ" : "310 kcal",
+      bg: "#C4A882",
+    },
+  ];
+
+  return (
+    <div style={{ padding: "14px 12px 10px", fontFamily: "'Inter', sans-serif" }}>
+      <p
+        style={{
+          fontSize: 8,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          color: "rgba(43,42,38,0.45)",
+          textTransform: "uppercase",
+          marginBottom: 4,
+        }}
+      >
+        {lang === "my" ? "ကောရာ ဘစ်ထရို" : "Koura Bistro"}
+      </p>
+      <p style={{ fontSize: 12, fontWeight: 500, color: "#2B2A26", marginBottom: 12 }}>
+        {lang === "my" ? "ညစာမီနူး" : "Dinner menu"}
+      </p>
+
+      {dishes.map((d) => (
+        <div
+          key={d.name}
+          style={{ borderRadius: 10, overflow: "hidden", marginBottom: 8, background: "#fff" }}
+        >
+          <div
+            style={{
+              height: 60,
+              background: d.bg,
+              display: "flex",
+              alignItems: "flex-end",
+              padding: "0 8px 6px",
+            }}
+          >
+            <span style={{ fontSize: 7, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
+              {d.kcal}
+            </span>
+          </div>
+          <div style={{ padding: "6px 8px 8px" }}>
+            <p style={{ fontSize: 10, fontWeight: 500, color: "#2B2A26", margin: 0 }}>{d.name}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Dessert detail screen ───────────────────────────────────────────────────
+
+function DessertDetailScreen({ lang }: { lang: "en" | "my" }) {
+  const related = [
+    { name: lang === "my" ? "သံပရာတာ့ট" : "Lemon tart", bg: "#E6C97A" },
+    { name: lang === "my" ? "ပန်နာကော်တာ" : "Panna cotta", bg: "#D9BFA8" },
+  ];
+
+  return (
+    <div style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div
+        style={{
+          height: 130,
+          background: "#C2677A",
+          display: "flex",
+          alignItems: "flex-end",
+          padding: "0 12px 10px",
+        }}
+      >
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#FBFAF6",
+            fontFamily: "Georgia, serif",
+            lineHeight: 1.3,
+            margin: 0,
+          }}
+        >
+          {lang === "my" ? "သစ်တော်သီး\nမူး" : "Raspberry\nmousse"}
+        </p>
+      </div>
+
+      <div style={{ padding: "10px 12px 12px" }}>
+        <p style={{ fontSize: 8, color: "rgba(43,42,38,0.5)", marginBottom: 10, lineHeight: 1.5 }}>
+          {lang === "my"
+            ? "သစ်တော်သီးနဲ့ ခရင်မ် ချမ်းအောင် အမွှေးနဲ့ ဆောင်ပေးသည်။"
+            : "Fresh raspberry with cream, served chilled with mint."}
+        </p>
+
+        <p
+          style={{
+            fontSize: 7,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            color: "rgba(43,42,38,0.4)",
+            textTransform: "uppercase",
+            marginBottom: 6,
+          }}
+        >
+          {lang === "my" ? "တခြားဟင်းပွဲ" : "Also available"}
+        </p>
+        <div style={{ display: "flex", gap: 6 }}>
+          {related.map((r) => (
+            <div key={r.name} style={{ flex: 1, borderRadius: 8, overflow: "hidden" }}>
+              <div style={{ height: 42, background: r.bg }} />
+              <div style={{ padding: "4px 6px 6px" }}>
+                <p style={{ fontSize: 8, fontWeight: 500, color: "#2B2A26", margin: 0 }}>
+                  {r.name}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Hero component ──────────────────────────────────────────────────────────
+
+export default function Hero() {
+  const { language, t } = useLanguage();
+  const h = t.japandiHero ?? {
+     headlineLine1: "Keep your paper menu.",
+    headlineLine2: "Update it through",
+    brandName: "Moss",
+    cta1: "Try Moss free",
+    cta2: "See an example",
+  };
+
+  return (
+    <section
+      aria-label="Hero section"
+      style={{ background: "#F4F1EA", position: "relative", overflow: "hidden" }}
+    >
+      {/* Decorative soft circle accent */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -60,
+          right: -60,
+          width: 280,
+          height: 280,
+          borderRadius: "50%",
+          background: "#E1E8CE",
+          opacity: 0.6,
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1120,
+          margin: "0 auto",
+          padding: "56px 40px",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 24,
+        }}
+        className="hero-inner"
+      >
+        {/* ── LEFT COLUMN ──────────────────────────────────────── */}
+        <div
+          style={{
+            flex: "1 1 0",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 20,
+          }}
+        >
+          {/* Badge */}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#E1E8CE",
+              color: "#3B6D11",
+              fontSize: 12,
+              fontWeight: 500,
+              padding: "5px 12px",
+              borderRadius: 20,
+              lineHeight: 1,
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path
+                d="M2 10C2 10 3.5 7 6 5.5C8.5 4 10.5 3 10.5 3C10.5 3 10 5.5 8 7.5C6 9.5 4 10.5 2 10Z"
+                fill="#3B6D11"
+              />
+              <path d="M6 5.5L4 9" stroke="#3B6D11" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+            {h.badge}
+          </span>
+
+          {/* Headline */}
+          <h1
+            style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontWeight: 400,
+              fontSize: 44,
+              lineHeight: 1.2,
+              color: "#2B2A26",
+              margin: 0,
+              maxWidth: 460,
+            }}
+          >
+            {h.headlineLine1}
+            <br />
+            {h.headlineLine2}{" "}
+            <span style={{ color: "#3B6D11" }}>{h.brandName}</span>
+          </h1>
+
+          {/* Button row */}
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <Link
+              href="/auth/sign-up"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                background: "#3B6D11",
+                color: "#F4F1EA",
+                fontWeight: 500,
+                fontSize: 14,
+                padding: "12px 24px",
+                borderRadius: 10,
+                textDecoration: "none",
+                fontFamily: "'Inter', sans-serif",
+                transition: "opacity 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              {h.cta1}
+            </Link>
+
+            <a
+              href="#examples"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                background: "transparent",
+                border: "0.5px solid rgba(43,42,38,0.25)",
+                color: "#2B2A26",
+                fontWeight: 500,
+                fontSize: 14,
+                padding: "12px 22px",
+                borderRadius: 10,
+                textDecoration: "none",
+                fontFamily: "'Inter', sans-serif",
+                transition: "border-color 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(43,42,38,0.5)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(43,42,38,0.25)")}
+            >
+              {h.cta2}
+            </a>
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN — phone mockups ─────────────────────── */}
+        <div
+          style={{
+            flex: "1 1 0",
+            position: "relative",
+            height: 420,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          aria-hidden="true"
+        >
+          {/* Phone 1 — back left, menu list */}
+          <PhoneMockup
+            rotation={-4}
+            shadow="4px 8px 24px rgba(43,42,38,0.14)"
+            style={{ left: "calc(50% - 210px)", top: 20 }}
+          >
+            <MenuListScreen lang={language} />
+          </PhoneMockup>
+
+          {/* Phone 2 — front right, dessert detail */}
+          <PhoneMockup
+            rotation={3}
+            shadow="8px 16px 40px rgba(43,42,38,0.22)"
+            style={{ left: "calc(50% - 60px)", top: 0 }}
+          >
+            <DessertDetailScreen lang={language} />
+          </PhoneMockup>
+        </div>
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .hero-inner {
+            flex-direction: column !important;
+            padding: 48px 24px 40px !important;
+          }
+          .hero-inner > div:last-child {
+            height: 360px !important;
+            width: 100%;
+          }
+        }
+      `}</style>
+    </section>
+  );
+}

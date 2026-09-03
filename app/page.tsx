@@ -3,30 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Menu, X, ArrowRight, Check, ExternalLink, Globe } from "lucide-react";
+import { ChevronDown, ArrowRight, Check } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { landingEn } from "@/lib/i18n/landing-en";
 import { landingMy } from "@/lib/i18n/landing-my";
-// Change 1: Reuse existing qrcode.react library (already installed, same import pattern as QrCodeGenerator.tsx)
-import { QRCodeSVG } from "qrcode.react";
-import { DEMO_CATEGORIES, DEMO_MENU_ITEMS } from "@/lib/demo-menu-data";
-import { formatMMK } from "@/lib/utils";
+import JapandiHero from "@/components/landing/Hero";
+import JapandiNavbar from "@/components/landing/LandingNavbar";
 
 export default function LandingPage() {
-  const { language, setLanguage } = useLanguage();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language } = useLanguage();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [demoQrUrl, setDemoQrUrl] = useState("https://moss-qr.com/menu");
   const vineFillRef = useRef<HTMLDivElement | null>(null);
   const vineTrackRef = useRef<HTMLDivElement | null>(null);
-  const mobileProgressRef = useRef<HTMLDivElement | null>(null);
 
   const content = language === "my" ? landingMy : landingEn;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setDemoQrUrl(`${window.location.origin}/menu`);
-    }
     const sizeTrack = () => {
       if (vineTrackRef.current) {
         vineTrackRef.current.style.height = `${document.body.scrollHeight}px`;
@@ -40,9 +32,6 @@ export default function LandingPage() {
       if (vineFillRef.current) {
         vineFillRef.current.style.height = `${pct}%`;
       }
-      if (mobileProgressRef.current) {
-        mobileProgressRef.current.style.width = `${pct}%`;
-      }
     };
 
     sizeTrack();
@@ -52,7 +41,7 @@ export default function LandingPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     // Light up nodes as sections are reached
-    const sections = document.querySelectorAll<HTMLElement>("section, header#live-proof, header#s0");
+    const sections = document.querySelectorAll<HTMLElement>("section");
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -222,23 +211,6 @@ export default function LandingPage() {
           border-color: rgba(30, 36, 23, 0.25);
         }
 
-        /* Hero card curl animation */
-        .curl-path {
-          fill: none;
-          stroke: var(--moss-mid);
-          stroke-width: 2.2;
-          stroke-linecap: round;
-          stroke-dasharray: 120;
-          stroke-dashoffset: 120;
-          animation: drawCurl 1.6s ease-out 0.4s forwards;
-        }
-
-        @keyframes drawCurl {
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-
         /* Order Ticket Clip-path */
         .ticket-card {
           clip-path: polygon(
@@ -306,426 +278,11 @@ export default function LandingPage() {
       </div>
 
       {/* NAVIGATION */}
-      <header className="sticky top-0 z-30 bg-[var(--stone)]/80 backdrop-blur-xl border-b border-[var(--border)] shadow-[0_4px_24px_rgba(30,36,23,0.04)] transition-all">
-        {/* Subtle Top Mobile Scroll Progress Indicator */}
-        <div className="md:hidden w-full h-[2.5px] bg-transparent absolute top-0 left-0 overflow-hidden">
-          <div
-            ref={mobileProgressRef}
-            className="h-full bg-[var(--lime)] transition-all duration-100 ease-out shadow-[0_0_8px_rgba(200,240,74,0.9)]"
-            style={{ width: "0%" }}
-          />
-        </div>
+      <JapandiNavbar />
 
-        <nav className="flex items-center justify-between py-3.5 px-5 sm:px-8 max-w-[1040px] mx-auto">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 font-fraunces font-semibold text-lg text-[var(--ink)] hover:opacity-90 transition-opacity"
-          >
-            <Image
-              src="/moss_logo.jpg"
-              alt="Moss logo"
-              width={30}
-              height={30}
-              className="w-7.5 h-7.5 rounded-lg object-cover shadow-2xs"
-            />
-            <span className="tracking-tight text-xl">Moss</span>
-          </Link>
+      {/* HERO SECTION */}
+      <JapandiHero />
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-7 text-[13.5px] text-[var(--sub)] font-medium">
-            <a href="#how" className="hover:text-[var(--ink)] transition-colors">
-              {content.nav.howItWorks}
-            </a>
-            <a href="#pricing" className="hover:text-[var(--ink)] transition-colors">
-              {content.nav.pricing}
-            </a>
-            <a href="#faq" className="hover:text-[var(--ink)] transition-colors">
-              {content.nav.faq}
-            </a>
-            <Link
-              href="/menu"
-              target="_blank"
-              className="hover:text-[var(--ink)] transition-colors inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/50 backdrop-blur-sm border border-[var(--border)]"
-            >
-              <span>{content.nav.liveDemo}</span>
-              <ExternalLink className="w-3 h-3 text-[var(--sub)]" />
-            </Link>
-          </div>
-
-          {/* Language Switcher & Action Button */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Language Switcher */}
-            <div className="flex items-center p-1 rounded-full bg-[var(--stone-2)]/80 border border-[var(--border)] text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setLanguage("en")}
-                className={`px-2.5 py-1 rounded-full transition-all ${
-                  language === "en"
-                    ? "bg-[var(--moss-deep)] text-white shadow-xs"
-                    : "text-[var(--sub)] hover:text-[var(--ink)]"
-                }`}
-              >
-                English
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage("my")}
-                className={`px-2.5 py-1 rounded-full transition-all ${
-                  language === "my"
-                    ? "bg-[var(--moss-deep)] text-white shadow-xs"
-                    : "text-[var(--sub)] hover:text-[var(--ink)]"
-                }`}
-              >
-                မြန်မာ
-              </button>
-            </div>
-
-            <Link
-              href="/auth/login"
-              className="text-[13.5px] font-medium text-[var(--sub)] hover:text-[var(--ink)] transition-colors px-3 py-1.5"
-            >
-              {content.nav.logIn}
-            </Link>
-            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-primary">
-              {content.nav.startFree}
-            </Link>
-          </div>
-
-          {/* Mobile Right Bar (Switcher + Hamburger) */}
-          <div className="md:hidden flex items-center gap-2">
-            <div className="flex items-center p-0.5 rounded-full bg-[var(--stone-2)]/80 border border-[var(--border)] text-[11px] font-semibold">
-              <button
-                type="button"
-                onClick={() => setLanguage("en")}
-                className={`px-2 py-0.5 rounded-full transition-all ${
-                  language === "en"
-                    ? "bg-[var(--moss-deep)] text-white"
-                    : "text-[var(--sub)]"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage("my")}
-                className={`px-2 py-0.5 rounded-full transition-all ${
-                  language === "my"
-                    ? "bg-[var(--moss-deep)] text-white"
-                    : "text-[var(--sub)]"
-                }`}
-              >
-                မြန်မာ
-              </button>
-            </div>
-
-            {/* Mobile Hamburger */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border)] bg-white/60 backdrop-blur-md text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)]"
-              aria-label="Toggle navigation menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </nav>
-
-        {/* Mobile Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[var(--stone)]/95 backdrop-blur-xl border-b border-[var(--border)] px-6 py-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
-            <a
-              href="#how"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
-            >
-              {content.nav.howItWorks}
-            </a>
-            <a
-              href="#pricing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
-            >
-              {content.nav.pricing}
-            </a>
-            <a
-              href="#faq"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1 text-sm font-medium text-[var(--ink)] hover:text-[var(--moss-mid)]"
-            >
-              {content.nav.faq}
-            </a>
-            <Link
-              href="/menu"
-              target="_blank"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-1 text-sm font-medium text-[var(--ink)]"
-            >
-              {content.nav.liveDemo}
-            </Link>
-            <div className="pt-3 border-t border-[var(--border)] flex flex-col gap-2">
-              <Link
-                href="/auth/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn-editorial btn-editorial-primary w-full text-center"
-              >
-                {content.nav.startFree}
-              </Link>
-              <Link
-                href="/auth/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn-editorial btn-editorial-outline w-full text-center"
-              >
-                {content.nav.logIn}
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* HERO / LIVE PROOF SECTION */}
-      <header
-        className="relative pt-10 pb-16 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-12 items-center"
-        id="live-proof"
-      >
-        <div className="vine-node" style={{ top: 0 }} />
-        <div>
-          {/* Change 2: lg:text-[48px]→[42px], leading-[1.08]→[1.12] to fit the longer new headline line */}
-          <h1 className="font-fraunces text-4xl sm:text-5xl lg:text-[42px] leading-[1.12] mb-4 tracking-[-0.015em] text-[var(--ink)]">
-            {content.hero.titleLine1}
-            <br />
-            <em className="italic text-[var(--moss-mid)] font-fraunces">{content.hero.titleHighlight}</em> {content.hero.titleLine2}
-            <br />
-            {content.hero.titleLine3}
-          </h1>
-          <p className="text-base text-[var(--sub)] max-w-[420px] mb-7 leading-relaxed font-normal">
-            {content.hero.description}
-          </p>
-          <div className="flex gap-3 mb-5 flex-wrap">
-            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-dark">
-              <span>{content.hero.createMenu}</span>
-              <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Link>
-            <a href="#how" className="btn-editorial btn-editorial-outline">
-              {content.hero.seeHowItWorks}
-            </a>
-          </div>
-          <p className="text-xs text-[var(--sub)] flex items-center gap-4 flex-wrap">
-            <span>
-              <b className="text-[var(--ink)]">{content.hero.pillFree}</b> {content.hero.pillFreeSub}
-            </span>
-            <span>&bull;</span>
-            <span>
-              <b className="text-[var(--ink)]">{content.hero.pillNoApp}</b> {content.hero.pillNoAppSub}
-            </span>
-            <span>&bull;</span>
-            <span>
-              <b className="text-[var(--ink)]">{content.hero.pillLive}</b> {content.hero.pillLiveSub}
-            </span>
-          </p>
-        </div>
-
-        {/* Live Proof Demo Card Visual */}
-        <div className="relative flex flex-col items-center">
-          {/* Concrete Proof Metric Badge: 0.8s speed */}
-          {/* Fix 7: mb-3 → mb-2 — tighter gap below badge on mobile flow */}
-          <div className="flex sm:absolute -top-3.5 sm:-left-3 z-20 items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--ink)] mb-2 sm:mb-0 self-start sm:self-auto">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="tracking-tight">{content.hero.speedBadge}</span>
-          </div>
-
-          {/* Dual Language Indicator Badge */}
-          <div className="hidden sm:flex absolute -bottom-3 -right-2 z-20 items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[var(--border)] shadow-[0_4px_16px_rgba(30,36,23,0.08)] text-[11.5px] font-semibold text-[var(--moss-mid)]">
-            <span aria-hidden="true">🇲🇲</span>
-            <span>{content.hero.dualLangBadge}</span>
-          </div>
-
-          {/* Main Demo Card Container */}
-          <div
-            className="w-full relative bg-[var(--stone-2)] rounded-[24px] p-6 sm:p-8 md:p-9 border border-[var(--border)] transition-all duration-300 hover:rotate-0 hover:shadow-[0_28px_60px_rgba(30,36,23,0.16)] group"
-            style={{
-              transform: "rotate(-2deg)",
-              boxShadow: "0 20px 48px rgba(30, 36, 23, 0.12)",
-            }}
-          >
-            {/* Playful corner curl svg */}
-            <svg
-              className="absolute -top-3.5 right-2.5 w-[60px] h-[60px] pointer-events-none"
-              viewBox="0 0 60 60"
-              aria-hidden="true"
-            >
-              <path className="curl-path" d="M5 40 Q 10 10, 35 8 Q 50 6, 52 20" />
-            </svg>
-
-            {/* Layered Two-Phone Mockup Composition (OddMenu inspired, Moss aesthetic) */}
-            <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[340px] h-[340px] sm:h-[360px] mb-4 select-none">
-              {/* BACK PHONE: Offset & tilted, showing restaurant banner and QR code */}
-              <div
-                className="absolute top-1 left-2 sm:left-4 w-[170px] sm:w-[185px] bg-[var(--moss-deep)] rounded-[24px] p-2 border border-white/10 shadow-[0_16px_36px_rgba(27,36,20,0.3)] z-10 transition-transform duration-300 group-hover:translate-x-[-4px] group-hover:rotate-[-8deg]"
-                style={{ transform: "rotate(-6deg)" }}
-              >
-                {/* Back Phone Notch */}
-                <div className="w-8 h-1 bg-black/50 rounded-full mx-auto mb-1.5" aria-hidden="true" />
-
-                {/* Back Phone Screen Content */}
-                <div className="bg-[#fcfbf9] rounded-[16px] p-2 flex flex-col items-center border border-black/5 overflow-hidden">
-                  {/* Mini Restaurant Header */}
-                  <div className="w-full bg-[var(--stone-2)] rounded-lg p-1.5 mb-2 text-center border border-[var(--border)]">
-                    <p className="font-fraunces text-[10.5px] font-bold text-[var(--ink)] truncate">
-                      Golden Spoon
-                    </p>
-                    <p className="text-[8px] text-[var(--moss-mid)] font-semibold">
-                      {language === "my" ? "ရွှေဇွန်းစားသောက်ဆိုင်" : "Authentic Myanmar"}
-                    </p>
-                  </div>
-
-                  {/* Back Phone QR Display */}
-                  <div className="bg-white rounded-xl p-2 shadow-xs border border-black/5 flex flex-col items-center">
-                    <QRCodeSVG
-                      value={demoQrUrl}
-                      size={80}
-                      level="M"
-                      fgColor="#1b2414"
-                      bgColor="#ffffff"
-                      className="w-16 h-16 sm:w-[72px] sm:h-[72px]"
-                    />
-                    <span className="mt-1 text-[8px] font-semibold text-[var(--moss-mid)] uppercase tracking-wider">
-                      {content.hero.cardScanToOpen}
-                    </span>
-                  </div>
-
-                  {/* Feature Pill */}
-                  <div className="mt-2 px-2 py-0.5 rounded-full bg-[var(--lime)]/30 border border-[var(--lime)] text-[8px] font-bold text-[var(--ink)]">
-                    ⚡ 0.8s
-                  </div>
-                </div>
-              </div>
-
-              {/* FRONT PHONE: Prominent, showing real interactive menu dishes & category pills */}
-              <div
-                className="absolute top-4 right-1 sm:right-2 w-[190px] sm:w-[210px] bg-[var(--moss-deep)] rounded-[26px] p-2.5 border border-white/15 shadow-[0_22px_45px_rgba(27,36,20,0.4)] z-20 transition-transform duration-300 group-hover:translate-x-[4px] group-hover:rotate-[3deg]"
-                style={{ transform: "rotate(2deg)" }}
-              >
-                {/* Front Phone Speaker */}
-                <div className="w-10 h-1 bg-black/50 rounded-full mx-auto mb-1.5" aria-hidden="true" />
-
-                {/* Front Phone Screen Content */}
-                <div className="bg-[#faf8f5] rounded-[18px] p-2 border border-black/5 shadow-inner text-left overflow-hidden">
-                  {/* Category Pills Header */}
-                  <div className="flex items-center gap-1 overflow-x-hidden pb-1.5 mb-1.5 border-b border-[var(--border)]">
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--moss-deep)] text-white text-[8.5px] font-semibold shrink-0 shadow-2xs">
-                      {language === "my" ? DEMO_CATEGORIES[0].name_mm : DEMO_CATEGORIES[0].name}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--stone-2)] text-[var(--sub)] text-[8px] font-medium shrink-0">
-                      {language === "my" ? DEMO_CATEGORIES[1].name_mm : DEMO_CATEGORIES[1].name}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--stone-2)] text-[var(--sub)] text-[8px] font-medium shrink-0">
-                      {language === "my" ? DEMO_CATEGORIES[2].name_mm : DEMO_CATEGORIES[2].name}
-                    </span>
-                  </div>
-
-                  {/* Real Menu Dish Cards */}
-                  <div className="space-y-1.5">
-                    {/* Dish 1: Tea Leaf Salad */}
-                    <div className="bg-white rounded-xl p-1.5 border border-[var(--border)] shadow-2xs flex items-center gap-2">
-                      <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[var(--stone-2)]">
-                        <Image
-                          src={DEMO_MENU_ITEMS[0].image || "/moss_logo.jpg"}
-                          alt={DEMO_MENU_ITEMS[0].name}
-                          fill
-                          className="object-cover"
-                          sizes="44px"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-fraunces text-[10px] font-semibold text-[var(--ink)] leading-tight truncate">
-                          {language === "my" && DEMO_MENU_ITEMS[0].name_mm
-                            ? DEMO_MENU_ITEMS[0].name_mm
-                            : DEMO_MENU_ITEMS[0].name}
-                        </p>
-                        <p className="text-[9px] font-bold text-[var(--moss-mid)] mt-0.5">
-                          {formatMMK(DEMO_MENU_ITEMS[0].price)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Dish 2: Shan Noodles */}
-                    <div className="bg-white rounded-xl p-1.5 border border-[var(--border)] shadow-2xs flex items-center gap-2">
-                      <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[var(--stone-2)]">
-                        <Image
-                          src={DEMO_MENU_ITEMS[1].image || "/moss_logo.jpg"}
-                          alt={DEMO_MENU_ITEMS[1].name}
-                          fill
-                          className="object-cover"
-                          sizes="44px"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-fraunces text-[10px] font-semibold text-[var(--ink)] leading-tight truncate">
-                          {language === "my" && DEMO_MENU_ITEMS[1].name_mm
-                            ? DEMO_MENU_ITEMS[1].name_mm
-                            : DEMO_MENU_ITEMS[1].name}
-                        </p>
-                        <p className="text-[9px] font-bold text-[var(--moss-mid)] mt-0.5">
-                          {formatMMK(DEMO_MENU_ITEMS[1].price)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Add to order banner inside mockup */}
-                  <div className="mt-1.5 py-1 px-2 rounded-lg bg-[var(--lime)]/30 border border-[var(--lime)]/60 flex items-center justify-between">
-                    <span className="text-[8px] font-bold text-[var(--ink)]">
-                      {language === "my" ? "ဓာတ်ပုံနှင့် မီနူးကြည့်ရန်" : "Live Photo Menu"}
-                    </span>
-                    <span className="text-[8px] font-bold text-[var(--moss-mid)]">
-                      {language === "my" ? "ပွင့်ဆဲ" : "Active"} &bull;
-                    </span>
-                  </div>
-                </div>
-
-                {/* Home bar */}
-                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-1.5" aria-hidden="true" />
-              </div>
-            </div>
-
-            {/* Scan to open instruction */}
-            <p className="text-center text-[11px] sm:text-xs text-[var(--sub)] font-semibold mb-1 tracking-widest uppercase">
-              {content.hero.cardScanToOpen}
-            </p>
-            <p className="text-center font-fraunces text-xl sm:text-2xl text-[var(--ink)] mb-3">
-              {content.hero.cardDemoTitle}
-            </p>
-
-            {/* Subtle Step Interaction Cue: Scan -> Open -> Browse */}
-            <div className="flex items-center justify-center gap-2 mb-4 text-[10.5px] font-medium text-[var(--sub)] bg-black/[0.03] py-1 px-3 rounded-full w-fit mx-auto border border-black/[0.04]">
-              <span className="text-[var(--ink)] font-semibold">1. {content.hero.stepScan}</span>
-              <span className="text-[var(--sub)] opacity-50">&rarr;</span>
-              <span className="text-[var(--ink)] font-semibold">2. {content.hero.stepOpen}</span>
-              <span className="text-[var(--sub)] opacity-50">&rarr;</span>
-              <span className="text-[var(--ink)] font-semibold">3. {content.hero.stepBrowse}</span>
-            </div>
-
-            {/* Interactive 'Explore live demo' CTA button */}
-            <div className="flex justify-center">
-              <Link
-                href="/menu"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Explore live demo menu (opens in new tab)"
-                className="inline-flex items-center gap-2 text-xs sm:text-[13px] font-semibold text-[var(--ink)] bg-white/90 hover:bg-white px-4 py-2 rounded-full border border-[var(--border)] shadow-2xs hover:shadow-sm hover:border-[var(--moss-mid)] hover:-translate-y-0.5 transition-all focus-visible:outline-2 focus-visible:outline-[var(--ink)] focus-visible:outline-offset-2"
-              >
-                <span>{content.hero.cardExploreDemo}</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[var(--moss-mid)]" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* PROBLEM STATEMENT SECTION */}
       <section className="py-8 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
@@ -868,52 +425,6 @@ export default function LandingPage() {
           <cite className="block not-italic text-xs text-[var(--sub)] font-semibold font-sans">
             {content.napkinQuote.author}
           </cite>
-        </div>
-      </section>
-
-      {/* BURMESE SECTION */}
-      <section
-        id="burmese"
-        className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative"
-      >
-        <div className="vine-node" />
-        <div className="bg-[var(--moss-deep)] rounded-[20px] p-7 sm:p-10 text-[var(--stone)] max-w-[940px]">
-          {/* Burmese heading */}
-          <h2 className="font-fraunces text-[22px] sm:text-[26px] leading-snug text-white mb-2">
-            {content.burmeseSection.title}
-          </h2>
-          <p className="text-sm text-[#c2c8b8] mb-8 max-w-[560px] leading-relaxed font-normal">
-            {content.burmeseSection.description}
-          </p>
-
-          {/* Three feature rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-            {content.burmeseSection.features.map((feat, idx) => (
-              <div key={idx} className="bg-white/[0.06] rounded-[14px] px-5 py-5 border border-white/10">
-                <div className="text-[var(--lime)] text-xl mb-2.5">{feat.icon}</div>
-                <p className="text-white text-[14px] font-fraunces font-semibold mb-1 leading-snug">
-                  {feat.title}
-                </p>
-                {/* Fix 1: #a9b2a2 (contrast 3.1:1 ✗) → #c2c8b8 (4.7:1 ✓ AA pass) */}
-                {/* Fix 2: text-[12.5px] → text-sm (14px) */}
-                <p className="text-[#c2c8b8] text-sm leading-relaxed font-normal">
-                  {feat.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* CTA row */}
-          <div className="flex flex-wrap items-center gap-4">
-            <Link href="/auth/sign-up" className="btn-editorial btn-editorial-primary">
-              <span>{content.burmeseSection.cta}</span>
-              <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Link>
-            {/* Fix 1: #a9b2a2 → #c2c8b8 (WCAG AA contrast fix) */}
-            <span className="text-[12px] text-[#c2c8b8] font-normal">
-              {content.burmeseSection.footnote}
-            </span>
-          </div>
         </div>
       </section>
 
