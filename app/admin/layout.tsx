@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/lib/admin-auth";
+import { signOutAction } from "@/app/auth/actions";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -127,7 +128,12 @@ export default async function AdminLayout({
               <ExternalLink className="h-3 w-3" />
             </Link>
 
-            <form action="/api/auth/logout" method="post">
+            <form
+              action={async () => {
+                "use server";
+                await signOutAction();
+              }}
+            >
               <button
                 type="submit"
                 className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-neutral-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"

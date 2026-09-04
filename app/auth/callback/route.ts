@@ -7,7 +7,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/protected";
+  const rawNext = searchParams.get("next") ?? "/protected";
+  // Enforce relative path to prevent open redirect vulnerabilities
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")
+    ? rawNext
+    : "/protected";
 
   const supabase = await createClient();
 
@@ -17,16 +21,15 @@ export async function GET(request: NextRequest) {
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
-      if (isLocalEnv) {
+      if (isLocalEnv || !forwardedHost) {
         return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`https://${forwardedHost}${next}`);
       }
     }
+    console.error("[auth:callback] exchangeCodeForSession failed:", error.message);
     return NextResponse.redirect(
-      `${origin}/auth/error?error=${encodeURIComponent(error.message)}`
+      `${origin}/auth/error?error=${encodeURIComponent("Authentication link is invalid or has expired.")}`
     );
   }
 
@@ -37,10 +40,17 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const isLocalEnv = process.env.NODE_ENV === "development";
+      if (isLocalEnv || !forwardedHost) {
+        return NextResponse.redirect(`${origin}${next}`);
+      } else {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      }
     }
+    console.error("[auth:callback] verifyOtp failed:", error.message);
     return NextResponse.redirect(
-      `${origin}/auth/error?error=${encodeURIComponent(error.message)}`
+      `${origin}/auth/error?error=${encodeURIComponent("Authentication link is invalid or has expired.")}`
     );
   }
 

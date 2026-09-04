@@ -5,10 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Environment variables ရှိမရှိ စစ်ဆေးပေးသည့် variable
 export const hasEnvVars =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
   export const formatMMK = (amount: number): string => {
     return `${new Intl.NumberFormat("en-US").format(amount)} MMK`;

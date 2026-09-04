@@ -51,6 +51,21 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Please provide an image file.' },
+        { status: 400 }
+      );
+    }
+
+    // Max 10MB image limit
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'File size exceeds 10MB limit.' },
+        { status: 400 }
+      );
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
@@ -89,9 +104,9 @@ export async function POST(req: Request) {
     const parsedData = JSON.parse(response.text!);
     return NextResponse.json({ data: parsedData });
   } catch (error: any) {
-    console.error('Gemini Parse Error:', error);
+    console.error('[api:parse-menu] Error parsing menu:', error);
     return NextResponse.json(
-      { error: error?.message || 'Menu ဖတ်ယူရာတွင် အဆင်မပြေပါ' },
+      { error: 'Failed to extract menu data from image. Please ensure the image is clear and try again.' },
       { status: 500 }
     );
   }

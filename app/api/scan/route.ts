@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const { restaurantId } = await req.json();
+    const body = await req.json().catch(() => null);
+    const restaurantId = typeof body?.restaurantId === "string" ? body.restaurantId.trim() : null;
 
     if (!restaurantId || restaurantId === "demo") {
       return NextResponse.json({ success: true, skipped: true });
@@ -26,8 +27,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("Error logging scan event:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 200 }); // Do not break client page load on telemetry failure
+  } catch (err: unknown) {
+    console.error("[api:scan] Error logging scan event:", err);
+    return NextResponse.json({ success: false }, { status: 200 }); // Do not break client page load on telemetry failure
   }
 }

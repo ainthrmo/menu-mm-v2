@@ -2,52 +2,42 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Structured auth response sent back to the client.
- * - error: human-readable on failure
- * - success: true when operation succeeded
- * - details: optional raw info for debugging (remove in prod)
- */
-type AuthResult = { error?: string; success?: boolean; redirectUrl?: string; details?: any };
+export type AuthResult = {
+  error?: string;
+  success?: boolean;
+  redirectUrl?: string;
+};
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export async function loginAction(formData: { email: string; password: string }): Promise<AuthResult> {
-  // Defensive validation
   if (!formData?.email || !formData?.password) {
     return { error: "Email and password are required." };
   }
 
-  // Try to create server Supabase client
   let supabase;
   try {
     supabase = await createClient();
   } catch (err) {
-    // Log server-side for debugging
-    // eslint-disable-next-line no-console
-    console.error("[actions] createClient failed:", err);
-    return { error: "Server configuration error. Check logs.", details: String(err) };
+    console.error("[auth:actions] createClient failed during login:", err);
+    return { error: "Unable to connect to authentication service. Please try again later." };
   }
 
-  // Attempt sign-in; catch both returned error and thrown exceptions
   try {
     const res = await supabase.auth.signInWithPassword({
-      email: formData.email.trim(),
+      email: formData.email.trim().toLowerCase(),
       password: formData.password,
     });
 
     if (res?.error) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] signInWithPassword returned error:", res.error);
-      return { error: res.error.message || "Sign-in failed", details: String(res.error.message || res.error) };
+      console.error("[auth:actions] signInWithPassword error:", res.error.message);
+      return { error: "Invalid email or password." };
     }
 
-    const data = (res as any).data ?? {};
-    const user = data?.user ?? null;
-    const session = data?.session ?? null;
-
-    if (!user && !session) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] signIn did not return user/session:", res);
-      return { error: "Login failed: no user session returned.", details: String(res) };
+    const user = res.data?.user;
+    if (!user) {
+      console.error("[auth:actions] signIn succeeded but no user returned.");
+      return { error: "Login failed: could not verify user account." };
     }
 
     // Check if user already owns a restaurant
@@ -59,33 +49,33 @@ export async function loginAction(formData: { email: string; password: string })
 
     const redirectUrl = restaurant ? "/protected" : "/protected/onboarding";
 
-    // Success: return structured success result with destination URL.
-    return { success: true, redirectUrl, details: { user, session } };
+    return { success: true, redirectUrl };
   } catch (err) {
-    // Network/fetch or unexpected runtime error while calling Supabase
-    // eslint-disable-next-line no-console
-    console.error("[actions] signInWithPassword threw:", err);
-    return { error: err instanceof Error ? `Network/server error: ${err.message}` : "Unknown sign-in error", details: String(err) };
+    console.error("[auth:actions] signInWithPassword unexpected exception:", err);
+    return { error: "An unexpected error occurred during log in. Please try again." };
   }
 }
 
-export async function signUpAction(formData: { email: string; password: string; origin: string; }): Promise<AuthResult> {
+export async function signUpAction(formData: { email: string; password: string; origin: string }): Promise<AuthResult> {
   if (!formData?.email || !formData?.password) {
     return { error: "Email and password are required." };
+  }
+
+  if (formData.password.length < MIN_PASSWORD_LENGTH) {
+    return { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.` };
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] createClient (signup) failed:", err);
-    return { error: "Server configuration error. Check logs.", details: String(err) };
+    console.error("[auth:actions] createClient failed during signup:", err);
+    return { error: "Unable to connect to authentication service. Please try again later." };
   }
 
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email.trim(),
+    const { error } = await supabase.auth.signUp({
+      email: formData.email.trim().toLowerCase(),
       password: formData.password,
       options: {
         emailRedirectTo: `${formData.origin}/auth/callback`,
@@ -93,76 +83,76 @@ export async function signUpAction(formData: { email: string; password: string; 
     });
 
     if (error) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] signUp returned error:", error);
-      return { error: error.message || "Sign up failed.", details: String(error.message || error) };
-    }
-
-    return { success: true, details: data };
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] signUp threw:", err);
-    return { error: err instanceof Error ? err.message : "Unexpected error during sign up.", details: String(err) };
-  }
-}
-
-export async function forgotPasswordAction(formData: { email: string; origin: string; }): Promise<AuthResult> {
-  if (!formData?.email) return { error: "Email is required." };
-
-  let supabase;
-  try {
-    supabase = await createClient();
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] createClient (forgotPassword) failed:", err);
-    return { error: "Server configuration error. Check logs.", details: String(err) };
-  }
-
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(formData.email.trim(), {
-      redirectTo: `${formData.origin}/auth/callback?next=/auth/update-password`,
-    });
-
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] resetPasswordForEmail returned error:", error);
-      return { error: error.message || "Failed to send reset email.", details: String(error.message || error) };
+      console.error("[auth:actions] signUp error:", error.message);
+      return { error: "Unable to create account. Please check your details and try again." };
     }
 
     return { success: true };
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] resetPasswordForEmail threw:", err);
-    return { error: err instanceof Error ? err.message : "Unexpected error.", details: String(err) };
+    console.error("[auth:actions] signUp unexpected exception:", err);
+    return { error: "An unexpected error occurred during sign up. Please try again." };
   }
 }
 
-export async function updatePasswordAction(formData: { password: string }): Promise<AuthResult> {
-  if (!formData?.password) return { error: "Password is required." };
+export async function forgotPasswordAction(formData: { email: string; origin: string }): Promise<AuthResult> {
+  if (!formData?.email) {
+    return { error: "Email is required." };
+  }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] createClient (updatePassword) failed:", err);
-    return { error: "Server configuration error. Check logs.", details: String(err) };
+    console.error("[auth:actions] createClient failed during forgotPassword:", err);
+    return { error: "Unable to connect to authentication service. Please try again later." };
   }
 
   try {
-    const { data, error } = await supabase.auth.updateUser({ password: formData.password });
+    const { error } = await supabase.auth.resetPasswordForEmail(formData.email.trim().toLowerCase(), {
+      redirectTo: `${formData.origin}/auth/callback?next=/auth/update-password`,
+    });
 
     if (error) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] updateUser returned error:", error);
-      return { error: error.message || "Failed to update password.", details: String(error.message || error) };
+      console.error("[auth:actions] resetPasswordForEmail error:", error.message);
+      return { error: "Failed to send reset email. Please try again." };
     }
 
-    return { success: true, details: data };
+    return { success: true };
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] updateUser threw:", err);
-    return { error: err instanceof Error ? err.message : "Unexpected error.", details: String(err) };
+    console.error("[auth:actions] resetPasswordForEmail unexpected exception:", err);
+    return { error: "An unexpected error occurred. Please try again later." };
+  }
+}
+
+export async function updatePasswordAction(formData: { password: string }): Promise<AuthResult> {
+  if (!formData?.password) {
+    return { error: "Password is required." };
+  }
+
+  if (formData.password.length < MIN_PASSWORD_LENGTH) {
+    return { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.` };
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch (err) {
+    console.error("[auth:actions] createClient failed during updatePassword:", err);
+    return { error: "Unable to connect to authentication service. Please try again later." };
+  }
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password: formData.password });
+
+    if (error) {
+      console.error("[auth:actions] updateUser error:", error.message);
+      return { error: "Failed to update password. Your reset link may have expired." };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("[auth:actions] updateUser unexpected exception:", err);
+    return { error: "An unexpected error occurred while updating your password." };
   }
 }
 
@@ -171,22 +161,19 @@ export async function signOutAction(): Promise<AuthResult> {
   try {
     supabase = await createClient();
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] signOut) failed:", err);
-    return { error: "Server configuration error. Check logs.", details: String(err) };
+    console.error("[auth:actions] createClient failed during signOut:", err);
+    return { error: "Unable to connect to authentication service." };
   }
 
   try {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      // eslint-disable-next-line no-console
-      console.error("[actions] signOut returned error:", error);
-      return { error: error.message || "Failed to sign out.", details: String(error.message || error) };
+      console.error("[auth:actions] signOut error:", error.message);
+      return { error: "Failed to sign out. Please try again." };
     }
     return { success: true };
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[actions] signOut threw:", err);
-    return { error: err instanceof Error ? err.message : "Unexpected error.", details: String(err) };
+    console.error("[auth:actions] signOut unexpected exception:", err);
+    return { error: "An unexpected error occurred during sign out." };
   }
 }
