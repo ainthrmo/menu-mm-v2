@@ -923,10 +923,6 @@ export const AdminDashboard: React.FC = () => {
       setFormError("Burmese Dish Name is required.");
       return;
     }
-    if (!newItemDescriptionMm.trim()) {
-      setFormError("Burmese Dish Description is required.");
-      return;
-    }
     if (!newItemPrice.trim() || isNaN(parseFloat(newItemPrice)) || parseFloat(newItemPrice) < 0) {
       setFormError("Please enter a valid price.");
       return;
@@ -1054,8 +1050,8 @@ export const AdminDashboard: React.FC = () => {
       category: targetCategory,
       price: parseFloat(newItemPrice),
       image: imageUrl,
-      description: newItemDescriptionEn.trim() || newItemDescriptionMm.trim(),
-      description_mm: newItemDescriptionMm.trim(),
+      description: (newItemDescriptionEn.trim() || newItemDescriptionMm.trim()) || null,
+      description_mm: newItemDescriptionMm.trim() || null,
       is_popular: isFreePlan ? false : newItemIsPopular,
     };
 
@@ -2497,7 +2493,7 @@ export const AdminDashboard: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-[#1e2417]">
-                    Description {descLang === "MM" && <span className="text-rose-500">*</span>}
+                    Description
                   </label>
                   <div className="flex items-center p-0.5 bg-[#f6f2e8] rounded-lg border border-[#1e2417]/10">
                     <button
@@ -2528,7 +2524,6 @@ export const AdminDashboard: React.FC = () => {
                 {descLang === "MM" ? (
                   <textarea
                     rows={3}
-                    required
                     value={newItemDescriptionMm}
                     onChange={(e) => setNewItemDescriptionMm(e.target.value)}
                     placeholder="ဥပမာ - ကြက်သား၊ ငရုတ်ဆီ၊ ရှမ်းချဥ်တို့ဖြင့် တွဲဖက်ထားသော ရှမ်းရိုးရာခေါက်ဆွဲ"

@@ -250,31 +250,6 @@ export default function Hero() {
             gap: 20,
           }}
         >
-          {/* Badge */}
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "#E1E8CE",
-              color: "#3B6D11",
-              fontSize: 12,
-              fontWeight: 500,
-              padding: "5px 12px",
-              borderRadius: 20,
-              lineHeight: 1,
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path
-                d="M2 10C2 10 3.5 7 6 5.5C8.5 4 10.5 3 10.5 3C10.5 3 10 5.5 8 7.5C6 9.5 4 10.5 2 10Z"
-                fill="#3B6D11"
-              />
-              <path d="M6 5.5L4 9" stroke="#3B6D11" strokeWidth="0.8" strokeLinecap="round" />
-            </svg>
-            {h.badge}
-          </span>
 
           {/* Headline */}
           <h1

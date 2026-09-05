@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, UtensilsCrossed, Clock, Palette, Languages, ToggleRight } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { landingEn } from "@/lib/i18n/landing-en";
 import { landingMy } from "@/lib/i18n/landing-my";
@@ -12,7 +12,6 @@ import JapandiNavbar from "@/components/landing/LandingNavbar";
 
 export default function LandingPage() {
   const { language } = useLanguage();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const vineFillRef = useRef<HTMLDivElement | null>(null);
   const vineTrackRef = useRef<HTMLDivElement | null>(null);
 
@@ -62,10 +61,6 @@ export default function LandingPage() {
       obs.disconnect();
     };
   }, []);
-
-  const toggleFaq = (index: number) => {
-    setOpenFaq((prev) => (prev === index ? null : index));
-  };
 
   return (
     <div className="landing-editorial-root min-h-screen bg-[var(--stone)] text-[var(--ink)] antialiased overflow-x-hidden selection:bg-[var(--lime)] selection:text-[var(--ink)]">
@@ -283,156 +278,186 @@ export default function LandingPage() {
       {/* HERO SECTION */}
       <JapandiHero />
 
-
-      {/* PROBLEM STATEMENT SECTION */}
-      <section className="py-8 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
-        <div className="bg-[var(--moss-deep)] rounded-[20px] p-7 sm:p-10 text-[var(--stone)] max-w-[940px] shadow-lg">
-          <h2 className="text-xl sm:text-2xl mb-3 max-w-[540px] text-white font-fraunces font-semibold leading-snug">
-            {content.problem.title}
+      {/* HOW IT WORKS SECTION */}
+      <section id="how" className="py-12 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <div className="mb-8">
+          <h2 className="text-[24px] sm:text-[28px] md:text-[30px] font-fraunces font-semibold text-[var(--ink)] mb-2">
+            {content.howItWorks.title}
           </h2>
-          <p className="text-sm text-[#c2c8b8] max-w-[500px] leading-relaxed font-normal">
-            {content.problem.description}
+          <p className="text-sm sm:text-base text-[var(--sub)]">
+            {content.howItWorks.subtitle}
           </p>
         </div>
-      </section>
 
-      {/* WHAT YOU GET */}
-      <section className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
-        <div className="vine-node" />
-        <h2 className="text-[24px] sm:text-[26px] mb-1.5 font-fraunces text-[var(--ink)]">
-          {content.whatYouGet.title}
-        </h2>
-        <p className="text-sm text-[var(--sub)] mb-7 max-w-[460px] font-normal">
-          {content.whatYouGet.subtitle}
-        </p>
-
-        {/* Fix 6: Removed space-y-4 — items use py-5 internal padding now */}
-        <div className="max-w-[820px]">
-          {content.whatYouGet.items.map((item, idx) => (
-            <div key={idx}>
-              {/* Fix 6: py-4 → py-5 — more breathing room between feature rows */}
-              <div className="flex items-baseline gap-2 py-5 border-b border-dashed border-[var(--border)]">
-                <span className="font-fraunces text-base font-semibold whitespace-nowrap text-[var(--ink)]">
-                  {item.title}
-                </span>
-                <span className="flex-1 border-b border-dotted border-[var(--sub)] opacity-40 -translate-y-1" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Add your dishes */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="w-8 h-8 rounded-lg bg-[var(--stone-2)] flex items-center justify-center mb-4 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                1
               </div>
-              {/* Fix 2: text-[12.5px] → text-sm (14px) for WCAG AA compliance */}
-              <p className="text-sm text-[var(--sub)] mt-1.5 font-normal">
-                {item.description}
+              <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+                {content.howItWorks.step1Title}
+              </h3>
+              <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
+                {content.howItWorks.step1Desc}
               </p>
             </div>
-          ))}
+          </div>
+
+          {/* Card 2: Get your QR code */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="w-8 h-8 rounded-lg bg-[var(--stone-2)] flex items-center justify-center mb-4 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                2
+              </div>
+              <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+                {content.howItWorks.step2Title}
+              </h3>
+              <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
+                {content.howItWorks.step2Desc}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Guests scan and order */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] flex flex-col justify-between">
+            <div>
+              <div className="w-8 h-8 rounded-lg bg-[var(--stone-2)] flex items-center justify-center mb-4 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                3
+              </div>
+              <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+                {content.howItWorks.step3Title}
+              </h3>
+              <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
+                {content.howItWorks.step3Desc}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section id="how" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+      {/* 1. EXPLAINER SECTION */}
+      <section id="explainer" className="py-12 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
         <div className="vine-node" />
-        <h2 className="text-[24px] sm:text-[26px] mb-1.5 font-fraunces text-[var(--ink)]">
-          {content.howItWorks.title}
+        <div className="bg-white rounded-[20px] p-6 sm:p-10 border border-[var(--border)] shadow-[0_4px_24px_rgba(30,36,23,0.04)] grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          {/* Left column: Customer menu mockup image */}
+          <div className="bg-[var(--stone)] rounded-2xl p-4 sm:p-5 border border-[var(--border)] relative overflow-hidden flex flex-col items-center justify-center">
+            <div className="w-full max-w-[320px] rounded-2xl overflow-hidden shadow-md border border-[var(--border)] bg-white">
+              <Image
+                src="/customer_menu.png"
+                alt="Customer mobile menu view"
+                width={606}
+                height={951}
+                className="w-full h-auto object-contain block"
+                priority
+              />
+            </div>
+          </div>
+
+          {/* Right column: Heading & 3 short numbered points */}
+          <div className="flex flex-col justify-center">
+            <h2 className="text-2xl sm:text-3xl font-fraunces font-semibold text-[var(--ink)] mb-6 leading-tight">
+              {content.explainer.heading}
+            </h2>
+            <ol className="space-y-4">
+              <li className="flex items-start gap-3.5">
+                <div className="w-7 h-7 rounded-lg bg-[var(--stone-2)] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                  1
+                </div>
+                <span className="text-sm sm:text-base text-[var(--ink)] font-medium leading-snug pt-0.5">
+                  {content.explainer.point1}
+                </span>
+              </li>
+              <li className="flex items-start gap-3.5">
+                <div className="w-7 h-7 rounded-lg bg-[var(--stone-2)] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                  2
+                </div>
+                <span className="text-sm sm:text-base text-[var(--ink)] font-medium leading-snug pt-0.5">
+                  {content.explainer.point2}
+                </span>
+              </li>
+              <li className="flex items-start gap-3.5">
+                <div className="w-7 h-7 rounded-lg bg-[var(--stone-2)] flex items-center justify-center shrink-0 mt-0.5 border border-[var(--border)] text-[var(--moss-deep)] text-xs font-semibold font-fraunces">
+                  3
+                </div>
+                <span className="text-sm sm:text-base text-[var(--ink)] font-medium leading-snug pt-0.5">
+                  {content.explainer.point3}
+                </span>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. BENEFITS SECTION */}
+      <section id="benefits" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
+        <div className="vine-node" />
+        <h2 className="text-[24px] sm:text-[28px] md:text-[30px] mb-8 font-fraunces font-semibold text-[var(--ink)]">
+          {content.benefits.heading}
         </h2>
-        <p className="text-sm text-[var(--sub)] mb-8 max-w-[460px] font-normal">
-          {content.howItWorks.subtitle}
-        </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {/* Ticket 1 */}
-          <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
-            style={{
-              transform: "rotate(-1.5deg)",
-              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
-            }}
-          >
-            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
-              {content.howItWorks.step1Tag}
-            </p>
-            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
-              {content.howItWorks.step1Title}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-[940px]">
+          {/* Card 1: Update anytime */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_28px_rgba(30,36,23,0.07)] transition-all">
+            <div className="w-10 h-10 rounded-xl bg-[var(--stone-2)] flex items-center justify-center mb-4 text-[var(--moss-deep)]">
+              <Clock className="w-5 h-5" />
+            </div>
+            <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+              {content.benefits.card1Title}
             </h3>
-            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
             <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
-              {content.howItWorks.step1Desc}
+              {content.benefits.card1Desc}
             </p>
           </div>
 
-          {/* Ticket 2 */}
-          <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
-            style={{
-              transform: "rotate(1deg)",
-              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
-            }}
-          >
-            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
-              {content.howItWorks.step2Tag}
-            </p>
-            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
-              {content.howItWorks.step2Title}
+          {/* Card 2: Your own branding */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_28px_rgba(30,36,23,0.07)] transition-all">
+            <div className="w-10 h-10 rounded-xl bg-[var(--stone-2)] flex items-center justify-center mb-4 text-[var(--moss-deep)]">
+              <Palette className="w-5 h-5" />
+            </div>
+            <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+              {content.benefits.card2Title}
             </h3>
-            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
             <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
-              {content.howItWorks.step2Desc}
+              {content.benefits.card2Desc}
             </p>
           </div>
 
-          {/* Ticket 3 */}
-          <div
-            className="ticket-card bg-white p-6 pb-8 relative rounded-t-sm hover:rotate-0 hover:-translate-y-2"
-            style={{
-              transform: "rotate(-1deg)",
-              boxShadow: "0 10px 26px rgba(30, 36, 23, 0.08)",
-            }}
-          >
-            <p className="font-fraunces text-xs text-[var(--clay)] font-semibold mb-2 tracking-wide">
-              {content.howItWorks.step3Tag}
-            </p>
-            <h3 className="text-[16px] mb-1 font-semibold text-[var(--ink)] font-fraunces">
-              {content.howItWorks.step3Title}
+          {/* Card 3: Bilingual by default */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_28px_rgba(30,36,23,0.07)] transition-all">
+            <div className="w-10 h-10 rounded-xl bg-[var(--stone-2)] flex items-center justify-center mb-4 text-[var(--moss-deep)]">
+              <Languages className="w-5 h-5" />
+            </div>
+            <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+              {content.benefits.card3Title}
             </h3>
-            {/* Fix 2: text-[13px] → text-sm (14px) for readability */}
             <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
-              {content.howItWorks.step3Desc}
+              {content.benefits.card3Desc}
+            </p>
+          </div>
+
+          {/* Card 4: Mark items sold out */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[var(--border)] shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_28px_rgba(30,36,23,0.07)] transition-all">
+            <div className="w-10 h-10 rounded-xl bg-[var(--stone-2)] flex items-center justify-center mb-4 text-[var(--moss-deep)]">
+              <ToggleRight className="w-5 h-5" />
+            </div>
+            <h3 className="font-fraunces text-base sm:text-[17px] font-semibold text-[var(--ink)] mb-1.5">
+              {content.benefits.card4Title}
+            </h3>
+            <p className="text-sm text-[var(--sub)] font-normal leading-relaxed">
+              {content.benefits.card4Desc}
             </p>
           </div>
         </div>
       </section>
 
-      {/* TAPED NAPKIN QUOTE */}
-      <section className="py-12 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
-        <div className="vine-node" />
-        <div
-          className="bg-[#fffdf7] max-w-[620px] p-7 sm:p-10 relative rounded-xs transition-transform duration-200 hover:rotate-0"
-          style={{
-            transform: "rotate(1deg)",
-            boxShadow: "0 16px 36px rgba(30, 36, 23, 0.10)",
-          }}
-        >
-          {/* Tape Left */}
-          <div
-            className="absolute w-[50px] h-[19px] bg-[rgba(200,240,74,0.65)] -top-2.5 left-6 shadow-2xs pointer-events-none"
-            style={{ transform: "rotate(-8deg)" }}
-          />
-          {/* Tape Right */}
-          <div
-            className="absolute w-[50px] h-[19px] bg-[rgba(200,240,74,0.65)] -top-2.5 right-6 shadow-2xs pointer-events-none"
-            style={{ transform: "rotate(7deg)" }}
-          />
-          <blockquote className="font-caveat text-2xl md:text-[27px] leading-[1.4] text-[var(--ink)] mb-3 font-semibold">
-            &ldquo;{content.napkinQuote.quote}&rdquo;
-          </blockquote>
-          <cite className="block not-italic text-xs text-[var(--sub)] font-semibold font-sans">
-            {content.napkinQuote.author}
-          </cite>
-        </div>
-      </section>
-
-      {/* PRICING SECTION */}
+      {/* 3. PRICING SECTION */}
       <section id="pricing" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
         <div className="vine-node" />
         <div className="max-w-[840px]">
-          <h2 className="text-[24px] sm:text-[28px] md:text-[32px] mb-2 font-fraunces text-[var(--ink)] tracking-tight">
+          <h2 className="text-[24px] sm:text-[28px] md:text-[32px] mb-2 font-fraunces text-[var(--ink)] tracking-tight font-semibold">
             {content.pricing.title}
           </h2>
           <p className="text-sm sm:text-base text-[var(--sub)] mb-8 sm:mb-10 max-w-[520px] font-normal leading-relaxed">
@@ -440,28 +465,31 @@ export default function LandingPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
-            {/* Free Plan */}
+            {/* Starter Plan */}
             <div className="bg-white rounded-[20px] p-6 sm:p-8 border border-[var(--border)] flex flex-col justify-between shadow-[0_4px_20px_rgba(30,36,23,0.04)] hover:shadow-[0_12px_32px_rgba(30,36,23,0.08)] transition-all duration-300">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--sub)] px-2.5 py-1 rounded-md bg-[var(--stone-2)]">
-                    {content.pricing.freeBadge}
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--ink)] px-2.5 py-1 rounded-md bg-[var(--stone-2)]">
+                    {content.pricing.starterBadge}
                   </span>
                 </div>
-                
+
                 <div className="my-4 pb-4 border-b border-[var(--border)]">
                   <div className="flex items-baseline gap-1.5 flex-wrap">
                     <span className="font-fraunces text-3xl sm:text-4xl font-semibold text-[var(--ink)]">
-                      {content.pricing.freePrice}
+                      {content.pricing.starterPrice}
                     </span>
                     <span className="text-sm font-normal text-[var(--sub)] font-sans">
-                      {content.pricing.freePeriod}
+                      {content.pricing.starterPeriod}
                     </span>
                   </div>
+                  <p className="text-xs font-semibold text-[var(--sub)] mt-1.5">
+                    {content.pricing.starterDishes}
+                  </p>
                 </div>
 
                 <div className="space-y-3.5 text-sm text-[var(--ink)] my-6">
-                  {content.pricing.freeFeatures.map((feat, idx) => (
+                  {content.pricing.starterFeatures.map((feat, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full bg-[var(--stone-2)] flex items-center justify-center shrink-0 mt-0.5">
                         <Check className="w-3.5 h-3.5 text-[var(--moss-mid)]" />
@@ -477,14 +505,14 @@ export default function LandingPage() {
                   href="/auth/sign-up"
                   className="btn-editorial btn-editorial-outline w-full py-3.5 justify-center text-sm font-semibold rounded-xl"
                 >
-                  {content.pricing.freeCta}
+                  {content.pricing.starterCta}
                 </Link>
               </div>
             </div>
 
             {/* Pro Plan Featured */}
             <div className="bg-[var(--moss-deep)] text-[var(--stone)] rounded-[20px] p-6 sm:p-8 flex flex-col justify-between border-2 border-[var(--lime)] shadow-[0_16px_40px_rgba(27,36,20,0.18)] hover:shadow-[0_20px_48px_rgba(27,36,20,0.28)] transition-all duration-300 relative overflow-hidden">
-              {/* Pro Badge */}
+              {/* Featured Badge */}
               <div className="absolute top-4 right-4 sm:top-5 sm:right-5 bg-[var(--lime)] text-[var(--ink)] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
                 {content.pricing.proRecommended}
               </div>
@@ -495,7 +523,7 @@ export default function LandingPage() {
                     {content.pricing.proBadge}
                   </span>
                 </div>
-                
+
                 <div className="my-4 pb-4 border-b border-white/10">
                   <div className="flex items-baseline gap-1.5 flex-wrap">
                     <span className="font-fraunces text-3xl sm:text-4xl font-semibold text-white">
@@ -505,6 +533,9 @@ export default function LandingPage() {
                       {content.pricing.proPeriod}
                     </span>
                   </div>
+                  <p className="text-xs font-semibold text-[var(--lime)] mt-1.5">
+                    {content.pricing.proDishes}
+                  </p>
                 </div>
 
                 <div className="space-y-3.5 text-sm text-[var(--stone)] my-6">
@@ -532,47 +563,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ SECTION */}
-      <section id="faq" className="py-14 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
-        <div className="vine-node" />
-        <h2 className="text-[24px] sm:text-[26px] mb-7 font-fraunces text-[var(--ink)]">
-          {content.faq.title}
-        </h2>
-
-        <div className="divide-y divide-[var(--border)] border-t border-[var(--border)] max-w-[820px]">
-          {content.faq.items.map((faq, idx) => {
-            const isOpen = openFaq === idx;
-            return (
-              <div key={idx} className="transition-colors">
-                {/* Fix 4: Added hover:bg + px/-mx so the full row lights up on hover, not just the text */}
-                <button
-                  type="button"
-                  onClick={() => toggleFaq(idx)}
-                  className="w-full py-4.5 px-3 -mx-3 flex justify-between items-center text-left text-[15px] font-fraunces font-semibold text-[var(--ink)] hover:text-[var(--moss-mid)] hover:bg-[var(--stone-2)] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] transition-colors"
-                  aria-expanded={isOpen}
-                >
-                  <span className="pr-4">{faq.q}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-[var(--sub)] shrink-0 transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-[var(--ink)]" : ""
-                    }`}
-                  />
-                </button>
-                <div className={`faq-content-grid ${isOpen ? "open" : ""}`}>
-                  <div className="overflow-hidden">
-                    {/* Fix 2: text-[13.5px] → text-sm (14px) for readability */}
-                    <p className="text-sm text-[var(--sub)] leading-relaxed font-normal pb-4.5 max-w-[700px]">
-                      {faq.a}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* FINAL CTA SECTION */}
+      {/* 4. FINAL CTA SECTION */}
       <section className="py-10 pl-10 pr-5 sm:pl-12 sm:pr-8 md:pl-20 md:px-8 max-w-[1040px] mx-auto relative">
         <div className="vine-node" id="lastNode" />
         <div className="bg-[var(--moss-deep)] text-center py-16 px-6 sm:px-10 rounded-[24px] relative overflow-hidden text-[var(--stone)] shadow-2xl">
@@ -621,9 +612,6 @@ export default function LandingPage() {
           </a>
           <a href="#pricing" className="hover:text-[var(--ink)] transition-colors">
             {content.nav.pricing}
-          </a>
-          <a href="#faq" className="hover:text-[var(--ink)] transition-colors">
-            {content.nav.faq}
           </a>
           <Link href="/auth/login" className="hover:text-[var(--ink)] transition-colors">
             {content.nav.logIn}

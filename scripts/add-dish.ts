@@ -35,7 +35,7 @@ interface DishData {
   nameEn?: string;
   category: string;
   price: number;
-  descMm: string;
+  descMm?: string;
   descEn?: string;
   isPopular: boolean;
 }
@@ -50,7 +50,7 @@ program
   .option("--name-en <name>", "Dish name in English (optional)")
   .option("--category <name>", "Category name (Burmese or English)")
   .option("--price <number>", "Price in MMK (required, positive number)")
-  .option("--desc-mm <text>", "Description in Burmese (required)")
+  .option("--desc-mm <text>", "Description in Burmese (optional)")
   .option("--desc-en <text>", "Description in English (optional)")
   .option("--popular", "Feature as popular dish")
   .option("-y, --yes", "Skip interactive confirmation and save immediately")
@@ -98,7 +98,6 @@ async function runAddDish(flags: any) {
 
   const isFullyFlagged =
     Boolean(flags.nameMm) &&
-    Boolean(flags.descMm) &&
     flags.price !== undefined &&
     Boolean(flags.category);
 
@@ -258,16 +257,13 @@ async function runAddDish(flags: any) {
 
   // --- Step 6: Description (Burmese) ---
   if (flags.descMm) {
-    data.descMm = String(flags.descMm).trim();
-  } else {
+    data.descMm = String(flags.descMm).trim() || undefined;
+  } else if (!flags.yes) {
     const descMm = await p.text({
-      message: "Description (Burmese)",
-      validate: (val) => {
-        if (!val || !val.trim()) return "Burmese description is required";
-      },
+      message: "Description (Burmese) (optional)",
     });
     if (p.isCancel(descMm)) return onCancel();
-    data.descMm = descMm.trim();
+    data.descMm = descMm?.trim() ? descMm.trim() : undefined;
   }
 
   // --- Step 7: Description (English) ---
@@ -370,8 +366,8 @@ async function runAddDish(flags: any) {
     name_mm: data.nameMm,
     category: data.category,
     price: data.price,
-    description: data.descEn || data.descMm,
-    description_mm: data.descMm,
+    description: (data.descEn || data.descMm) || null,
+    description_mm: data.descMm || null,
     image: imageUrl,
     is_popular: data.isPopular || false,
     is_available: true,
@@ -492,11 +488,10 @@ async function editField(
     }
     case "descMm": {
       const res = await p.text({
-        message: "Description (Burmese)",
-        initialValue: data.descMm,
-        validate: (val) => (!val || !val.trim() ? "Burmese description is required" : undefined),
+        message: "Description (Burmese) (optional)",
+        initialValue: data.descMm || "",
       });
-      if (!p.isCancel(res)) data.descMm = res.trim();
+      if (!p.isCancel(res)) data.descMm = res?.trim() ? res.trim() : undefined;
       break;
     }
     case "descEn": {
