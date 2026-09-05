@@ -13,9 +13,8 @@ export default async function AdminOverviewPage() {
   const supabase = await createClient();
   const { role } = await getCurrentUserRole(supabase);
 
-  // 1. Fetch Restaurants with Subscriptions, Dish Counts, and Category Counts
   const [
-    { data: rawRestaurants, error: restError },
+    { data: rawRestaurants },
     { data: subscriptions },
     { data: menuItems },
     { data: categories },
@@ -34,7 +33,6 @@ export default async function AdminOverviewPage() {
       .order("submitted_at", { ascending: false }),
   ]);
 
-  // Fallback demo dataset if database has zero restaurants yet
   const restaurantsList = rawRestaurants || [];
 
   const adminRestaurants: AdminRestaurant[] = restaurantsList.map((r: any) => {
@@ -54,7 +52,7 @@ export default async function AdminOverviewPage() {
       id: r.id,
       name: r.name || "Untitled Restaurant",
       owner_id: r.owner_id,
-      status: (r.status as "active" | "disabled") || "active",
+      status: (r.status as "pending" | "active" | "disabled") || "pending",
       scan_count: Number(r.scan_count || 0),
       created_at: r.created_at || new Date().toISOString(),
       plan_id: planId,
@@ -76,7 +74,6 @@ export default async function AdminOverviewPage() {
     submitted_at: l.submitted_at || l.created_at || new Date().toISOString(),
   }));
 
-  // Aggregate Real Stats
   const totalActiveRestaurants = adminRestaurants.filter((r) => r.status === "active").length;
   const proTierCount = adminRestaurants.filter(
     (r) => r.plan_id === "pro" || r.plan_id === "business"
