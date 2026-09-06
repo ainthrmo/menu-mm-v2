@@ -4,13 +4,28 @@ import CategoryMenuView from "@/components/CategoryMenuView";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ restaurantId?: string; demo?: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const query = await searchParams;
+  const restaurantId = query.restaurantId?.trim();
+  const isDemo = query.demo === "true" || !restaurantId;
+
+  if (isDemo) {
+    return {
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
   return {
     alternates: {
-      canonical: `/category/${id}`,
+      canonical: `/category/${id}?restaurantId=${encodeURIComponent(restaurantId)}`,
     },
   };
 }
@@ -33,5 +48,3 @@ export default function CategoryPage({
     </main>
   );
 }
-
-
