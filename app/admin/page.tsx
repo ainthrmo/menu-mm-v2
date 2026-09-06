@@ -10,7 +10,6 @@ import PendingApprovalsPanel, {
 } from "@/components/PendingApprovalsPanel";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 export const instant = false;
 
 export default async function AdminOverviewPage() {
