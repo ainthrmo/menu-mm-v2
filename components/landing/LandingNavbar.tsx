@@ -57,7 +57,7 @@ export default function LandingNavbar() {
         {/* Desktop links + lang switcher */}
         <div className="hidden md:flex items-center gap-6">
           <a
-            href="#examples"
+            href="/examples"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
@@ -166,7 +166,7 @@ export default function LandingNavbar() {
           style={{ background: "#F4F1EA", borderColor: "rgba(43,42,38,0.08)" }}
         >
           <a
-            href="#examples"
+            href="/examples"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
