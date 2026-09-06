@@ -1,5 +1,5 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserRole } from "@/lib/admin-auth";
 import SuperAdminDashboard, {
   AdminRestaurant,
   AdminLead,
@@ -9,34 +9,54 @@ import PendingApprovalsPanel, {
   PendingRestaurant,
 } from "@/components/PendingApprovalsPanel";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const instant = false;
 
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
-  const { role } = await getCurrentUserRole(supabase);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = profile?.role || "owner";
+
+  if (role !== "admin" && role !== "staff") {
+    redirect("/protected");
+  }
 
   const [
-    { data: rawRestaurants },
-    { data: subscriptions },
-    { data: menuItems },
-    { data: categories },
-    { data: leadsData },
+    restaurantsResult,
+    subscriptionsResult,
+    menuItemsResult,
+    categoriesResult,
+    leadsResult,
   ] = await Promise.all([
-    supabase
-      .from("restaurants")
-      .select("id, name, owner_id, status, scan_count, created_at")
-      .order("created_at", { ascending: false }),
-    supabase.from("subscriptions").select("restaurant_id, plan_id, status"),
+    supabase.from("restaurants").select("*").order("created_at", { ascending: false }),
+    supabase.from("subscriptions").select("*"),
     supabase.from("menu_items").select("id, restaurant_id"),
     supabase.from("categories").select("id, restaurant_id"),
-    supabase
-      .from("leads")
-      .select("*")
-      .order("submitted_at", { ascending: false }),
+    supabase.from("leads").select("*").order("created_at", { ascending: false }),
   ]);
 
-  const restaurantsList = rawRestaurants || [];
-  const pendingRestaurants: PendingRestaurant[] = restaurantsList
+  const rawRestaurants = restaurantsResult.data || [];
+  const subscriptions = subscriptionsResult.data || [];
+  const menuItems = menuItemsResult.data || [];
+  const categories = categoriesResult.data || [];
+  const leadsData = leadsResult.data || [];
+
+  const pendingRestaurants: PendingRestaurant[] = rawRestaurants
     .filter((r: any) => r.status === "pending")
     .map((r: any) => ({
       id: r.id,
@@ -44,13 +64,13 @@ export default async function AdminOverviewPage() {
       created_at: r.created_at || new Date().toISOString(),
     }));
 
-  const adminRestaurants: AdminRestaurant[] = restaurantsList
+  const adminRestaurants: AdminRestaurant[] = rawRestaurants
     .filter((r: any) => r.status !== "pending")
     .map((r: any) => {
-      const sub = subscriptions?.find((s: any) => s.restaurant_id === r.id);
+      const sub = subscriptions.find((s: any) => s.restaurant_id === r.id);
       const planId = sub?.plan_id || "free";
-      const dishesForRest = menuItems?.filter((m: any) => m.restaurant_id === r.id) || [];
-      const catsForRest = categories?.filter((c: any) => c.restaurant_id === r.id) || [];
+      const dishesForRest = menuItems.filter((m: any) => m.restaurant_id === r.id);
+      const catsForRest = categories.filter((c: any) => c.restaurant_id === r.id);
 
       const planName =
         planId === "pro"
@@ -80,23 +100,20 @@ export default async function AdminOverviewPage() {
     phone: l.phone,
     city: l.city,
     notes: l.notes,
-    status: l.status || "pending",
-    onboarded_restaurant_id: l.onboarded_restaurant_id,
-    submitted_at: l.submitted_at || l.created_at || new Date().toISOString(),
+    status: l.status,
+    submitted_at: l.submitted_at,
+    created_at: l.created_at,
   }));
 
-  const totalActiveRestaurants = adminRestaurants.filter((r) => r.status === "active").length;
-  const proTierCount = adminRestaurants.filter(
-    (r) => r.plan_id === "pro" || r.plan_id === "business"
-  ).length;
-  const pendingLeadsCount = adminLeads.filter((l) => l.status === "pending").length;
-  const totalScans = adminRestaurants.reduce((sum, r) => sum + r.scan_count, 0);
-
   const initialStats: AdminStats = {
-    totalActiveRestaurants,
-    proTierCount,
-    pendingLeadsCount,
-    totalScans,
+    totalRestaurants: rawRestaurants.length,
+    activeRestaurants: rawRestaurants.filter((r: any) => r.status === "active").length,
+    pendingRestaurants: rawRestaurants.filter((r: any) => r.status === "pending").length,
+    disabledRestaurants: rawRestaurants.filter((r: any) => r.status === "disabled").length,
+    totalScans: rawRestaurants.reduce(
+      (sum: number, r: any) => sum + Number(r.scan_count || 0),
+      0,
+    ),
   };
 
   return (
