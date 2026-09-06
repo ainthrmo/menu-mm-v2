@@ -294,7 +294,7 @@ export default function Hero() {
             </Link>
 
             <a
-              href="#examples"
+              href="/examples"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
