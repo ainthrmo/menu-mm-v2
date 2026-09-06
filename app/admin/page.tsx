@@ -5,7 +5,9 @@ import SuperAdminDashboard, {
   AdminLead,
   AdminStats,
 } from "@/components/SuperAdminDashboard";
-import { DEFAULT_PRO_PLAN, DEFAULT_FREE_PLAN, DEFAULT_BUSINESS_PLAN } from "@/lib/subscription";
+import PendingApprovalsPanel, {
+  PendingRestaurant,
+} from "@/components/PendingApprovalsPanel";
 
 export const instant = false;
 
@@ -34,33 +36,42 @@ export default async function AdminOverviewPage() {
   ]);
 
   const restaurantsList = rawRestaurants || [];
-
-  const adminRestaurants: AdminRestaurant[] = restaurantsList.map((r: any) => {
-    const sub = subscriptions?.find((s: any) => s.restaurant_id === r.id);
-    const planId = sub?.plan_id || "free";
-    const dishesForRest = menuItems?.filter((m: any) => m.restaurant_id === r.id) || [];
-    const catsForRest = categories?.filter((c: any) => c.restaurant_id === r.id) || [];
-
-    const planName =
-      planId === "pro"
-        ? "Pro"
-        : planId === "business"
-        ? "Business"
-        : "Free";
-
-    return {
+  const pendingRestaurants: PendingRestaurant[] = restaurantsList
+    .filter((r: any) => r.status === "pending")
+    .map((r: any) => ({
       id: r.id,
       name: r.name || "Untitled Restaurant",
-      owner_id: r.owner_id,
-      status: (r.status as "pending" | "active" | "disabled") || "pending",
-      scan_count: Number(r.scan_count || 0),
       created_at: r.created_at || new Date().toISOString(),
-      plan_id: planId,
-      plan_name: planName,
-      dish_count: dishesForRest.length,
-      category_count: catsForRest.length,
-    };
-  });
+    }));
+
+  const adminRestaurants: AdminRestaurant[] = restaurantsList
+    .filter((r: any) => r.status !== "pending")
+    .map((r: any) => {
+      const sub = subscriptions?.find((s: any) => s.restaurant_id === r.id);
+      const planId = sub?.plan_id || "free";
+      const dishesForRest = menuItems?.filter((m: any) => m.restaurant_id === r.id) || [];
+      const catsForRest = categories?.filter((c: any) => c.restaurant_id === r.id) || [];
+
+      const planName =
+        planId === "pro"
+          ? "Pro"
+          : planId === "business"
+          ? "Business"
+          : "Free";
+
+      return {
+        id: r.id,
+        name: r.name || "Untitled Restaurant",
+        owner_id: r.owner_id,
+        status: r.status as "active" | "disabled",
+        scan_count: Number(r.scan_count || 0),
+        created_at: r.created_at || new Date().toISOString(),
+        plan_id: planId,
+        plan_name: planName,
+        dish_count: dishesForRest.length,
+        category_count: catsForRest.length,
+      };
+    });
 
   const adminLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
     id: l.id,
@@ -89,11 +100,14 @@ export default async function AdminOverviewPage() {
   };
 
   return (
-    <SuperAdminDashboard
-      initialRestaurants={adminRestaurants}
-      initialLeads={adminLeads}
-      initialStats={initialStats}
-      currentRole={role}
-    />
+    <div className="space-y-6">
+      <PendingApprovalsPanel initialRestaurants={pendingRestaurants} />
+      <SuperAdminDashboard
+        initialRestaurants={adminRestaurants}
+        initialLeads={adminLeads}
+        initialStats={initialStats}
+        currentRole={role}
+      />
+    </div>
   );
 }
