@@ -35,46 +35,49 @@ export default async function AdminOverviewContent() {
     restaurantsResult,
     leadsResult,
     pendingResult,
-    statsResult,
   ] = await Promise.all([
     supabase
       .from("restaurants")
-      .select("id, name, slug, owner_id, created_at, status")
+      .select("id, name, owner_id, status, scan_count, created_at, plan_id, plan_name, dish_count, category_count, cover_url")
       .order("created_at", { ascending: false }),
     supabase
       .from("leads")
-      .select("id, name, email, phone, restaurant_name, message, created_at")
-      .order("created_at", { ascending: false }),
+      .select("id, restaurant_name, contact_name, phone, city, notes, status, onboarded_restaurant_id, submitted_at")
+      .order("submitted_at", { ascending: false }),
     supabase
       .from("restaurants")
-      .select("id, name, slug, owner_id, created_at, status")
+      .select("id, name, created_at")
       .eq("status", "pending")
       .order("created_at", { ascending: true }),
-    supabase
-      .from("restaurants")
-      .select("id, status, created_at"),
   ]);
 
-  const restaurants = (restaurantsResult.data || []) as AdminRestaurant[];
-  const leads = (leadsResult.data || []) as AdminLead[];
-  const pendingRestaurants = (pendingResult.data || []) as PendingRestaurant[];
-  const allRestaurants = statsResult.data || [];
+  const restaurants = (restaurantsResult.data || []) as unknown as AdminRestaurant[];
+  const leads = (leadsResult.data || []) as unknown as AdminLead[];
+  const pendingRestaurants = (pendingResult.data || []) as unknown as PendingRestaurant[];
+
+  const activeRestaurants = restaurants.filter((r) => r.status === "active");
+  const proRestaurants = restaurants.filter(
+    (r) => r.plan_id === "pro" || r.plan_id === "business"
+  );
+  const pendingLeads = leads.filter((l) => l.status === "pending");
+  const totalScans = restaurants.reduce((sum, r) => sum + (r.scan_count || 0), 0);
 
   const stats: AdminStats = {
-    totalRestaurants: allRestaurants.length,
-    activeRestaurants: allRestaurants.filter((r) => r.status === "active").length,
-    pendingRestaurants: allRestaurants.filter((r) => r.status === "pending").length,
-    totalLeads: leads.length,
+    totalActiveRestaurants: activeRestaurants.length,
+    proTierCount: proRestaurants.length,
+    pendingLeadsCount: pendingLeads.length,
+    totalScans,
   };
 
   return (
     <div className="min-h-screen bg-background">
       <SuperAdminDashboard
-        restaurants={restaurants}
-        leads={leads}
-        stats={stats}
+        initialRestaurants={restaurants}
+        initialLeads={leads}
+        initialStats={stats}
+        currentRole={role}
       />
-      <PendingApprovalsPanel restaurants={pendingRestaurants} />
+      <PendingApprovalsPanel initialRestaurants={pendingRestaurants} />
     </div>
   );
 }
