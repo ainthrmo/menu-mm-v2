@@ -1093,9 +1093,10 @@ export const AdminDashboard: React.FC = () => {
           toast.success(`Added "${newItemNameMm.trim()}" to menu`);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Unexpected error saving dish:", err);
-      setFormError(err?.message || "An unexpected error occurred while saving the dish.");
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred while saving the dish.";
+      setFormError(errorMessage);
     } finally {
       isSavingDishRef.current = false;
       setSubmitting(false);
