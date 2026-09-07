@@ -22,6 +22,7 @@ export default function LandingNavbar() {
     pricing: "Pricing",
     getStarted: "Get started",
   };
+  const logIn = language === "my" ? "အကောင့်ဝင်ရန်" : "Log in";
   
   return (
     <header
@@ -107,6 +108,13 @@ export default function LandingNavbar() {
           )}
 
           <Link
+            href="/auth/login"
+            className="inline-flex items-center text-[13.5px] font-medium px-4 py-2 rounded-lg border border-[rgba(43,42,38,0.14)] transition-colors hover:bg-[#E1E8CE]"
+            style={{ color: "#2B2A26" }}
+          >
+            {logIn}
+          </Link>
+          <Link
             href="/auth/sign-up"
             className="inline-flex items-center text-[13.5px] font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
             style={{ background: "#2B2A26", color: "#F4F1EA" }}
@@ -181,6 +189,14 @@ export default function LandingNavbar() {
           >
             {nav.pricing}
           </a>
+          <Link
+            href="/auth/login"
+            onClick={() => setIsOpen(false)}
+            className="inline-flex items-center justify-center text-sm font-medium px-4 py-2.5 rounded-lg border border-[rgba(43,42,38,0.14)]"
+            style={{ color: "#2B2A26" }}
+          >
+            {logIn}
+          </Link>
           <Link
             href="/auth/sign-up"
             onClick={() => setIsOpen(false)}
