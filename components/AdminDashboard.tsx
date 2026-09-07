@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
@@ -142,6 +142,7 @@ export const AdminDashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const isSavingDishRef = useRef(false);
   const [copied, setCopied] = useState(false);
   const qrRef = React.useRef<HTMLCanvasElement | null>(null);
 
@@ -919,180 +920,186 @@ export const AdminDashboard: React.FC = () => {
 
   const handleSaveDish = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemNameMm.trim()) {
-      setFormError("Burmese Dish Name is required.");
-      return;
-    }
-    if (!newItemPrice.trim() || isNaN(parseFloat(newItemPrice)) || parseFloat(newItemPrice) < 0) {
-      setFormError("Please enter a valid price.");
-      return;
-    }
 
-    setFormError(null);
+    if (isSavingDishRef.current) return;
 
-    // Subscription Limit Check for new menu items
-    if (!editingItem) {
-      try {
-        const { plan: currentPlan } = await getRestaurantSubscription(supabase, restaurantId);
-        const activePlan = currentPlan || plan;
-        const allowedLimit = activePlan?.max_menu_items ?? 20;
-
-        const { count, error: countError } = await supabase
-          .from("menu_items")
-          .select("*", { count: "exact", head: true })
-          .eq("restaurant_id", restaurantId);
-
-        const currentItemCount = countError || count === null ? menuItems.length : count;
-
-        if (currentItemCount >= allowedLimit) {
-          setIsDishModalOpen(false);
-          const isFree =
-            activePlan?.id?.toLowerCase() === "free" ||
-            activePlan?.name?.toLowerCase() === "free" ||
-            isFreePlan;
-
-          if (isFree) {
-            setShowUpgradeModal(true);
-          }
-          return;
-        }
-      } catch (err) {
-        console.warn("Failed to verify menu item limit:", err);
-        const allowedLimit = plan?.max_menu_items ?? 20;
-        if (menuItems.length >= allowedLimit) {
-          setIsDishModalOpen(false);
-          if (isFreePlan) {
-            setShowUpgradeModal(true);
-          }
-          return;
-        }
-      }
-    }
-
+    isSavingDishRef.current = true;
     setSubmitting(true);
 
-    let targetCategory = selectedCategoryChoice;
-
-    // If "Add new category" was chosen, create the category first
-    if (selectedCategoryChoice === "__NEW__") {
-      if (!newCategoryNameMm.trim()) {
-        setFormError("Burmese Category Name is required for the new category.");
-        setSubmitting(false);
+    try {
+      if (!newItemNameMm.trim()) {
+        setFormError("Burmese Dish Name is required.");
+        return;
+      }
+      if (!newItemPrice.trim() || isNaN(parseFloat(newItemPrice)) || parseFloat(newItemPrice) < 0) {
+        setFormError("Please enter a valid price.");
         return;
       }
 
-      // Case-insensitive uniqueness check against existing categories
-      const isDuplicate = categories.some(
-        (c) => (c.name_mm || c.name).trim().toLowerCase() === newCategoryNameMm.trim().toLowerCase()
-      );
-      if (isDuplicate) {
-        setFormError(
-          `A category named "${newCategoryNameMm.trim()}" already exists. Please select it from the dropdown or choose a different name.`
+      setFormError(null);
+
+      // Subscription Limit Check for new menu items
+      if (!editingItem) {
+        try {
+          const { plan: currentPlan } = await getRestaurantSubscription(supabase, restaurantId);
+          const activePlan = currentPlan || plan;
+          const allowedLimit = activePlan?.max_menu_items ?? 20;
+
+          const { count, error: countError } = await supabase
+            .from("menu_items")
+            .select("*", { count: "exact", head: true })
+            .eq("restaurant_id", restaurantId);
+
+          const currentItemCount = countError || count === null ? menuItems.length : count;
+
+          if (currentItemCount >= allowedLimit) {
+            setIsDishModalOpen(false);
+            const isFree =
+              activePlan?.id?.toLowerCase() === "free" ||
+              activePlan?.name?.toLowerCase() === "free" ||
+              isFreePlan;
+
+            if (isFree) {
+              setShowUpgradeModal(true);
+            }
+            return;
+          }
+        } catch (err) {
+          console.warn("Failed to verify menu item limit:", err);
+          const allowedLimit = plan?.max_menu_items ?? 20;
+          if (menuItems.length >= allowedLimit) {
+            setIsDishModalOpen(false);
+            if (isFreePlan) {
+              setShowUpgradeModal(true);
+            }
+            return;
+          }
+        }
+      }
+
+      let targetCategory = selectedCategoryChoice;
+
+      // If "Add new category" was chosen, create the category first
+      if (selectedCategoryChoice === "__NEW__") {
+        if (!newCategoryNameMm.trim()) {
+          setFormError("Burmese Category Name is required for the new category.");
+          return;
+        }
+
+        // Case-insensitive uniqueness check against existing categories
+        const isDuplicate = categories.some(
+          (c) => (c.name_mm || c.name).trim().toLowerCase() === newCategoryNameMm.trim().toLowerCase()
         );
-        setSubmitting(false);
-        return;
+        if (isDuplicate) {
+          setFormError(
+            `A category named "${newCategoryNameMm.trim()}" already exists. Please select it from the dropdown or choose a different name.`
+          );
+          return;
+        }
+
+        const createdCatName = newCategoryNameEn.trim() || newCategoryNameMm.trim();
+        const newCatPayload = {
+          name: createdCatName,
+          name_mm: newCategoryNameMm.trim(),
+          restaurant_id: restaurantId,
+          sort_order: categories.length,
+        };
+
+        const { data: newCatData, error: catError } = await supabase
+          .from("categories")
+          .insert([newCatPayload])
+          .select();
+
+        if (catError) {
+          console.error("CATEGORY CREATION IN DISH FORM ERROR:", catError);
+          setFormError("Failed to create category: " + catError.message);
+          return;
+        }
+
+        if (newCatData && newCatData.length > 0) {
+          setCategories((prev) => [...prev, newCatData[0]]);
+          targetCategory = newCatData[0].name;
+          setSelectedCategoryChoice(targetCategory);
+        }
       }
 
-      const createdCatName = newCategoryNameEn.trim() || newCategoryNameMm.trim();
-      const newCatPayload = {
-        name: createdCatName,
-        name_mm: newCategoryNameMm.trim(),
-        restaurant_id: restaurantId,
-        sort_order: categories.length,
+      let imageUrl = editingItem ? editingItem.image : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("menu-images")
+          .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
+
+        if (uploadError) {
+          console.error("DISH IMAGE UPLOAD ERROR:", uploadError);
+          setFormError(`Image upload failed: ${uploadError.message}`);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("menu-images")
+          .getPublicUrl(fileName);
+
+        if (publicUrlData?.publicUrl) imageUrl = publicUrlData.publicUrl;
+      }
+
+      const dishPayload: any = {
+        name: newItemNameEn.trim() || newItemNameMm.trim(),
+        name_mm: newItemNameMm.trim(),
+        category: targetCategory,
+        price: parseFloat(newItemPrice),
+        image: imageUrl,
+        description: (newItemDescriptionEn.trim() || newItemDescriptionMm.trim()) || null,
+        description_mm: newItemDescriptionMm.trim() || null,
+        is_popular: isFreePlan ? false : newItemIsPopular,
       };
 
-      const { data: newCatData, error: catError } = await supabase
-        .from("categories")
-        .insert([newCatPayload])
-        .select();
+      if (editingItem) {
+        const { data, error } = await supabase
+          .from("menu_items")
+          .update(dishPayload)
+          .eq("id", editingItem.id)
+          .select();
 
-      if (catError) {
-        console.error("CATEGORY CREATION IN DISH FORM ERROR:", catError);
-        setFormError("Failed to create category: " + catError.message);
-        setSubmitting(false);
-        return;
-      }
+        if (error) {
+          console.error("MENU UPDATE ERROR:", error);
+          setFormError(error.message || "Failed to update menu item.");
+        } else if (data && data.length > 0) {
+          setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data[0] : i)));
+          setIsDishModalOpen(false);
+          toast.success(`Updated "${newItemNameMm.trim()}"`);
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("menu_items")
+          .insert([
+            {
+              ...dishPayload,
+              is_available: true,
+              restaurant_id: restaurantId,
+            },
+          ])
+          .select();
 
-      if (newCatData && newCatData.length > 0) {
-        setCategories((prev) => [...prev, newCatData[0]]);
-        targetCategory = newCatData[0].name;
-        setSelectedCategoryChoice(targetCategory);
+        if (error) {
+          console.error("MENU INSERT ERROR:", error);
+          setFormError(error.message || "Failed to insert menu item into database.");
+        } else if (data && data.length > 0) {
+          setMenuItems([data[0], ...menuItems]);
+          setIsDishModalOpen(false);
+          toast.success(`Added "${newItemNameMm.trim()}" to menu`);
+        }
       }
+    } catch (err: any) {
+      console.error("Unexpected error saving dish:", err);
+      setFormError(err?.message || "An unexpected error occurred while saving the dish.");
+    } finally {
+      isSavingDishRef.current = false;
+      setSubmitting(false);
     }
-
-    let imageUrl = editingItem ? editingItem.image : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
-
-    if (imageFile) {
-      const fileExt = imageFile.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("menu-images")
-        .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
-
-      if (uploadError) {
-        console.error("DISH IMAGE UPLOAD ERROR:", uploadError);
-        setFormError(`Image upload failed: ${uploadError.message}`);
-        setSubmitting(false);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("menu-images")
-        .getPublicUrl(fileName);
-
-      if (publicUrlData?.publicUrl) imageUrl = publicUrlData.publicUrl;
-    }
-
-    const dishPayload: any = {
-      name: newItemNameEn.trim() || newItemNameMm.trim(),
-      name_mm: newItemNameMm.trim(),
-      category: targetCategory,
-      price: parseFloat(newItemPrice),
-      image: imageUrl,
-      description: (newItemDescriptionEn.trim() || newItemDescriptionMm.trim()) || null,
-      description_mm: newItemDescriptionMm.trim() || null,
-      is_popular: isFreePlan ? false : newItemIsPopular,
-    };
-
-    if (editingItem) {
-      const { data, error } = await supabase
-        .from("menu_items")
-        .update(dishPayload)
-        .eq("id", editingItem.id)
-        .select();
-
-      if (error) {
-        console.error("MENU UPDATE ERROR:", error);
-        setFormError(error.message || "Failed to update menu item.");
-      } else if (data && data.length > 0) {
-        setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data[0] : i)));
-        setIsDishModalOpen(false);
-        toast.success(`Updated "${newItemNameMm.trim()}"`);
-      }
-    } else {
-      const { data, error } = await supabase
-        .from("menu_items")
-        .insert([
-          {
-            ...dishPayload,
-            is_available: true,
-            restaurant_id: restaurantId,
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.error("MENU INSERT ERROR:", error);
-        setFormError(error.message || "Failed to insert menu item into database.");
-      } else if (data && data.length > 0) {
-        setMenuItems([data[0], ...menuItems]);
-        setIsDishModalOpen(false);
-        toast.success(`Added "${newItemNameMm.trim()}" to menu`);
-      }
-    }
-
-    setSubmitting(false);
   };
 
   const toggleAvailability = async (id: string, currentStatus: boolean) => {
