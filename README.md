@@ -1,354 +1,115 @@
-# Mee Nhuu — Digital QR Menu
+# MOSSQR
 
-> A simple, modern digital menu platform for restaurants and cafés in Myanmar.
+> Digital QR menus for restaurants and cafés.
 
-**Mee Nhuu (မီနှုး)** helps restaurants create, manage, and publish a mobile-friendly digital menu that customers can access by scanning a QR code.
+MOSSQR helps restaurants create and manage a mobile-friendly digital menu that customers can open instantly by scanning a QR code.
 
-The project is designed with Myanmar restaurants in mind, with support for **Burmese and English**, MMK pricing, restaurant branding, and an easy-to-use management dashboard.
+Built with a simple goal: **make menu updates easier without reprinting the entire menu.**
+
+**Website:** https://getmossqr.com
+
+---
+
+## Product Overview
+
+MOSSQR gives restaurant owners a simple dashboard to manage their digital menu, while customers get a fast, phone-friendly browsing experience.
+
+**Restaurant owner**
+→ Manage menu  
+→ Update prices & availability  
+→ Generate QR code  
+→ Place QR at the restaurant
+
+**Customer**
+→ Scan QR  
+→ Open menu  
+→ Browse categories & dishes  
+→ View restaurant information
 
 ---
 
 ## Features
 
-### Restaurant Dashboard
-
-* Secure restaurant authentication
-* Mobile-first admin dashboard
-* Restaurant profile management
-* Restaurant logo upload
-* Social media and contact information
-* Menu item management
-* Add, edit, and delete menu items
-* Menu item availability toggle
-* Category management
-* Search and category filtering
-* Real-time updates through Supabase
-
 ### Digital Menu
+- Mobile-first customer experience
+- Burmese & English support
+- Menu categories
+- Food images
+- Prices in MMK
+- Availability / sold-out toggle
+- Restaurant profile and contact information
 
-* Mobile-first customer experience
-* Restaurant branding
-* Menu categories
-* Food images
-* Menu item names and prices
-* MMK currency formatting
-* Available/unavailable menu items
-* Burmese and English content support
+### Restaurant Dashboard
+- Secure authentication
+- Menu item management
+- Category management
+- Image uploads
+- Restaurant profile management
+- Social links and Wi-Fi information
+- Search and filtering
 
 ### QR Code
-
-* Generate a restaurant-specific QR code
-* Branded QR code with restaurant logo
-* Preview the live digital menu
-* Copy menu URL
-* Download QR code as PNG
-* QR code optimized for physical restaurant use
+- Restaurant-specific QR code
+- Branded QR code with restaurant logo
+- Live menu preview
+- Download QR code as PNG
+- Shareable menu URL
 
 ---
 
-## Product Flow
+## Screenshots
 
-```text
-Restaurant
-    │
-    ▼
-Create Account
-    │
-    ▼
-Admin Dashboard
-    │
-    ├── Restaurant Profile
-    ├── Categories
-    ├── Menu Items
-    └── QR Code
-            │
-            ▼
-      Download / Print
-            │
-            ▼
-        Customer
-            │
-            ▼
-       Scan QR Code
-            │
-            ▼
-      Digital Menu
-```
+Screenshots will be added here as the product UI is finalized.
+
+| Restaurant Dashboard | Digital Menu |
+| --- | --- |
+| Coming soon | Coming soon |
+
+| QR Code | Mobile Experience |
+| --- | --- |
+| Coming soon | Coming soon |
 
 ---
 
 ## Tech Stack
 
-### Frontend
-
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
-* Lucide Icons
-
-### Backend / Infrastructure
-
-* Supabase
-
-  * Authentication
-  * PostgreSQL database
-  * Storage
-  * Row Level Security
-
-### QR
-
-* `qrcode.react`
-
-### Deployment
-
-* Vercel
-* GitHub
-
----
-
-## Project Structure
-
-```text
-menu-mm-v2/
-│
-├── app/
-│   ├── auth/
-│   ├── menu/
-│   ├── protected/
-│   ├── layout.tsx
-│   └── page.tsx
-│
-├── components/
-│   ├── AdminDashboard.tsx
-│   ├── QrCodeGenerator.tsx
-│   └── ui/
-│
-├── lib/
-│   ├── supabase/
-│   ├── store.ts
-│   └── utils.ts
-│
-├── public/
-│
-├── types/
-│
-├── .env.example
-├── .gitignore
-├── package.json
-└── README.md
-```
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js, React, TypeScript |
+| Styling | Tailwind CSS |
+| Backend | Supabase |
+| Database | PostgreSQL |
+| Authentication | Supabase Auth |
+| Storage | Supabase Storage |
+| Security | Row Level Security |
+| QR | qrcode.react |
+| Deployment | Vercel |
+| Version Control | GitHub |
 
 ---
 
 ## Getting Started
 
-### 1. Clone the repository
+### Prerequisites
+
+- Node.js
+- npm
+- Supabase project
+
+### Installation
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/ainthrmo/menu-mm-v2.git
 cd menu-mm-v2
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a local environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Then add your Supabase credentials.
-
-Example:
+Create `.env.local` from `.env.example` and add your Supabase credentials.
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
-
-> Never commit `.env.local` or real API keys to Git.
-
-### 4. Set up Supabase
-
-Create a Supabase project and configure:
-
-* Authentication
-* PostgreSQL tables
-* Storage bucket
-* Row Level Security policies
-
-The application currently uses tables for:
-
-```text
-store_profile
-categories
-menu_items
-```
-
-### 5. Start the development server
-
-```bash
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
----
-
-## Environment Variables
-
-The repository contains `.env.example` as a template.
-
-Do not commit:
-
-```text
-.env
-.env.local
-.env.production
-.env.*.local
-```
-
-Only placeholder values should be stored in `.env.example`.
-
----
-
-## Database
-
-The current MVP uses Supabase for persistent application data.
-
-### Store Profile
-
-Stores restaurant information such as:
-
-* Restaurant name
-* Logo
-* Facebook
-* Instagram
-* TikTok
-* Messenger
-* Phone number
-
-### Categories
-
-Stores menu categories such as:
-
-```text
-Main Dishes
-Noodles
-Drinks
-Desserts
-```
-
-### Menu Items
-
-Stores:
-
-* Name
-* Category
-* Price
-* Image
-* Availability
-* Creation timestamp
-
----
-
-## Design Principles
-
-Mee Nhuu follows a **mobile-first** approach because most restaurant customers will access the menu from their phones.
-
-The UI focuses on:
-
-* Simple navigation
-* Large touch targets
-* Clear menu hierarchy
-* Fast access to restaurant information
-* Accessible interactions
-* High readability
-* Minimal visual clutter
-* Consistent branding
-
-The primary brand color is:
-
-```text
-Mee Nhuu Teal
-#0B7A5F
-```
-
-The interface uses warm neutral backgrounds to complement food photography and improve readability.
-
----
-
-## Localization
-
-Mee Nhuu is designed for the Myanmar market.
-
-The product supports:
-
-* English
-* Burmese / Myanmar
-
-Localization is intended to cover both the restaurant management experience and the customer-facing digital menu.
-
----
-
-## MVP Scope
-
-The current MVP focuses on one core problem:
-
-> **Help restaurants replace printed menus with a simple digital QR menu.**
-
-### Included
-
-* Restaurant authentication
-* Restaurant profile
-* Menu management
-* Category management
-* Image uploads
-* Digital menu
-* QR generation
-* Branded QR download
-* Mobile-first experience
-
-### Future Roadmap
-
-Mee Nhuu is planned to evolve into a broader restaurant technology platform.
-
-Potential future products include:
-
-```text
-Digital QR Menu
-      ↓
-POS
-      ↓
-Order Management
-      ↓
-Kitchen Display System
-      ↓
-Inventory
-      ↓
-Sales Analytics
-      ↓
-Customer Loyalty
-      ↓
-Restaurant Management Platform
-```
-
-These features are **not part of the current MVP**.
-
----
-
-## Development
 
 Run the development server:
 
@@ -356,90 +117,81 @@ Run the development server:
 npm run dev
 ```
 
-Build for production:
+Open `http://localhost:3000`.
 
-```bash
-npm run build
-```
+---
 
-Start the production server:
+## Roadmap
 
-```bash
-npm start
-```
+### Current
+- [x] Digital QR menu
+- [x] Restaurant dashboard
+- [x] Menu & category management
+- [x] Food image uploads
+- [x] Availability toggle
+- [x] Burmese & English support
+- [x] QR code generation
+- [x] Restaurant profile
 
-Run linting:
+### Next
+- [ ] Production launch
+- [ ] Onboard first restaurants
+- [ ] Improve menu customization
+- [ ] Menu update history
+- [ ] Scheduled menu changes
+- [ ] Customer menu issue reporting
 
-```bash
-npm run lint
+### Future
+- [ ] Restaurant analytics
+- [ ] POS integrations
+- [ ] Ordering
+- [ ] Inventory tools
+- [ ] Broader restaurant management features
+
+> The roadmap is subject to change based on customer feedback and product validation.
+
+---
+
+## Project Structure
+
+```text
+menu-mm-v2/
+├── app/
+├── components/
+├── lib/
+├── public/
+├── types/
+├── .env.example
+├── package.json
+└── README.md
 ```
 
 ---
 
-## Security
+## Product Principles
 
-This project uses Supabase authentication and database security policies.
+MOSSQR is built around a few principles:
 
-Important rules:
-
-* Never commit API keys or service-role keys.
-* Never expose Supabase service-role credentials to the browser.
-* Keep private environment variables in `.env.local`.
-* Use Row Level Security for protected database resources.
-* Rotate any credential that has accidentally been exposed.
+- **Simple** — restaurant owners should not need technical skills.
+- **Mobile-first** — customers primarily access menus from their phones.
+- **Fast to update** — menu changes should not require reprinting.
+- **Practical** — features are added based on real restaurant needs.
 
 ---
 
 ## Status
 
-**Current status: MVP development**
+**MVP — preparing for real-world restaurant testing.**
 
-The core QR menu workflow is functional:
-
-```text
-Restaurant Login
-       ↓
-Admin Dashboard
-       ↓
-Manage Menu
-       ↓
-Generate QR
-       ↓
-Download QR
-       ↓
-Customer Scans
-       ↓
-Digital Menu
-```
-
-The project is currently being prepared for production testing with Myanmar restaurants.
-
----
-
-## Contributing
-
-This project is currently under active development.
-
-For significant changes, create a separate branch and open a pull request.
-
-```bash
-git checkout -b feature/your-feature
-```
-
-Make your changes, commit them, and push the branch.
+MOSSQR is currently focused on validating the core QR menu workflow with restaurants before expanding into additional restaurant technology.
 
 ---
 
 ## License
 
-This project is currently private / proprietary.
-
-All rights reserved.
+MOSSQR is proprietary software. All rights reserved.
 
 ---
 
-## Mee Nhuu
-
-**မီနှုး — Digital menus made simple.**
-
-Built to help Myanmar restaurants move from printed menus to a modern digital experience.
+**MOSSQR**  
+Digital menus for restaurants & cafés.
