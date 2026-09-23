@@ -32,11 +32,11 @@ export default function LandingNavbar() {
           : "bg-[#F4F1EA]"
       }`}
     >
-      <nav className="mx-auto flex h-[60px] max-w-[1120px] items-center justify-between px-10">
+      <nav className="mx-auto flex h-[68px] max-w-[1180px] items-center justify-between px-6 sm:px-8 lg:px-10">
         {/* Logo mark + wordmark */}
-        <Link href="/" className="flex items-center gap-2.5 select-none">
+        <Link href="/" className="flex items-center gap-3 select-none">
           <span
-            className="inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-[11px] flex-shrink-0"
             style={{ background: "#2B2A26" }}
             aria-hidden="true"
           >
@@ -48,7 +48,7 @@ export default function LandingNavbar() {
             </span>
           </span>
           <span
-            className="text-[15px] font-medium tracking-[-0.01em]"
+            className="text-[16px] font-semibold tracking-[-0.025em]"
             style={{ color: "#2B2A26", fontFamily: "'Fraunces', Georgia, serif" }}
           >
             Moss
@@ -56,7 +56,7 @@ export default function LandingNavbar() {
         </Link>
 
         {/* Desktop links + lang switcher */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-5 lg:gap-6">
           <a
             href="/examples"
             className="text-[13.5px] font-medium transition-colors"
@@ -159,7 +159,7 @@ export default function LandingNavbar() {
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close menu" : "Open menu"}
             aria-expanded={isOpen}
-            className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+            className="flex items-center justify-center w-10 h-10 rounded-[11px] transition-colors border border-[rgba(43,42,38,0.10)]"
             style={{ color: "#2B2A26" }}
           >
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -170,7 +170,7 @@ export default function LandingNavbar() {
       {/* Mobile drawer */}
       {isOpen && (
         <div
-          className="md:hidden border-t px-10 py-5 flex flex-col gap-4"
+          className="md:hidden border-t px-5 sm:px-8 py-5 flex flex-col gap-4 shadow-[0_12px_30px_rgba(43,42,38,0.06)]"
           style={{ background: "#F4F1EA", borderColor: "rgba(43,42,38,0.08)" }}
         >
           <a

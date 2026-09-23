@@ -20,11 +20,11 @@ function PhoneMockup({
     <div
       style={{
         transform: `rotate(${rotation}deg)`,
-        borderRadius: 28,
-        border: "2.5px solid #2B2A26",
-        background: "#2B2A26",
-        width: 190,
-        padding: "10px 8px 14px",
+        borderRadius: 30,
+        border: "1px solid rgba(43,42,38,0.18)",
+        background: "#24241F",
+        width: 204,
+        padding: "9px 7px 12px",
         boxShadow: shadow ?? "none",
         flexShrink: 0,
         position: "absolute",
@@ -35,9 +35,9 @@ function PhoneMockup({
       {/* Notch */}
       <div
         style={{
-          width: 52,
-          height: 6,
-          background: "#2B2A26",
+          width: 48,
+          height: 5,
+          background: "#171713",
           borderRadius: 8,
           margin: "0 auto 8px",
         }}
@@ -46,9 +46,9 @@ function PhoneMockup({
       <div
         style={{
           background: "#FBFAF6",
-          borderRadius: 18,
+          borderRadius: 23,
           overflow: "hidden",
-          minHeight: 320,
+          minHeight: 348,
         }}
       >
         {children}
@@ -232,11 +232,11 @@ export default function Hero() {
           zIndex: 1,
           maxWidth: 1120,
           margin: "0 auto",
-          padding: "56px 40px",
+          padding: "72px 40px 64px",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          gap: 24,
+          gap: 56px,
         }}
         className="hero-inner"
       >
@@ -256,11 +256,12 @@ export default function Hero() {
             style={{
               fontFamily: "'Fraunces', Georgia, serif",
               fontWeight: 400,
-              fontSize: 44,
-              lineHeight: 1.2,
+              fontSize: 50,
+              lineHeight: 1.08,
+              letterSpacing: "-0.025em",
               color: "#2B2A26",
               margin: 0,
-              maxWidth: 460,
+              maxWidth: 500,
             }}
           >
             {h.headlineLine1}
@@ -276,7 +277,7 @@ export default function Hero() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                background: "#3B6D11",
+                background: "#2F4F12",
                 color: "#F4F1EA",
                 fontWeight: 500,
                 fontSize: 14,
@@ -299,7 +300,7 @@ export default function Hero() {
                 display: "inline-flex",
                 alignItems: "center",
                 background: "transparent",
-                border: "0.5px solid rgba(43,42,38,0.25)",
+                border: "1px solid rgba(43,42,38,0.16)",
                 color: "#2B2A26",
                 fontWeight: 500,
                 fontSize: 14,
@@ -323,7 +324,7 @@ export default function Hero() {
           style={{
             flex: "1 1 0",
             position: "relative",
-            height: 420,
+            height: 440,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -334,7 +335,7 @@ export default function Hero() {
           <PhoneMockup
             rotation={-4}
             shadow="4px 8px 24px rgba(43,42,38,0.14)"
-            style={{ left: "calc(50% - 210px)", top: 20 }}
+            style={{ left: "calc(50% - 218px)", top: 22 }}
           >
             <MenuListScreen lang={language} />
           </PhoneMockup>
@@ -343,7 +344,7 @@ export default function Hero() {
           <PhoneMockup
             rotation={3}
             shadow="8px 16px 40px rgba(43,42,38,0.22)"
-            style={{ left: "calc(50% - 60px)", top: 0 }}
+            style={{ left: "calc(50% - 68px)", top: 0 }}
           >
             <DessertDetailScreen lang={language} />
           </PhoneMockup>
@@ -354,12 +355,14 @@ export default function Hero() {
         @media (max-width: 768px) {
           .hero-inner {
             flex-direction: column !important;
-            padding: 48px 24px 40px !important;
+            padding: 52px 20px 36px !important;
           }
           .hero-inner > div:last-child {
-            height: 360px !important;
+            height: 390px !important;
             width: 100%;
+            max-width: 430px;
           }
+          .hero-inner h1 { font-size: 40px !important; line-height: 1.08 !important; }
         }
       `}</style>
     </section>
