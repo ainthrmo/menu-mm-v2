@@ -24,18 +24,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "MOSSQR",
   title: {
-    default: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    default: "MOSSQR — Digital QR Menus for Restaurants | Myanmar",
     template: "%s | MOSSQR",
   },
   description:
-    "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
+    "Stop reprinting your menu. MOSSQR gives your restaurant a digital QR menu you can update from your phone — prices, dishes, photos, availability. Free 30 days.",
   keywords: [
-    "MOSSQR",
+    "digital menu myanmar",
     "QR menu",
-    "digital menu",
     "restaurant QR code",
-    "restaurant menu",
-    "café menu",
+    "menu maker myanmar",
+    "mossqr",
+    "bilingual menu myanmar",
   ],
   category: "Restaurant Technology",
   verification: {
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    title: "MOSSQR — Digital QR Menus for Restaurants",
     description:
-      "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
+      "Update your menu from your phone. No reprinting, no app for customers — just scan and browse. Free for your first 30 days.",
     url: "https://getmossqr.com",
     siteName: "MOSSQR",
     locale: "en_US",
@@ -64,9 +64,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MOSSQR — Digital QR Menus for Restaurants & Cafés",
+    title: "MOSSQR — Digital QR Menus for Restaurants",
     description:
-      "MOSSQR is a digital QR menu platform for restaurants and cafés. Create, manage, and share a beautiful menu that guests can browse instantly from their phones — no app required.",
+      "Stop reprinting your menu every time something changes. Update it from your phone instead.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -90,7 +90,7 @@ const jsonLd = {
       "@id": "https://getmossqr.com/#website",
       "url": "https://getmossqr.com",
       "name": "MOSSQR",
-      "description": "Digital QR Menus for Restaurants & Cafés",
+      "description": "Digital QR Menus for Restaurants | Myanmar",
       "inLanguage": ["en", "my"],
     },
     {
@@ -98,14 +98,23 @@ const jsonLd = {
       "@id": "https://getmossqr.com/#software",
       "name": "MOSSQR",
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "All modern web browsers",
+      "operatingSystem": "Web",
       "description":
-        "Create a beautiful digital QR menu for your restaurant or café. Let guests browse your menu instantly from their phones — no app required.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "MMK",
-      },
+        "Digital QR menu platform for restaurants and cafés in Myanmar. Update prices, dishes, and availability from your phone — no reprinting required.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Starter",
+          "price": "69000",
+          "priceCurrency": "MMK",
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro",
+          "price": "125000",
+          "priceCurrency": "MMK",
+        },
+      ],
     },
     {
       "@type": "Organization",

@@ -58,7 +58,7 @@ export default function LandingNavbar() {
         {/* Desktop links + lang switcher */}
         <div className="hidden md:flex items-center gap-5 lg:gap-6">
           <a
-            href="/examples"
+            href="#solution"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
@@ -74,6 +74,15 @@ export default function LandingNavbar() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
           >
             {nav.pricing}
+          </a>
+          <a
+            href="#faq"
+            className="text-[13.5px] font-medium transition-colors"
+            style={{ color: "rgba(43,42,38,0.6)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
+          >
+            {t.nav?.faq ?? "FAQ"}
           </a>
 
           {/* Language switcher */}
@@ -174,7 +183,7 @@ export default function LandingNavbar() {
           style={{ background: "#F4F1EA", borderColor: "rgba(43,42,38,0.08)" }}
         >
           <a
-            href="/examples"
+            href="#solution"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
@@ -188,6 +197,14 @@ export default function LandingNavbar() {
             style={{ color: "#2B2A26" }}
           >
             {nav.pricing}
+          </a>
+          <a
+            href="#faq"
+            onClick={() => setIsOpen(false)}
+            className="text-sm font-medium"
+            style={{ color: "#2B2A26" }}
+          >
+            {t.nav?.faq ?? "FAQ"}
           </a>
           <Link
             href="/auth/login"
