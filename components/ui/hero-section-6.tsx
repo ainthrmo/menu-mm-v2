@@ -134,7 +134,7 @@ export function HeroSection({
                                             <ArrowRight className="size-4" />
                                         </Link>
                                         <Link
-                                            href="/examples"
+                                            href="/menu?restaurantId=50094dc1-dd94-41a6-a29a-d4ab223d3717"
                                             className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-[0.85rem] border border-border bg-background/60 text-foreground text-sm font-medium hover:bg-muted/60 transition-colors backdrop-blur-sm"
                                         >
                                             {language === "my" ? "နမူနာကြည့်ရန်" : "View demo"}

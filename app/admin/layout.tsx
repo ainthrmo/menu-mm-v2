@@ -63,7 +63,7 @@ export default async function AdminLayout({
               <ChevronRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/menu"
+              href="/menu?restaurantId=50094dc1-dd94-41a6-a29a-d4ab223d3717"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-5 py-3 text-xs font-bold text-neutral-300 hover:bg-white/10 hover:text-white transition-all"
             >
               Explore Live Demo Menu

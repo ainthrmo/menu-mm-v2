@@ -765,7 +765,7 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
               <a
-                href="/examples"
+                href="/menu?restaurantId=50094dc1-dd94-41a6-a29a-d4ab223d3717"
                 className="btn-editorial btn-editorial-outline text-sm sm:text-base px-7 py-3.5 border-white/20 text-[var(--stone)] hover:bg-white/10"
               >
                 <span>{content.nav.liveDemo}</span>
