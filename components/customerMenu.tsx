@@ -50,7 +50,7 @@ interface MenuItem {
   price: number;
   description?: string | null;
   description_mm?: string | null;
-  image?: string;
+  image?: string | null;
   is_available?: boolean;
   is_popular?: boolean;
   is_spicy?: boolean;

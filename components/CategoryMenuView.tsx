@@ -47,7 +47,7 @@ interface MenuItem {
   price: number;
   description?: string | null;
   description_mm?: string | null;
-  image?: string;
+  image?: string | null;
   is_available?: boolean;
   is_popular?: boolean;
   is_spicy?: boolean;
@@ -75,7 +75,7 @@ interface CartItem {
   name_mm?: string;
   price: number;
   quantity: number;
-  image?: string;
+  image?: string | null;
 }
 
 type ViewLayout = "list" | "grid";
@@ -343,7 +343,7 @@ export default function CategoryMenuView({
 
   // Category cover image
   const categoryCoverImage = useMemo(() => {
-    const dishWithImage = categoryDishes.find((d) => Boolean(d.image));
+    const dishWithImage = categoryDishes.find((d) => Boolean(d.image && d.image.trim()));
     return dishWithImage?.image || null;
   }, [categoryDishes]);
 
@@ -737,7 +737,7 @@ export default function CategoryMenuView({
         className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs hover:shadow-md hover:border-slate-300 transition-all active:scale-[0.98] cursor-pointer"
       >
         <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
-          {item.image ? (
+          {item.image && item.image.trim() ? (
             <img
               src={getImageUrl(item.image)}
               alt={item.name}
@@ -825,7 +825,7 @@ export default function CategoryMenuView({
       className="group relative flex overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs hover:shadow-md hover:border-slate-300 transition-all active:scale-[0.99] cursor-pointer"
     >
       <div className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden bg-slate-100">
-        {item.image ? (
+        {item.image && item.image.trim() ? (
           <img
             src={getImageUrl(item.image)}
             alt={item.name}
@@ -950,7 +950,7 @@ function DishDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#ECE8E1] shrink-0">
-          {item.image ? (
+          {item.image && item.image.trim() ? (
             <img src={getImageUrl(item.image)} alt={item.name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

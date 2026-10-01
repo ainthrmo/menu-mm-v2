@@ -66,7 +66,7 @@ export interface AdminMenuItem {
   category: string;
   price: number;
   is_available: boolean;
-  image: string;
+  image?: string | null;
   description?: string;
   description_mm?: string;
   is_popular?: boolean;
@@ -652,7 +652,7 @@ export const AdminDashboard: React.FC = () => {
     setNewItemDescriptionEn(englishDesc);
     setNewItemIsPopular(Boolean(item.is_popular));
     setImageFile(null);
-    setImagePreview(item.image);
+    setImagePreview(item.image || null);
     setFormError(null);
     setIsDishModalOpen(true);
   };
@@ -1023,7 +1023,7 @@ export const AdminDashboard: React.FC = () => {
         }
       }
 
-      let imageUrl = editingItem ? editingItem.image : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
+      let imageUrl: string | null = null;
 
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
@@ -1043,7 +1043,15 @@ export const AdminDashboard: React.FC = () => {
           .from("menu-images")
           .getPublicUrl(fileName);
 
-        if (publicUrlData?.publicUrl) imageUrl = publicUrlData.publicUrl;
+        if (publicUrlData?.publicUrl) {
+          imageUrl = publicUrlData.publicUrl;
+        }
+      } else if (imagePreview && editingItem) {
+        // Preserving existing image on edit
+        imageUrl = editingItem.image || null;
+      } else {
+        // Explicitly removed or no image provided
+        imageUrl = null;
       }
 
       const dishPayload: any = {
@@ -1435,7 +1443,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="flex gap-3">
                       {/* Thumbnail: w-16 (4rem) on mobile, w-20 (5rem) on sm+ — explicit fixed dimensions prevent overflow */}
                       <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
-                        {item.image ? (
+                        {item.image && item.image.trim() ? (
                           <img
                             src={getImageUrl(item.image)}
                             alt={item.name}
@@ -2295,7 +2303,24 @@ export const AdminDashboard: React.FC = () => {
 
             <form onSubmit={handleSaveDish} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#1e2417] mb-1.5">Dish Photo</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-[#1e2417]">
+                    Dish Photo <span className="text-[11px] font-normal text-[#57604f]">(Optional)</span>
+                  </label>
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                      className="text-[11px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Remove photo
+                    </button>
+                  )}
+                </div>
                 <div className="relative border-2 border-dashed border-[#1e2417]/15 rounded-2xl p-4 text-center bg-white cursor-pointer hover:border-[#1b2414] transition-colors">
                   <input
                     type="file"
@@ -2307,14 +2332,26 @@ export const AdminDashboard: React.FC = () => {
                         setImagePreview(URL.createObjectURL(file));
                       }
                     }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   />
                   {imagePreview ? (
-                    <img src={getImageUrl(imagePreview)} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-[#1e2417]/10" />
+                    <div className="relative group rounded-xl overflow-hidden">
+                      <img
+                        src={getImageUrl(imagePreview)}
+                        alt="Preview"
+                        className="w-full h-32 object-cover rounded-xl border border-[#1e2417]/10"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <span className="text-xs text-white font-medium bg-black/60 px-2.5 py-1 rounded-lg">
+                          Click to change photo
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-1.5 py-2 text-xs text-[#57604f]">
                       <Upload className="w-5 h-5 mx-auto text-[#1b2414]" />
-                      <p className="font-medium">Upload dish photo (optional)</p>
+                      <p className="font-medium text-[#1e2417]">Upload dish photo (optional)</p>
+                      <p className="text-[11px] text-[#57604f]/70">Leave blank for text-only item</p>
                     </div>
                   )}
                 </div>

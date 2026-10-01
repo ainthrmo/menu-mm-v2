@@ -22,7 +22,7 @@ export interface DetailedMenuItem {
   name: string;
   description: string;
   price: number;
-  image: string;
+  image?: string | null;
   calories?: string;
   isSpicy?: boolean;
   allergens?: string[];
@@ -43,11 +43,17 @@ export const ItemCustomizationModal: React.FC<ModalProps> = ({ item, onClose }) 
         
         {/* Header Image & Close Button */}
         <div className="relative h-60 w-full bg-zinc-900 shrink-0">
-          <img 
-            src={getImageUrl(item.image)} 
-            alt={item.name} 
-            className="w-full h-full object-cover"
-          />
+          {item.image && item.image.trim() ? (
+            <img 
+              src={getImageUrl(item.image)} 
+              alt={item.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
+              <span className="text-xs">No image</span>
+            </div>
+          )}
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 hover:bg-black transition-all"

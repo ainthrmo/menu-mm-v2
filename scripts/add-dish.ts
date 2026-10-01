@@ -332,7 +332,7 @@ async function runAddDish(flags: any) {
   const s = p.spinner();
   s.start("Saving dish...");
 
-  let imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80";
+  let imageUrl: string | null = null;
 
   if (data.photo && fs.existsSync(data.photo)) {
     try {
