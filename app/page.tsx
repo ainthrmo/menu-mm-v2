@@ -806,6 +806,9 @@ export default function LandingPage() {
           <a href="#faq" className="hover:text-[var(--ink)] transition-colors">
             {content.nav.faq}
           </a>
+          <Link href="/contact" className="hover:text-[var(--ink)] transition-colors">
+            {content.nav.contact}
+          </Link>
           <Link href="/auth/login" className="hover:text-[var(--ink)] transition-colors">
             {content.nav.logIn}
           </Link>
