@@ -9,6 +9,7 @@ export const translations = {
       liveDemo: "View Live Demo",
       logIn: "Log in",
       startFree: "Start Free",
+      contact: "Contact",
     },
     japandiNav: {
       examples: "Product",
@@ -240,6 +241,7 @@ export const translations = {
       liveDemo: "နမူနာမီနူး ကြည့်ရန်",
       logIn: "အကောင့်ဝင်ရန်",
       startFree: "အခမဲ့စတင်ရန်",
+      contact: "ဆက်သွယ်ရန်",
     },
     japandiNav: {
       examples: "ထုတ်ကုန်",
