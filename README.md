@@ -120,12 +120,7 @@ cd menu-mm-v2
 npm install
 ```
 
-Create `.env.local` from `.env.example` and add your credentials:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
-```
+ 
 
 Run the development server:
 
