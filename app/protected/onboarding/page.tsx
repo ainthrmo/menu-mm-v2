@@ -25,16 +25,12 @@ export default function OnboardingPage() {
       } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Unauthorized. Please login again.");
 
-      const { error: insertError } = await supabase
-        .from("restaurants")
-        .insert({
-          name: restaurantName.trim(),
-          owner_id: user.id,
-        })
-        .select()
-        .single();
+      const { error: createError } = await supabase.rpc(
+        "create_organization_venue_for_current_user",
+        { p_name: restaurantName.trim() },
+      );
 
-      if (insertError) throw insertError;
+      if (createError) throw createError;
 
       router.push("/protected");
       router.refresh();
