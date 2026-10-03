@@ -758,10 +758,33 @@ export const AdminDashboard: React.FC = () => {
       .eq("restaurant_id", restaurantId);
 
     if (restaurantId) {
-      await supabase
+      const { error: restaurantNameError } = await supabase
         .from("restaurants")
         .update({ name: storeName })
         .eq("id", restaurantId);
+
+      if (restaurantNameError) {
+        console.error("RESTAURANT NAME UPDATE ERROR:", restaurantNameError);
+      }
+
+      // Keep the normalized tenant names aligned during the migration bridge.
+      const { data: venue } = await supabase
+        .from("venues")
+        .select("id, org_id")
+        .eq("legacy_restaurant_id", restaurantId)
+        .maybeSingle();
+
+      if (venue) {
+        await supabase
+          .from("venues")
+          .update({ name: storeName })
+          .eq("id", venue.id);
+
+        await supabase
+          .from("organizations")
+          .update({ name: storeName })
+          .eq("id", venue.org_id);
+      }
     }
 
     if (error) {
