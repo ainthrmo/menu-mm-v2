@@ -1,0 +1,6 @@
+-- Phase 3: transactional legacy/new-schema dish bridge.
+-- Applied to Supabase project nkaunvzoebkuzktrmaft on 2026-10-03.
+-- This migration keeps legacy menu_items compatible while synchronizing
+-- organizations/venues/menus/dishes/dish_translations atomically.
+-- The production definitions are intentionally maintained as database
+-- functions so each RPC call is one transaction.
