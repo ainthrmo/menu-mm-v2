@@ -58,7 +58,7 @@ export default function LandingNavbar() {
         {/* Desktop links + lang switcher */}
         <div className="hidden md:flex items-center gap-5 lg:gap-6">
           <a
-            href="#solution"
+            href="/#solution"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
@@ -67,7 +67,7 @@ export default function LandingNavbar() {
             {nav.examples}
           </a>
           <a
-            href="#pricing"
+            href="/#pricing"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
@@ -76,7 +76,7 @@ export default function LandingNavbar() {
             {nav.pricing}
           </a>
           <a
-            href="#faq"
+            href="/#faq"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
@@ -84,6 +84,15 @@ export default function LandingNavbar() {
           >
             {t.nav?.faq ?? "FAQ"}
           </a>
+          <Link
+            href="/contact"
+            className="text-[13.5px] font-medium transition-colors"
+            style={{ color: "rgba(43,42,38,0.6)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#2B2A26")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
+          >
+            {t.nav?.contact ?? "Contact"}
+          </Link>
 
           {/* Language switcher */}
           {isMounted && (
@@ -183,7 +192,7 @@ export default function LandingNavbar() {
           style={{ background: "#F4F1EA", borderColor: "rgba(43,42,38,0.08)" }}
         >
           <a
-            href="#solution"
+            href="/#solution"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
@@ -191,7 +200,7 @@ export default function LandingNavbar() {
             {nav.examples}
           </a>
           <a
-            href="#pricing"
+            href="/#pricing"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
@@ -199,13 +208,21 @@ export default function LandingNavbar() {
             {nav.pricing}
           </a>
           <a
-            href="#faq"
+            href="/#faq"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
           >
             {t.nav?.faq ?? "FAQ"}
           </a>
+          <Link
+            href="/contact"
+            onClick={() => setIsOpen(false)}
+            className="text-sm font-medium"
+            style={{ color: "#2B2A26" }}
+          >
+            {t.nav?.contact ?? "Contact"}
+          </Link>
           <Link
             href="/auth/login"
             onClick={() => setIsOpen(false)}

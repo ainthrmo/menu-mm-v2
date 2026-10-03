@@ -59,11 +59,11 @@ import {
 const MENUU_VIBER_URL =
   process.env.NEXT_PUBLIC_MOSS_VIBER_URL ||
   process.env.NEXT_PUBLIC_MENUU_VIBER_URL ||
-  "https://viber.click/placeholder-moss-qr";
+  "viber://chat?number=%2B959969069005";
 const MENUU_FB_PAGE_URL =
   process.env.NEXT_PUBLIC_MOSS_FB_PAGE_URL ||
   process.env.NEXT_PUBLIC_MENUU_FB_PAGE_URL ||
-  "https://facebook.com/placeholder-moss-qr";
+  "https://www.facebook.com/getmossqr/";
 
 
 export interface AdminMenuItem {
