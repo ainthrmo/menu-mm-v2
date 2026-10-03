@@ -11,310 +11,74 @@ export type DishWriteInput = {
   price: number;
   imageUrl?: string | null;
   isPopular?: boolean;
-  available?: boolean;
 };
-
-export type LegacyMenuItem = {
-  id: string;
-  restaurant_id: string | null;
-  category: string;
-  name: string;
-  price: number;
-  description: string | null;
-  is_available: boolean | null;
-  created_at: string;
-  image: string | null;
-  is_popular: boolean;
-  name_mm: string | null;
-  description_mm: string | null;
-};
-
-type VenueMenuContext = {
-  venueId: string;
-  menuId: string;
-  currency: string;
-};
-
-function toMinorUnits(displayPrice: number, currency: string) {
-  if (!Number.isFinite(displayPrice) || displayPrice < 0) {
-    throw new Error("Invalid dish price.");
-  }
-  return currency.toUpperCase() === "MMK"
-    ? Math.round(displayPrice)
-    : Math.round(displayPrice * 100);
-}
-
-function fromMinorUnits(price: number | null, currency: string) {
-  if (price === null) return 0;
-  return currency.toUpperCase() === "MMK" ? price : price / 100;
-}
-
-async function getVenueMenuContext(
-  supabase: SupabaseClient,
-  restaurantId: string,
-): Promise<VenueMenuContext> {
-  const { data: venue, error: venueError } = await supabase
-    .from("venues")
-    .select("id, currency")
-    .eq("legacy_restaurant_id", restaurantId)
-    .maybeSingle();
-
-  if (venueError) throw venueError;
-  if (!venue) {
-    throw new Error(
-      "This restaurant has not been linked to the new venue structure yet.",
-    );
-  }
-
-  const { data: menu, error: menuError } = await supabase
-    .from("menus")
-    .select("id")
-    .eq("venue_id", venue.id)
-    .eq("is_default", true)
-    .maybeSingle();
-
-  if (menuError) throw menuError;
-  if (!menu) {
-    throw new Error("No default menu exists for this venue.");
-  }
-
-  return {
-    venueId: venue.id,
-    menuId: menu.id,
-    currency: venue.currency,
-  };
-}
-
-async function ensureCategoryTranslation(
-  supabase: SupabaseClient,
-  categoryId: string,
-  nameEn: string,
-  nameMm: string,
-) {
-  const rows = [
-    ...(nameMm.trim()
-      ? [{ category_id: categoryId, lang_code: "my", name: nameMm.trim() }]
-      : []),
-    ...(nameEn.trim()
-      ? [{ category_id: categoryId, lang_code: "en", name: nameEn.trim() }]
-      : []),
-  ];
-
-  if (!rows.length) return;
-
-  const { error } = await supabase
-    .from("category_translations")
-    .upsert(rows, { onConflict: "category_id,lang_code" });
-
-  if (error) throw error;
-}
-
-async function upsertDishTranslations(
-  supabase: SupabaseClient,
-  dishId: string,
-  input: DishWriteInput,
-) {
-  const rows = [
-    ...(input.nameMm.trim()
-      ? [
-          {
-            dish_id: dishId,
-            lang_code: "my",
-            name: input.nameMm.trim(),
-            description: input.descriptionMm?.trim() || null,
-          },
-        ]
-      : []),
-    ...(input.nameEn.trim()
-      ? [
-          {
-            dish_id: dishId,
-            lang_code: "en",
-            name: input.nameEn.trim(),
-            description: input.descriptionEn?.trim() || null,
-          },
-        ]
-      : []),
-  ];
-
-  if (!rows.length) {
-    throw new Error("At least one dish name is required.");
-  }
-
-  const { error } = await supabase
-    .from("dish_translations")
-    .upsert(rows, { onConflict: "dish_id,lang_code" });
-
-  if (error) throw error;
-}
 
 export async function createDishWithLegacyBridge(
   supabase: SupabaseClient,
   input: DishWriteInput,
-): Promise<LegacyMenuItem> {
-  const ctx = await getVenueMenuContext(supabase, input.restaurantId);
-  const minorPrice = toMinorUnits(input.price, ctx.currency);
+) {
+  if (!Number.isFinite(input.price) || input.price < 0) {
+    throw new Error("Invalid dish price.");
+  }
 
-  await ensureCategoryTranslation(
-    supabase,
-    input.categoryId,
-    input.nameEn ? input.categoryName : "",
-    input.categoryName,
-  );
+  const { data, error } = await supabase.rpc("create_dish_legacy_bridge", {
+    p_restaurant_id: input.restaurantId,
+    p_category_id: input.categoryId || null,
+    p_category_name: input.categoryName,
+    p_name_en: input.nameEn,
+    p_name_mm: input.nameMm,
+    p_description_en: input.descriptionEn || null,
+    p_description_mm: input.descriptionMm || null,
+    p_price: input.price,
+    p_image_url: input.imageUrl || null,
+    p_is_popular: Boolean(input.isPopular),
+  });
 
-  const { data: legacy, error: legacyError } = await supabase
+  if (error) throw error;
+
+  const { data: item, error: fetchError } = await supabase
     .from("menu_items")
-    .insert({
-      restaurant_id: input.restaurantId,
-      category: input.categoryName,
-      name: input.nameEn.trim() || input.nameMm.trim(),
-      name_mm: input.nameMm.trim() || null,
-      price: input.price,
-      description: input.descriptionEn?.trim() || input.descriptionMm?.trim() || null,
-      description_mm: input.descriptionMm?.trim() || null,
-      image: input.imageUrl || null,
-      is_available: input.available ?? true,
-      is_popular: input.isPopular ?? false,
-    })
     .select("*")
+    .eq("id", data)
     .single();
 
-  if (legacyError || !legacy) {
-    throw legacyError || new Error("Failed to create legacy menu item.");
-  }
-
-  const { data: dish, error: dishError } = await supabase
-    .from("dishes")
-    .insert({
-      menu_id: ctx.menuId,
-      category_id: input.categoryId,
-      price: minorPrice,
-      visible: true,
-      available: input.available ?? true,
-      image_url: input.imageUrl || null,
-      is_popular: input.isPopular ?? false,
-      legacy_menu_item_id: legacy.id,
-    })
-    .select("id")
-    .single();
-
-  if (dishError || !dish) {
-    await supabase.from("menu_items").delete().eq("id", legacy.id);
-    throw dishError || new Error("Failed to create new-schema dish.");
-  }
-
-  try {
-    await upsertDishTranslations(supabase, dish.id, input);
-  } catch (error) {
-    await supabase.from("dishes").delete().eq("id", dish.id);
-    await supabase.from("menu_items").delete().eq("id", legacy.id);
-    throw error;
-  }
-
-  return legacy as LegacyMenuItem;
+  if (fetchError || !item) throw fetchError || new Error("Created dish could not be loaded.");
+  return item;
 }
 
 export async function updateDishWithLegacyBridge(
   supabase: SupabaseClient,
-  dishId: string,
+  legacyMenuItemId: string,
   input: DishWriteInput,
-): Promise<LegacyMenuItem> {
-  const ctx = await getVenueMenuContext(supabase, input.restaurantId);
-  const minorPrice = toMinorUnits(input.price, ctx.currency);
-
-  const { data: dish, error: dishLookupError } = await supabase
-    .from("dishes")
-    .select("id, legacy_menu_item_id")
-    .eq("id", dishId)
-    .eq("legacy_menu_item_id", dishId)
-    .maybeSingle();
-
-  // The normal bridge uses the legacy menu item UUID as the UI ID, so resolve
-  // the new dish through its legacy_menu_item_id when the caller has that ID.
-  let resolvedDishId = dish?.id || null;
-  if (!resolvedDishId) {
-    const { data: byLegacy, error: byLegacyError } = await supabase
-      .from("dishes")
-      .select("id, legacy_menu_item_id")
-      .eq("legacy_menu_item_id", dishId)
-      .maybeSingle();
-    if (byLegacyError) throw byLegacyError;
-    resolvedDishId = byLegacy?.id || null;
-  }
-  if (!resolvedDishId) {
-    throw dishLookupError || new Error("New-schema dish mapping not found.");
+) {
+  if (!Number.isFinite(input.price) || input.price < 0) {
+    throw new Error("Invalid dish price.");
   }
 
-  const { data: previousLegacy, error: previousError } = await supabase
+  const { error } = await supabase.rpc("update_dish_legacy_bridge", {
+    p_legacy_menu_item_id: legacyMenuItemId,
+    p_restaurant_id: input.restaurantId,
+    p_category_id: input.categoryId || null,
+    p_category_name: input.categoryName,
+    p_name_en: input.nameEn,
+    p_name_mm: input.nameMm,
+    p_description_en: input.descriptionEn || null,
+    p_description_mm: input.descriptionMm || null,
+    p_price: input.price,
+    p_image_url: input.imageUrl || null,
+    p_is_popular: Boolean(input.isPopular),
+  });
+
+  if (error) throw error;
+
+  const { data, error: fetchError } = await supabase
     .from("menu_items")
     .select("*")
-    .eq("id", dishId)
-    .eq("restaurant_id", input.restaurantId)
+    .eq("id", legacyMenuItemId)
     .single();
 
-  if (previousError || !previousLegacy) {
-    throw previousError || new Error("Legacy menu item not found.");
-  }
-
-  const legacyPayload = {
-    category: input.categoryName,
-    name: input.nameEn.trim() || input.nameMm.trim(),
-    name_mm: input.nameMm.trim() || null,
-    price: input.price,
-    description: input.descriptionEn?.trim() || input.descriptionMm?.trim() || null,
-    description_mm: input.descriptionMm?.trim() || null,
-    image: input.imageUrl || null,
-    is_popular: input.isPopular ?? false,
-  };
-
-  const { data: updatedLegacy, error: legacyError } = await supabase
-    .from("menu_items")
-    .update(legacyPayload)
-    .eq("id", dishId)
-    .eq("restaurant_id", input.restaurantId)
-    .select("*")
-    .single();
-
-  if (legacyError || !updatedLegacy) {
-    throw legacyError || new Error("Failed to update legacy menu item.");
-  }
-
-  const { error: newSchemaError } = await supabase
-    .from("dishes")
-    .update({
-      menu_id: ctx.menuId,
-      category_id: input.categoryId,
-      price: minorPrice,
-      image_url: input.imageUrl || null,
-      is_popular: input.isPopular ?? false,
-      available: input.available ?? true,
-    })
-    .eq("id", resolvedDishId);
-
-  if (newSchemaError) {
-    await supabase
-      .from("menu_items")
-      .update(previousLegacy)
-      .eq("id", dishId);
-    throw newSchemaError;
-  }
-
-  try {
-    await upsertDishTranslations(supabase, resolvedDishId, input);
-  } catch (error) {
-    await supabase.from("dishes").update({
-      category_id: null,
-      price: previousLegacy.price,
-      image_url: previousLegacy.image,
-      is_popular: previousLegacy.is_popular,
-      available: previousLegacy.is_available ?? true,
-    }).eq("id", resolvedDishId);
-
-    await supabase.from("menu_items").update(previousLegacy).eq("id", dishId);
-    throw error;
-  }
-
-  return updatedLegacy as LegacyMenuItem;
+  if (fetchError || !data) throw fetchError || new Error("Updated dish could not be loaded.");
+  return data;
 }
 
 export async function toggleDishAvailabilityWithLegacyBridge(
@@ -332,12 +96,11 @@ export async function toggleDishAvailabilityWithLegacyBridge(
   if (lookupError) throw lookupError;
   if (!dish) throw new Error("New-schema dish mapping not found.");
 
-  const { error: newError } = await supabase.rpc(
+  const { error: rpcError } = await supabase.rpc(
     "staff_toggle_dish_availability",
     { p_dish_id: dish.id, p_available: available },
   );
-
-  if (newError) throw newError;
+  if (rpcError) throw rpcError;
 
   const { error: legacyError } = await supabase
     .from("menu_items")
@@ -359,54 +122,11 @@ export async function deleteDishWithLegacyBridge(
   legacyMenuItemId: string,
   restaurantId: string,
 ) {
-  const { data: legacy, error: legacyLookupError } = await supabase
-    .from("menu_items")
-    .select("*")
-    .eq("id", legacyMenuItemId)
-    .eq("restaurant_id", restaurantId)
-    .single();
-
-  if (legacyLookupError || !legacy) {
-    throw legacyLookupError || new Error("Legacy menu item not found.");
-  }
-
-  const { data: dish, error: dishLookupError } = await supabase
-    .from("dishes")
-    .select("id")
-    .eq("legacy_menu_item_id", legacyMenuItemId)
-    .maybeSingle();
-
-  if (dishLookupError) throw dishLookupError;
-
-  const { error: legacyDeleteError } = await supabase
-    .from("menu_items")
-    .delete()
-    .eq("id", legacyMenuItemId)
-    .eq("restaurant_id", restaurantId);
-
-  if (legacyDeleteError) throw legacyDeleteError;
-
-  if (dish) {
-    const { error: translationError } = await supabase
-      .from("dish_translations")
-      .delete()
-      .eq("dish_id", dish.id);
-
-    if (translationError) {
-      await supabase.from("menu_items").insert(legacy);
-      throw translationError;
-    }
-
-    const { error: dishDeleteError } = await supabase
-      .from("dishes")
-      .delete()
-      .eq("id", dish.id);
-
-    if (dishDeleteError) {
-      await supabase.from("menu_items").insert(legacy);
-      throw dishDeleteError;
-    }
-  }
+  const { error } = await supabase.rpc("delete_dish_legacy_bridge", {
+    p_legacy_menu_item_id: legacyMenuItemId,
+    p_restaurant_id: restaurantId,
+  });
+  if (error) throw error;
 }
 
 export async function syncCategoryTranslation(
@@ -415,12 +135,20 @@ export async function syncCategoryTranslation(
   englishName: string,
   burmeseName: string,
 ) {
-  await ensureCategoryTranslation(
-    supabase,
-    categoryId,
-    englishName.trim(),
-    burmeseName.trim(),
-  );
-}
+  const rows = [
+    ...(burmeseName.trim()
+      ? [{ category_id: categoryId, lang_code: "my", name: burmeseName.trim() }]
+      : []),
+    ...(englishName.trim()
+      ? [{ category_id: categoryId, lang_code: "en", name: englishName.trim() }]
+      : []),
+  ];
 
-export { fromMinorUnits };
+  if (!rows.length) return;
+
+  const { error } = await supabase
+    .from("category_translations")
+    .upsert(rows, { onConflict: "category_id,lang_code" });
+
+  if (error) throw error;
+}
