@@ -1,3 +1,4 @@
+import type { Database } from "@/lib/database.types";
 import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
@@ -16,7 +17,7 @@ export function createClient() {
   // as createServerClient (e.g. sb-nkaunvzoebkuzktrmaft-auth-token).
   // Use custom global.fetch to route HTTP requests through the local Next.js rewrite proxy (/supabase-proxy)
   // for Myanmar ISP compatibility.
-  return createBrowserClient(envUrl, supabaseAnonKey, {
+  return createBrowserClient<Database>(envUrl, supabaseAnonKey, {
     auth: {
       flowType: 'pkce',
     },
