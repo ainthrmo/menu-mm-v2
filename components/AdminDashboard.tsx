@@ -47,6 +47,13 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getRestaurantSubscription, DEFAULT_FREE_PLAN, Plan, Subscription } from "@/lib/subscription";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  createDishWithLegacyBridge,
+  updateDishWithLegacyBridge,
+  toggleDishAvailabilityWithLegacyBridge,
+  deleteDishWithLegacyBridge,
+  syncCategoryTranslation,
+} from "@/lib/services/menu-service";
 
 
 const MENUU_VIBER_URL =
@@ -751,10 +758,33 @@ export const AdminDashboard: React.FC = () => {
       .eq("restaurant_id", restaurantId);
 
     if (restaurantId) {
-      await supabase
+      const { error: restaurantNameError } = await supabase
         .from("restaurants")
         .update({ name: storeName })
         .eq("id", restaurantId);
+
+      if (restaurantNameError) {
+        console.error("RESTAURANT NAME UPDATE ERROR:", restaurantNameError);
+      }
+
+      // Keep the normalized tenant names aligned during the migration bridge.
+      const { data: venue } = await supabase
+        .from("venues")
+        .select("id, org_id")
+        .eq("legacy_restaurant_id", restaurantId)
+        .maybeSingle();
+
+      if (venue) {
+        await supabase
+          .from("venues")
+          .update({ name: storeName })
+          .eq("id", venue.id);
+
+        await supabase
+          .from("organizations")
+          .update({ name: storeName })
+          .eq("id", venue.org_id);
+      }
     }
 
     if (error) {
@@ -833,7 +863,14 @@ export const AdminDashboard: React.FC = () => {
       setCategoryError(error.message || "Failed to update category.");
       toast.error("Failed to update category");
     } else if (data && data.length > 0) {
-      // If the English/primary category name changed, update all assigned dishes
+      await syncCategoryTranslation(
+        supabase,
+        cat.id,
+        updatedName,
+        updatedNameMm,
+      );
+
+      // If the English/primary category name changed, update the legacy bridge text.
       if (oldName !== updatedName) {
         await supabase
           .from("menu_items")
@@ -978,6 +1015,7 @@ export const AdminDashboard: React.FC = () => {
       }
 
       let targetCategory = selectedCategoryChoice;
+      let targetCategoryId = categories.find((c) => c.name === targetCategory)?.id || "";
 
       // If "Add new category" was chosen, create the category first
       if (selectedCategoryChoice === "__NEW__") {
@@ -1019,7 +1057,14 @@ export const AdminDashboard: React.FC = () => {
         if (newCatData && newCatData.length > 0) {
           setCategories((prev) => [...prev, newCatData[0]]);
           targetCategory = newCatData[0].name;
+          targetCategoryId = newCatData[0].id;
           setSelectedCategoryChoice(targetCategory);
+          await syncCategoryTranslation(
+            supabase,
+            newCatData[0].id,
+            newCategoryNameEn.trim(),
+            newCategoryNameMm.trim(),
+          );
         }
       }
 
@@ -1054,52 +1099,33 @@ export const AdminDashboard: React.FC = () => {
         imageUrl = null;
       }
 
-      const dishPayload: any = {
-        name: newItemNameEn.trim() || newItemNameMm.trim(),
-        name_mm: newItemNameMm.trim(),
-        category: targetCategory,
+      if (!targetCategoryId) {
+        throw new Error("Please select a valid category.");
+      }
+
+      const dishInput = {
+        restaurantId,
+        categoryId: targetCategoryId,
+        categoryName: targetCategory,
+        nameEn: newItemNameEn.trim(),
+        nameMm: newItemNameMm.trim(),
+        descriptionEn: newItemDescriptionEn.trim() || null,
+        descriptionMm: newItemDescriptionMm.trim() || null,
         price: parseFloat(newItemPrice),
-        image: imageUrl,
-        description: (newItemDescriptionEn.trim() || newItemDescriptionMm.trim()) || null,
-        description_mm: newItemDescriptionMm.trim() || null,
-        is_popular: isFreePlan ? false : newItemIsPopular,
+        imageUrl,
+        isPopular: isFreePlan ? false : newItemIsPopular,
       };
 
       if (editingItem) {
-        const { data, error } = await supabase
-          .from("menu_items")
-          .update(dishPayload)
-          .eq("id", editingItem.id)
-          .select();
-
-        if (error) {
-          console.error("MENU UPDATE ERROR:", error);
-          setFormError(error.message || "Failed to update menu item.");
-        } else if (data && data.length > 0) {
-          setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data[0] : i)));
-          setIsDishModalOpen(false);
-          toast.success(`Updated "${newItemNameMm.trim()}"`);
-        }
+        const data = await updateDishWithLegacyBridge(supabase, editingItem.id, dishInput);
+        setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data : i)));
+        setIsDishModalOpen(false);
+        toast.success(`Updated "${newItemNameMm.trim()}"`);
       } else {
-        const { data, error } = await supabase
-          .from("menu_items")
-          .insert([
-            {
-              ...dishPayload,
-              is_available: true,
-              restaurant_id: restaurantId,
-            },
-          ])
-          .select();
-
-        if (error) {
-          console.error("MENU INSERT ERROR:", error);
-          setFormError(error.message || "Failed to insert menu item into database.");
-        } else if (data && data.length > 0) {
-          setMenuItems([data[0], ...menuItems]);
-          setIsDishModalOpen(false);
-          toast.success(`Added "${newItemNameMm.trim()}" to menu`);
-        }
+        const data = await createDishWithLegacyBridge(supabase, dishInput);
+        setMenuItems([data, ...menuItems]);
+        setIsDishModalOpen(false);
+        toast.success(`Added "${newItemNameMm.trim()}" to menu`);
       }
     } catch (err: unknown) {
       console.error("Unexpected error saving dish:", err);
@@ -1112,10 +1138,13 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const toggleAvailability = async (id: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from("menu_items")
-      .update({ is_available: !currentStatus })
-      .eq("id", id);
+    const nextStatus = !currentStatus;
+    let error: any = null;
+    try {
+      await toggleDishAvailabilityWithLegacyBridge(supabase, id, restaurantId, nextStatus);
+    } catch (err) {
+      error = err;
+    }
 
     if (error) {
       console.error("MENU AVAILABILITY TOGGLE ERROR:", error);
@@ -1136,7 +1165,12 @@ export const AdminDashboard: React.FC = () => {
       variant: "danger",
       onConfirm: async () => {
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        const { error } = await supabase.from("menu_items").delete().eq("id", id);
+        let error: any = null;
+        try {
+          await deleteDishWithLegacyBridge(supabase, id, restaurantId);
+        } catch (err) {
+          error = err;
+        }
         if (error) {
           console.error("MENU DELETE ERROR:", error);
           toast.error("Failed to delete dish: " + error.message);

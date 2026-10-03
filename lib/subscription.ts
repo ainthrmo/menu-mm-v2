@@ -25,22 +25,42 @@ export interface Subscription {
 
 export const DEFAULT_FREE_PLAN: Plan = {
   id: "free",
-  name: "Free",
+  name: "Starter",
   price_usd: 0,
-  price_mmk: 0,
-  billing_interval: "forever",
-  max_menu_items: 20,
-  features: ["Up to 20 Menu Items", "QR Code Generation", "Category Management", "Basic Customization", "Mobile Menu"],
+  price_mmk: 69000,
+  billing_interval: "yearly",
+  max_menu_items: 50,
+  features: [
+    "Digital QR Menu",
+    "Up to 50 Menu Items",
+    "Categories",
+    "Dish Images",
+    "Restaurant Profile",
+    "WiFi Information",
+    "Social Links",
+    "QR Code",
+    "Mobile-friendly Menu",
+  ],
 };
 
 export const DEFAULT_PRO_PLAN: Plan = {
   id: "pro",
   name: "Pro",
   price_usd: 0,
-  price_mmk: 50000, // 50,000 MMK/year — matches landing page pricing
+  price_mmk: 125000, // Founding Pro price: 125,000 MMK/year
   billing_interval: "yearly",
   max_menu_items: 100, // matches DB plans table seed — NOT unlimited
-  features: ["Up to 100 Menu Items", "Food Photos", "Full Customization", "Custom Theme Color", "Bilingual Menu", "Social Links", "Cart", "Mark Popular Items"],
+  features: [
+    "Digital QR Menu",
+    "Up to 100 Menu Items",
+    "Categories",
+    "Dish Images",
+    "Restaurant Profile",
+    "WiFi Information",
+    "Social Links",
+    "QR Code",
+    "Mobile-friendly Menu",
+  ],
 };
 
 export const DEFAULT_BUSINESS_PLAN: Plan = {
