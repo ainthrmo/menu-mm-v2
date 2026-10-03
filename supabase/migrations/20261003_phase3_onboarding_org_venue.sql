@@ -1,0 +1,4 @@
+-- Phase 3 onboarding bridge.
+-- Applied to Supabase project nkaunvzoebkuzktrmaft on 2026-10-03.
+-- Creates the authenticated onboarding RPC that provisions:
+-- legacy restaurant -> organization -> owner member -> venue -> default menu.
