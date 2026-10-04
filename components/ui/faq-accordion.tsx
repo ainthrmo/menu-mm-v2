@@ -14,7 +14,7 @@ interface FaqAccordionProps {
   className?: string;
 }
 
-function FaqRow({ item, index }: { item: FaqItem; index: number }) {
+function FaqRow({ item }: { item: FaqItem; index?: number }) {
   const [open, setOpen] = useState(false);
 
   return (

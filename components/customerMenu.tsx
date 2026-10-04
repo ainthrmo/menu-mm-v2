@@ -31,6 +31,8 @@ import {
   DEMO_CATEGORIES,
   DEMO_MENU_ITEMS,
 } from "@/lib/demo-menu-data";
+import { TableProvider, useTableContext } from "@/components/TableContext";
+import { ServiceActionBar } from "@/components/ServiceActionBar";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -39,19 +41,19 @@ import {
 interface Category {
   id: string;
   name: string;
-  name_mm?: string;
+  name_mm?: string | null;
 }
 
 interface MenuItem {
   id: string;
   name: string;
-  name_mm?: string;
+  name_mm?: string | null;
   category: string;
   price: number;
   description?: string | null;
   description_mm?: string | null;
   image?: string | null;
-  is_available?: boolean;
+  is_available?: boolean | null;
   is_popular?: boolean;
   is_spicy?: boolean;
 }
@@ -143,6 +145,9 @@ export default function CustomerMenu({
   const [langMode, setLangMode] = useState<LanguageMode>("all");
   const tabsRef = useRef<HTMLDivElement>(null);
 
+  // Table context for active table identity and URL propagation
+  const { activeTable, tableToken, isValidatingTable, tableError, setRestaurantId: syncTableRestaurantId } = useTableContext();
+
   const isPro =
     plan.id.toLowerCase() === "pro" || plan.id.toLowerCase() === "business";
 
@@ -190,6 +195,7 @@ export default function CustomerMenu({
         }
 
         setCurrentRestaurantId(targetRestaurantId);
+        syncTableRestaurantId(targetRestaurantId);
 
         if (typeof window !== "undefined") {
           const savedCart = sessionStorage.getItem(`menu_cart_${targetRestaurantId}`);
@@ -470,9 +476,28 @@ export default function CustomerMenu({
             )}
 
             <div className="min-w-0 flex-1">
+              {/* Table Identity Pill if active */}
+              {activeTable && (
+                <div className="mb-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#111111] text-[#CDF22B] shadow-2xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#CDF22B] animate-pulse" />
+                  <span>Table {activeTable.table_number.length === 1 ? `0${activeTable.table_number}` : activeTable.table_number}</span>
+                  {activeTable.label && (
+                    <span className="text-white/70 font-normal">({activeTable.label})</span>
+                  )}
+                </div>
+              )}
+
+              {tableError && (
+                <div className="mb-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  <span>{tableError}</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-[#111111] tracking-tight truncate leading-tight">
-                  {restaurantName}
+                  {activeTable
+                    ? `Table ${activeTable.table_number.length === 1 ? `0${activeTable.table_number}` : activeTable.table_number} • ${restaurantName}`
+                    : restaurantName}
                 </h1>
                 {isPro && (
                   <span className="shrink-0 rounded bg-neutral-100 border border-neutral-200 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-neutral-700">
@@ -541,6 +566,11 @@ export default function CustomerMenu({
               )}
             </div>
           )}
+
+          {/* Service Actions: Call Waiter & Request Bill (Only renders if activeTable exists) */}
+          {currentRestaurantId && (
+            <ServiceActionBar restaurantId={currentRestaurantId} />
+          )}
         </div>
       </section>
 
@@ -559,7 +589,11 @@ export default function CustomerMenu({
             className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5"
           >
             {groupedSections.map((sec) => {
-              const catUrl = buildCategoryMenuUrl(sec.name, currentRestaurantId);
+              const catUrl = buildCategoryMenuUrl(
+                sec.name,
+                currentRestaurantId,
+                activeTable?.qr_token || activeTable?.table_number || tableToken
+              );
               return (
                 <Link
                   key={`chip-${sec.name}`}
@@ -652,7 +686,11 @@ export default function CustomerMenu({
               return (
                 <div className="grid grid-cols-1 gap-3.5">
                   {displayed.map((section) => {
-                    const catUrl = buildCategoryMenuUrl(section.name, currentRestaurantId);
+                    const catUrl = buildCategoryMenuUrl(
+                      section.name,
+                      currentRestaurantId,
+                      activeTable?.qr_token || activeTable?.table_number || tableToken
+                    );
 
                     return (
                       <Link

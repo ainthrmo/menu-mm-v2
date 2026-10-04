@@ -107,7 +107,7 @@ export async function getRestaurantSubscription(
             price_usd: Number(rawPlan.price_usd || 0),
             price_mmk: Number(rawPlan.price_mmk || 0),
             billing_interval: rawPlan.billing_interval || "monthly",
-            max_menu_items: Number(rawPlan.max_menu_items ?? 20),
+            max_menu_items: Number(rawPlan.max_menu_items ?? 50),
             features: Array.isArray(rawPlan.features) ? rawPlan.features : [],
           }
         : data.plan_id === "pro"

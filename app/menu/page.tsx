@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import CustomerMenu from "@/components/customerMenu";
+import { TableProvider } from "@/components/TableContext";
 
 export async function generateMetadata({
   searchParams,
@@ -42,7 +43,9 @@ export default function MenuPage() {
         <DynamicMarker />
       </Suspense>
       <Suspense fallback={<div className="min-h-screen bg-[#F8F7F4]" />}>
-        <CustomerMenu />
+        <TableProvider>
+          <CustomerMenu />
+        </TableProvider>
       </Suspense>
     </main>
   );

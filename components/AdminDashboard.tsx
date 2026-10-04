@@ -38,6 +38,7 @@ import {
   User,
   Mail,
   Facebook,
+  Bell,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -54,6 +55,9 @@ import {
   deleteDishWithLegacyBridge,
   syncCategoryTranslation,
 } from "@/lib/services/menu-service";
+import { TableManagementSection } from "@/components/TableManagementSection";
+import { QrStudioSection } from "@/components/QrStudioSection";
+import { ServiceRequestFeed } from "@/components/ServiceRequestFeed";
 
 
 const MENUU_VIBER_URL =
@@ -69,24 +73,24 @@ const MENUU_FB_PAGE_URL =
 export interface AdminMenuItem {
   id: string;
   name: string;
-  name_mm?: string;
+  name_mm?: string | null;
   category: string;
   price: number;
   is_available: boolean;
   image?: string | null;
-  description?: string;
-  description_mm?: string;
+  description?: string | null;
+  description_mm?: string | null;
   is_popular?: boolean;
 }
 
 export interface Category {
   id: string;
   name: string;
-  name_mm?: string;
-  sort_order?: number;
+  name_mm?: string | null;
+  sort_order?: number | null;
 }
 
-type DashboardSection = "menu" | "qr" | "analytics" | "settings";
+type DashboardSection = "menu" | "tables" | "requests" | "qr" | "analytics" | "settings";
 
 export const AdminDashboard: React.FC = () => {
   const supabase = createClient();
@@ -298,7 +302,7 @@ export const AdminDashboard: React.FC = () => {
         setLogoUrl(profileData.logo_url || null);
         setStoreProfile(profileData);
         if (!sub) {
-          setStorePlan(profileData.subscription_plan || "Free");
+          setStorePlan((profileData as any).subscription_plan || "Free");
         }
 
         // WiFi credentials
@@ -353,7 +357,12 @@ export const AdminDashboard: React.FC = () => {
           code: menuFetchError.code,
         });
       } else if (menuData) {
-        setMenuItems(menuData);
+        setMenuItems(
+          menuData.map((item) => ({
+            ...item,
+            is_available: item.is_available ?? true,
+          }))
+        );
       }
     } catch (err) {
       console.error("AdminDashboard fetchData unexpected error:", err);
@@ -1257,6 +1266,34 @@ export const AdminDashboard: React.FC = () => {
               {!isSidebarCollapsed && <span className="truncate">Menu Dashboard</span>}
             </button>
             <button
+              onClick={() => setActiveSection("tables")}
+              title={isSidebarCollapsed ? "Tables" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
+                activeSection === "tables"
+                  ? "bg-[#1b2414] text-[#c8f04a] font-semibold"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
+              }`}
+            >
+              <UtensilsCrossed className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">Tables</span>}
+            </button>
+            <button
+              onClick={() => setActiveSection("requests")}
+              title={isSidebarCollapsed ? "Service Requests" : undefined}
+              className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
+                isSidebarCollapsed ? "justify-center p-3" : "px-3.5 py-2.5"
+              } ${
+                activeSection === "requests"
+                  ? "bg-[#1b2414] text-[#c8f04a] font-semibold"
+                  : "text-[#57604f] hover:bg-[#f6f2e8] hover:text-[#1e2417]"
+              }`}
+            >
+              <Bell className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span className="truncate">Requests</span>}
+            </button>
+            <button
               onClick={() => setActiveSection("qr")}
               title={isSidebarCollapsed ? "QR Code" : undefined}
               className={`flex items-center gap-2.5 rounded-xl text-xs font-medium transition-colors text-left w-full ${
@@ -1268,7 +1305,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <QrCode className="w-4 h-4 shrink-0" />
-              {!isSidebarCollapsed && <span className="truncate">QR Code</span>}
+              {!isSidebarCollapsed && <span className="truncate">QR Studio</span>}
             </button>
             <button
               onClick={() => setActiveSection("analytics")}
@@ -1554,110 +1591,25 @@ export const AdminDashboard: React.FC = () => {
               </div>
             )}
           </>
+        ) : activeSection === "tables" ? (
+          <TableManagementSection
+            supabase={supabase}
+            restaurantId={restaurantId}
+            storeName={storeName}
+          />
+        ) : activeSection === "requests" ? (
+          <ServiceRequestFeed
+            restaurantId={restaurantId}
+          />
         ) : activeSection === "qr" ? (
-          <div className="space-y-6">
-              <div className="bg-white border border-[#1e2417]/10 p-6 rounded-3xl shadow-2xs">
-                <div className="flex items-center gap-2.5 mb-1.5">
-                  <div className="p-2 rounded-xl bg-[#f6f2e8] text-[#1b2414]">
-                    <QrCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-[#1e2417] tracking-tight">QR Code Studio</h2>
-                    <p className="text-xs text-[#57604f]">
-                      Scan or download the high-resolution QR code for <strong className="text-[#1e2417] font-semibold">{storeName}</strong>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white border border-[#1e2417]/10 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xs">
-                  <div className="relative bg-white p-5 rounded-3xl border border-[#1e2417]/10 shadow-sm">
-                    {menuUrl && (
-                      <QRCodeCanvas
-                        ref={qrRef}
-                        value={menuUrl}
-                        size={220}
-                        level="H"
-                        includeMargin
-                        bgColor="#FFFFFF"
-                        fgColor="#1b2414"
-                      />
-                    )}
-                    {logoUrl && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-12 h-12 rounded-xl bg-white p-1 shadow-md border border-[#1e2417]/10">
-                          <img
-                            src={getImageUrl(logoUrl)}
-                            alt=""
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-center mt-5">
-                    {logoUrl && (
-                      <img
-                        src={getImageUrl(logoUrl)}
-                        alt=""
-                        className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-[#1e2417]/10"
-                      />
-                    )}
-                    <p className="text-sm font-bold text-[#1e2417]">{storeName}</p>
-                    <p className="text-xs text-[#57604f] mt-0.5 font-medium">Scan to open digital menu</p>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-[#1e2417]/10 rounded-3xl p-6 space-y-5 shadow-2xs flex flex-col justify-between">
-                  <div>
-                    <label className="block text-xs font-bold text-[#1e2417] mb-2">Live Menu URL</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={menuUrl}
-                        className="flex-1 bg-[#f6f2e8]/40 border border-[#1e2417]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#1e2417] font-mono focus:outline-none"
-                      />
-                      <button
-                        onClick={handleCopyMenuUrl}
-                        className="shrink-0 bg-white border border-[#1e2417]/15 text-[#1e2417] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-[#f6f2e8] active:scale-95 transition-all min-h-[42px] shadow-2xs"
-                      >
-                        <Copy className="w-4 h-4 text-[#57604f]" />
-                        {copied ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <a
-                      href={menuUrl || "/menu"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-[#1b2414] text-[#c8f04a] font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-black active:scale-[0.99] transition-all shadow-sm min-h-[46px]"
-                    >
-                      <ExternalLink className="w-4 h-4" /> Preview Diner Experience
-                    </a>
-                    <button
-                      onClick={handleDownloadQr}
-                      className="w-full bg-white border border-[#1e2417]/15 text-[#1e2417] font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 hover:bg-[#f6f2e8] hover:text-[#1b2414] active:scale-[0.99] transition-all min-h-[46px] shadow-2xs"
-                    >
-                      <Download className="w-4 h-4" /> Download Printable QR
-                    </button>
-                  </div>
-
-                  <div className="bg-[#f6f2e8]/40 border border-[#1e2417]/10 rounded-2xl p-4">
-                    <p className="text-xs font-bold text-[#1e2417] mb-1.5">How to deploy:</p>
-                    <ol className="text-xs text-[#57604f] space-y-1 list-decimal list-inside font-medium leading-relaxed">
-                      <li>Download and print your QR code on acrylic table stands or counter cards.</li>
-                      <li>Diners scan directly with any iOS or Android camera (zero app download).</li>
-                      <li>Any dish price or availability changes update instantaneously for all diners.</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <QrStudioSection
+            supabase={supabase}
+            restaurantId={restaurantId}
+            storeName={storeName}
+            logoUrl={logoUrl}
+            baseMenuUrl={menuUrl}
+            getImageUrl={getImageUrl}
+          />
         ) : activeSection === "analytics" ? (
           /* Sales Insights / Analytics Coming Soon Placeholder */
           <div className="space-y-6">
@@ -1903,22 +1855,40 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-around px-2 py-2">
             <button
               onClick={() => setActiveSection("menu")}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl min-w-[60px] min-h-[52px] transition-colors ${
                 activeSection === "menu" ? "text-[#1b2414] font-bold" : "text-[#57604f] font-medium"
               }`}
             >
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">Menu</span>
-          </button>
-          <button
-            onClick={() => setActiveSection("qr")}
-            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              activeSection === "qr" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-            }`}
-          >
-            <QrCode className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">QR Code</span>
-          </button>
+              <LayoutDashboard className="w-5 h-5" />
+              <span className="text-[10px] font-semibold">Menu</span>
+            </button>
+            <button
+              onClick={() => setActiveSection("tables")}
+              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
+                activeSection === "tables" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
+              }`}
+            >
+              <UtensilsCrossed className="w-5 h-5" />
+              <span className="text-[10px] font-semibold">Tables</span>
+            </button>
+            <button
+              onClick={() => setActiveSection("requests")}
+              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
+                activeSection === "requests" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
+              }`}
+            >
+              <Bell className="w-5 h-5" />
+              <span className="text-[10px] font-semibold">Requests</span>
+            </button>
+            <button
+              onClick={() => setActiveSection("qr")}
+              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
+                activeSection === "qr" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
+              }`}
+            >
+              <QrCode className="w-5 h-5" />
+              <span className="text-[10px] font-semibold">QR Studio</span>
+            </button>
           <button
             onClick={() => setActiveSection("analytics")}
             className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${

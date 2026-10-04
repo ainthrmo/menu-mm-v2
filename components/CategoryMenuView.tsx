@@ -27,6 +27,8 @@ import {
   DEMO_CATEGORIES,
   DEMO_MENU_ITEMS,
 } from "@/lib/demo-menu-data";
+import { useTableContext } from "@/components/TableContext";
+import { ServiceActionBar } from "@/components/ServiceActionBar";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -35,44 +37,44 @@ import {
 interface Category {
   id: string;
   name: string;
-  name_mm?: string;
-  sort_order?: number;
+  name_mm?: string | null;
+  sort_order?: number | null;
 }
 
 interface MenuItem {
   id: string;
   name: string;
-  name_mm?: string;
+  name_mm?: string | null;
   category: string;
   price: number;
   description?: string | null;
   description_mm?: string | null;
   image?: string | null;
-  is_available?: boolean;
+  is_available?: boolean | null;
   is_popular?: boolean;
   is_spicy?: boolean;
 }
 
 interface StoreProfile {
-  store_name?: string;
-  logo_url?: string;
-  cover_url?: string;
-  image?: string;
-  location?: string;
-  address?: string;
-  city?: string;
-  social_phone?: string;
-  wifi_password?: string;
-  social_facebook?: string;
-  social_instagram?: string;
-  social_tiktok?: string;
-  social_messenger?: string;
+  store_name?: string | null;
+  logo_url?: string | null;
+  cover_url?: string | null;
+  image?: string | null;
+  location?: string | null;
+  address?: string | null;
+  city?: string | null;
+  social_phone?: string | null;
+  wifi_password?: string | null;
+  social_facebook?: string | null;
+  social_instagram?: string | null;
+  social_tiktok?: string | null;
+  social_messenger?: string | null;
 }
 
 interface CartItem {
   id: string;
   name: string;
-  name_mm?: string;
+  name_mm?: string | null;
   price: number;
   quantity: number;
   image?: string | null;
@@ -148,6 +150,9 @@ export default function CategoryMenuView({
   const [langMode, setLangMode] = useState<LanguageMode>("all");
   const [activeModalItem, setActiveModalItem] = useState<MenuItem | null>(null);
 
+  // Table context for active table identity and URL propagation
+  const { activeTable, tableToken, isValidatingTable, tableError, setRestaurantId: syncTableRestaurantId } = useTableContext();
+
   const isPro =
     plan.id.toLowerCase() === "pro" || plan.id.toLowerCase() === "business";
 
@@ -207,6 +212,7 @@ export default function CategoryMenuView({
         }
 
         setCurrentRestaurantId(targetRestaurantId);
+        syncTableRestaurantId(targetRestaurantId);
 
         // Load cart for this specific tenant from sessionStorage
         if (typeof window !== "undefined") {
@@ -403,7 +409,10 @@ export default function CategoryMenuView({
   const cartTotalItems = cartItems.reduce((acc, i) => acc + i.quantity, 0);
   const cartTotalPrice = cartItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-  const mainPageUrl = buildMainMenuUrl(currentRestaurantId);
+  const mainPageUrl = buildMainMenuUrl(
+    currentRestaurantId,
+    activeTable?.qr_token || activeTable?.table_number || tableToken
+  );
 
   if (!loading && !currentRestaurantId) {
     return (
@@ -435,8 +444,13 @@ export default function CategoryMenuView({
           </Link>
 
           <div className="text-center min-w-0 flex-1 px-2">
-            <h1 className="text-xs font-black text-[#111111] truncate">
-              {storeProfile?.store_name || "Restaurant Menu"}
+            <h1 className="text-xs font-black text-[#111111] truncate flex items-center justify-center gap-1.5">
+              {activeTable && (
+                <span className="shrink-0 px-2 py-0.2 rounded-full text-[10px] font-black bg-[#111111] text-[#CDF22B]">
+                  Table {activeTable.table_number.length === 1 ? `0${activeTable.table_number}` : activeTable.table_number}
+                </span>
+              )}
+              <span className="truncate">{storeProfile?.store_name || "Restaurant Menu"}</span>
             </h1>
           </div>
 
@@ -505,6 +519,11 @@ export default function CategoryMenuView({
             </p>
           </div>
         </div>
+
+        {/* Service Actions: Call Waiter & Request Bill (Only renders if activeTable exists) */}
+        {currentRestaurantId && (
+          <ServiceActionBar restaurantId={currentRestaurantId} />
+        )}
       </div>
 
       {/* ====================================================
@@ -518,7 +537,11 @@ export default function CategoryMenuView({
           <div className="scrollbar-hide mx-auto flex max-w-xl gap-2 overflow-x-auto px-4 sm:px-5">
             {categories.map((cat) => {
               const isSelected = activeCategory?.id === cat.id || cat.name === activeCategoryName;
-              const catUrl = buildCategoryMenuUrl(cat.name, currentRestaurantId);
+              const catUrl = buildCategoryMenuUrl(
+                cat.name,
+                currentRestaurantId,
+                activeTable?.qr_token || activeTable?.table_number || tableToken
+              );
 
               return (
                 <Link

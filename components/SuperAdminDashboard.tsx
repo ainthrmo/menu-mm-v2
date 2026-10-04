@@ -160,7 +160,7 @@ export default function SuperAdminDashboard({ initialRestaurants, initialLeads, 
       const { data: newRest, error: restError } = await supabase.from("restaurants").insert({ name: lead.restaurant_name, status: "active", scan_count: 0 }).select("id").single();
       if (restError) throw restError;
       await supabase.from("subscriptions").insert({ restaurant_id: newRest.id, plan_id: "pro", status: "active" });
-      await supabase.from("store_profile").insert({ restaurant_id: newRest.id, store_name: lead.restaurant_name, social_phone: lead.phone, city: lead.city || undefined });
+      await supabase.from("store_profile").insert({ restaurant_id: newRest.id, store_name: lead.restaurant_name, social_phone: lead.phone });
       const { error: leadUpdateError } = await supabase.from("leads").update({ status: "onboarded", onboarded_restaurant_id: newRest.id, updated_at: new Date().toISOString() }).eq("id", lead.id);
       if (leadUpdateError) throw leadUpdateError;
       setLeads((prev) => prev.map((l) => l.id === lead.id ? { ...l, status: "onboarded", onboarded_restaurant_id: newRest.id } : l));
