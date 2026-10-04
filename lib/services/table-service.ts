@@ -334,6 +334,12 @@ export async function listServiceRequests(
     throw new Error("Restaurant ID is required.");
   }
 
+  // Guard anonymous users – they cannot read service_requests
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
+
   let query = supabase
     .from("service_requests")
     .select("*")
