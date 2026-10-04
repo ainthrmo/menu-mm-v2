@@ -301,17 +301,12 @@ export async function createServiceRequest(
     throw new Error("Table not found, inactive, or does not belong to this restaurant.");
   }
 
-  const { data, error } = await supabase
-    .from("service_requests")
-    .insert({
-      restaurant_id: restaurantId,
-      table_id: tableId,
-      request_type: requestType,
-      notes: input.notes?.trim() || null,
-      status: "pending",
-    })
-    .select("*")
-    .single();
+  const { data, error } = await supabase.rpc("create_service_request", {
+    p_restaurant_id: restaurantId,
+    p_table_id: tableId,
+    p_request_type: requestType,
+    p_notes: input.notes?.trim() || null,
+  });
 
   if (error) {
     // 23505: unique violation (handled duplicate pending request for this table and type)
