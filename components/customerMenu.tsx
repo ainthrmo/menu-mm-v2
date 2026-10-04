@@ -31,7 +31,7 @@ import {
   DEMO_CATEGORIES,
   DEMO_MENU_ITEMS,
 } from "@/lib/demo-menu-data";
-import { TableProvider, useTableContext } from "@/components/TableContext";
+import { useTableContext } from "@/components/TableContext";
 import { ServiceActionBar } from "@/components/ServiceActionBar";
 
 /* ===========================================================
@@ -146,7 +146,7 @@ export default function CustomerMenu({
   const tabsRef = useRef<HTMLDivElement>(null);
 
   // Table context for active table identity and URL propagation
-  const { activeTable, tableToken, isValidatingTable, tableError, setRestaurantId: syncTableRestaurantId } = useTableContext();
+  const { activeTable, tableToken, tableError, setRestaurantId: syncTableRestaurantId } = useTableContext();
 
   const isPro =
     plan.id.toLowerCase() === "pro" || plan.id.toLowerCase() === "business";
