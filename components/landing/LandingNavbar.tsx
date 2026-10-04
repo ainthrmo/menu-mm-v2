@@ -57,7 +57,7 @@ export default function LandingNavbar() {
 
         {/* Desktop links + lang switcher */}
         <div className="hidden md:flex items-center gap-5 lg:gap-6">
-          <a
+          <Link
             href="/#solution"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
@@ -65,8 +65,8 @@ export default function LandingNavbar() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
           >
             {nav.examples}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#pricing"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
@@ -74,8 +74,8 @@ export default function LandingNavbar() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
           >
             {nav.pricing}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#faq"
             className="text-[13.5px] font-medium transition-colors"
             style={{ color: "rgba(43,42,38,0.6)" }}
@@ -83,7 +83,7 @@ export default function LandingNavbar() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(43,42,38,0.6)")}
           >
             {t.nav?.faq ?? "FAQ"}
-          </a>
+          </Link>
           <Link
             href="/contact"
             className="text-[13.5px] font-medium transition-colors"
@@ -191,30 +191,30 @@ export default function LandingNavbar() {
           className="md:hidden border-t px-5 sm:px-8 py-5 flex flex-col gap-4 shadow-[0_12px_30px_rgba(43,42,38,0.06)]"
           style={{ background: "#F4F1EA", borderColor: "rgba(43,42,38,0.08)" }}
         >
-          <a
+          <Link
             href="/#solution"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
           >
             {nav.examples}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#pricing"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
           >
             {nav.pricing}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/#faq"
             onClick={() => setIsOpen(false)}
             className="text-sm font-medium"
             style={{ color: "#2B2A26" }}
           >
             {t.nav?.faq ?? "FAQ"}
-          </a>
+          </Link>
           <Link
             href="/contact"
             onClick={() => setIsOpen(false)}

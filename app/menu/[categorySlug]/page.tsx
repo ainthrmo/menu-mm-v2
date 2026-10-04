@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense, use } from "react";
 import CategoryMenuView from "@/components/CategoryMenuView";
+import { TableProvider } from "@/components/TableContext";
 
 export async function generateMetadata({
   params,
@@ -17,7 +18,11 @@ export async function generateMetadata({
 
 function CategorySlugContent({ params }: { params: Promise<{ categorySlug: string }> }) {
   const { categorySlug } = use(params);
-  return <CategoryMenuView categorySlug={categorySlug} />;
+  return (
+    <TableProvider>
+      <CategoryMenuView categorySlug={categorySlug} />
+    </TableProvider>
+  );
 }
 
 export default function CategorySlugPage({

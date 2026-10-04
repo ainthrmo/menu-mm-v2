@@ -634,6 +634,47 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_tables: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          qr_token: string | null
+          restaurant_id: string
+          table_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          qr_token?: string | null
+          restaurant_id: string
+          table_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          qr_token?: string | null
+          restaurant_id?: string
+          table_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_events: {
         Row: {
           id: string
@@ -662,6 +703,57 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          request_type: "call_waiter" | "request_bill"
+          restaurant_id: string
+          status: "pending" | "completed" | "cancelled"
+          table_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_type: "call_waiter" | "request_bill"
+          restaurant_id: string
+          status?: "pending" | "completed" | "cancelled"
+          table_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_type?: "call_waiter" | "request_bill"
+          restaurant_id?: string
+          status?: "pending" | "completed" | "cancelled"
+          table_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
             referencedColumns: ["id"]
           },
         ]
@@ -914,6 +1006,13 @@ export type Database = {
           p_restaurant_id: string
         }
         Returns: undefined
+      }
+      validate_table_belongs_to_restaurant: {
+        Args: {
+          p_restaurant_id: string
+          p_table_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

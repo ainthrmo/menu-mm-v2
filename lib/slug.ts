@@ -18,7 +18,7 @@ export function slugify(text: string): string {
 }
 
 export function categoryMatchesSlug(
-  cat: { name: string; name_mm?: string; id?: string },
+  cat: { name: string; name_mm?: string | null; id?: string | null },
   slug: string
 ): boolean {
   if (!slug) return false;
@@ -43,24 +43,42 @@ export function categoryMatchesSlug(
 
 export function buildCategoryMenuUrl(
   categoryNameOrId: string,
-  restaurantId?: string | null
+  restaurantId?: string | null,
+  tableToken?: string | null
 ): string {
   const catSlug = slugify(categoryNameOrId);
+  const params = new URLSearchParams();
+
   if (restaurantId && restaurantId !== "demo") {
-    return `/category/${catSlug}?restaurantId=${encodeURIComponent(restaurantId)}`;
+    params.set("restaurantId", restaurantId);
   } else if (restaurantId === "demo") {
-    return `/category/${catSlug}?demo=true`;
+    params.set("demo", "true");
   }
-  return `/category/${catSlug}`;
+
+  if (tableToken && restaurantId !== "demo") {
+    params.set("table", tableToken);
+  }
+
+  const qs = params.toString();
+  return qs ? `/category/${catSlug}?${qs}` : `/category/${catSlug}`;
 }
 
 export function buildMainMenuUrl(
-  restaurantId?: string | null
+  restaurantId?: string | null,
+  tableToken?: string | null
 ): string {
+  const params = new URLSearchParams();
+
   if (restaurantId && restaurantId !== "demo") {
-    return `/menu?restaurantId=${encodeURIComponent(restaurantId)}`;
+    params.set("restaurantId", restaurantId);
   } else if (restaurantId === "demo") {
-    return `/menu?demo=true`;
+    params.set("demo", "true");
   }
-  return `/menu`;
+
+  if (tableToken && restaurantId !== "demo") {
+    params.set("table", tableToken);
+  }
+
+  const qs = params.toString();
+  return qs ? `/menu?${qs}` : `/menu`;
 }
