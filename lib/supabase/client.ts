@@ -6,7 +6,7 @@ export function createClient() {
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    "";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rYXVudnpvZWJrdXprdHJtYWZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDg4NTMsImV4cCI6MjEwMTYyNDg1M30.8nSjdgC_SRIpzt16h7W8WkGtlNmO3TqMFjvrhI5yzI4";
 
   if (!envUrl || !supabaseAnonKey) {
     // eslint-disable-next-line no-console
