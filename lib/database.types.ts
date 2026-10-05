@@ -1013,8 +1013,6 @@ export type Database = {
           p_table_id: string
         }
         Returns: boolean
-<<<<<<< HEAD
-=======
       },
       create_service_request: {
         Args: {
@@ -1024,7 +1022,6 @@ export type Database = {
           p_notes?: string | null
         }
         Returns: Database["public"]["Tables"]["service_requests"]["Row"]
->>>>>>> phase3/schema-alignment
       }
     }
     Enums: {
