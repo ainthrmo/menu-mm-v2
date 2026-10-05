@@ -301,6 +301,7 @@ export async function createServiceRequest(
     throw new Error("Table not found, inactive, or does not belong to this restaurant.");
   }
 
+<<<<<<< HEAD
   const { data, error } = await supabase
     .from("service_requests")
     .insert({
@@ -312,6 +313,14 @@ export async function createServiceRequest(
     })
     .select("*")
     .single();
+=======
+  const { data, error } = await supabase.rpc("create_service_request", {
+    p_restaurant_id: restaurantId,
+    p_table_id: tableId,
+    p_request_type: requestType,
+    p_notes: input.notes?.trim() || null,
+  });
+>>>>>>> phase3/schema-alignment
 
   if (error) {
     // 23505: unique violation (handled duplicate pending request for this table and type)
@@ -339,6 +348,15 @@ export async function listServiceRequests(
     throw new Error("Restaurant ID is required.");
   }
 
+<<<<<<< HEAD
+=======
+  // Guard anonymous users – they cannot read service_requests
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
+
+>>>>>>> phase3/schema-alignment
   let query = supabase
     .from("service_requests")
     .select("*")
