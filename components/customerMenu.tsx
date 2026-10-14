@@ -322,7 +322,12 @@ export default function CustomerMenu({
     () => cartList.reduce((s, ci) => s + ci.quantity, 0), [cartList]
   );
   const totalCartPrice = useMemo(
-    () => cartList.reduce((s, ci) => s + ci.item.price * ci.quantity, 0), [cartList]
+    () => cartList.reduce((s, ci) => {
+      const price = ci.item?.price ?? 0;
+      const qty = ci.quantity ?? 0;
+      return s + price * qty;
+    }, 0),
+    [cartList]
   );
 
   const isSearching = searchQuery.trim().length > 0;
