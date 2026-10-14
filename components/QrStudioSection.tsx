@@ -404,6 +404,7 @@ export const QrStudioSection: React.FC<QrStudioSectionProps> = ({
               <img
                 src={getImageUrl(logoUrl)}
                 alt=""
+                aria-hidden="true"
                 className="w-10 h-10 rounded-xl object-cover mx-auto mb-2 border border-[#1e2417]/10"
               />
             )}

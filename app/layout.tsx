@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono, Noto_Sans_Myanmar } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono, Noto_Sans_Myanmar, Fraunces } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastProvider } from "@/components/ui/toast";
@@ -24,11 +24,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "MOSSQR",
   title: {
-    default: "MOSSQR — Digital QR Menus for Restaurants | Myanmar",
+    default: "MOSSQR — Digital Menus for Restaurants & Cafés",
     template: "%s | MOSSQR",
   },
   description:
-    "Stop reprinting your menu. MOSSQR gives your restaurant a digital QR menu you can update from your phone — prices, dishes, photos, availability. Free 30 days.",
+    "Create a beautiful digital menu for your restaurant or café. Update dishes and prices easily with MOSSQR.",
   keywords: [
     "digital menu myanmar",
     "QR menu",
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "MOSSQR — Digital QR Menus for Restaurants",
+    title: "MOSSQR — Digital Menus for Restaurants & Cafés",
     description:
-      "Update your menu from your phone. No reprinting, no app for customers — just scan and browse. Free for your first 30 days.",
+      "Create a beautiful digital menu for your restaurant or café. Update dishes and prices easily with MOSSQR.",
     url: "https://getmossqr.com",
     siteName: "MOSSQR",
     locale: "en_US",
@@ -64,9 +64,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MOSSQR — Digital QR Menus for Restaurants",
+    title: "MOSSQR — Digital Menus for Restaurants & Cafés",
     description:
-      "Stop reprinting your menu every time something changes. Update it from your phone instead.",
+      "Create a beautiful digital menu for your restaurant or café. Update dishes and prices easily with MOSSQR.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -90,7 +90,7 @@ const jsonLd = {
       "@id": "https://getmossqr.com/#website",
       "url": "https://getmossqr.com",
       "name": "MOSSQR",
-      "description": "Digital QR Menus for Restaurants | Myanmar",
+      "description": "Digital Menus for Restaurants & Cafés",
       "inLanguage": ["en", "my"],
     },
     {
@@ -100,7 +100,7 @@ const jsonLd = {
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
       "description":
-        "Digital QR menu platform for restaurants and cafés in Myanmar. Update prices, dishes, and availability from your phone — no reprinting required.",
+        "Digital QR menu platform for restaurants and cafés in Myanmar. Update prices, dishes, and availability easily.",
       "offers": [
         {
           "@type": "Offer",
@@ -137,7 +137,14 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   display: "swap",
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  display: "swap",
+  subsets: ["latin"],
+  weight: ["900"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -170,7 +177,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansMyanmar.variable} font-sans antialiased`}
+        className={`${spaceGrotesk.variable} ${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${notoSansMyanmar.variable} font-sans antialiased`}
       >
         <LanguageProvider>
           <ThemeProvider

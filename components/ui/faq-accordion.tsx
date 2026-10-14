@@ -14,13 +14,17 @@ interface FaqAccordionProps {
   className?: string;
 }
 
-function FaqRow({ item }: { item: FaqItem; index?: number }) {
+function FaqRow({ item, index = 0 }: { item: FaqItem; index?: number }) {
   const [open, setOpen] = useState(false);
+  const buttonId = `faq-button-${index}`;
+  const panelId = `faq-panel-${index}`;
 
   return (
     <div className="border-b border-[var(--border)] last:border-b-0">
       <button
+        id={buttonId}
         aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "w-full flex items-center justify-between gap-4 py-5 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--moss-mid)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--stone)] rounded-sm transition-colors",
@@ -60,6 +64,9 @@ function FaqRow({ item }: { item: FaqItem; index?: number }) {
 
       {/* Smooth height transition via CSS grid trick */}
       <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
         className="grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >

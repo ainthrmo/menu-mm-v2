@@ -1217,7 +1217,7 @@ export const AdminDashboard: React.FC = () => {
               {logoUrl ? (
                 <img
                   src={getImageUrl(logoUrl)}
-                  alt="Logo"
+                  alt={storeName ? `${storeName} logo` : "Restaurant logo"}
                   className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
                 />
               ) : (
@@ -1225,15 +1225,9 @@ export const AdminDashboard: React.FC = () => {
                   {storeName.charAt(0)}
                 </div>
               )}
-              {!isSidebarCollapsed && (
-                <div className="min-w-0 flex-1 hidden md:block">
-                  <h1 className="text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
-                  <p className="text-[11px] text-[#57604f] font-medium truncate">Moss QR Admin</p>
-                </div>
-              )}
-              <div className="min-w-0 flex-1 md:hidden">
+              <div className={`min-w-0 flex-1 ${isSidebarCollapsed ? "md:hidden" : ""}`}>
                 <h1 className="text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
-                <p className="text-[11px] text-[#57604f] font-medium">Moss QR Admin</p>
+                <p className="text-[11px] text-[#57604f] font-medium truncate">Moss QR Admin</p>
               </div>
             </div>
             <button
@@ -1732,7 +1726,7 @@ export const AdminDashboard: React.FC = () => {
                       <div className="space-y-2">
                         <img
                           src={logoPreview || getImageUrl(logoUrl!)}
-                          alt="Logo Preview"
+                          alt={storeName ? `${storeName} logo preview` : "Logo preview"}
                           className="w-20 h-20 mx-auto rounded-full object-cover border border-[#1e2417]/10 shadow-xs"
                         />
                         <p className="text-[11px] font-medium text-[#57604f]">Click to change photo</p>
@@ -1936,7 +1930,7 @@ export const AdminDashboard: React.FC = () => {
             {/* Store Account Summary */}
             <div className="flex items-center gap-3 p-3.5 bg-[#f6f2e8] rounded-2xl border border-[#1e2417]/10">
               {logoUrl ? (
-                <img src={getImageUrl(logoUrl)} alt="Logo" className="w-12 h-12 rounded-2xl object-cover border border-[#1e2417]/10" />
+                <img src={getImageUrl(logoUrl)} alt={storeName ? `${storeName} logo` : "Restaurant logo"} className="w-12 h-12 rounded-2xl object-cover border border-[#1e2417]/10" />
               ) : (
                 <div className="w-12 h-12 rounded-2xl bg-[#1b2414] text-[#c8f04a] flex items-center justify-center font-bold text-base">
                   {storeName.charAt(0)}
@@ -2342,7 +2336,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="relative group rounded-xl overflow-hidden">
                       <img
                         src={getImageUrl(imagePreview)}
-                        alt="Preview"
+                        alt="Dish photo preview"
                         className="w-full h-32 object-cover rounded-xl border border-[#1e2417]/10"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">

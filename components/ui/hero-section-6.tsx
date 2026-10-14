@@ -56,14 +56,15 @@ export function HeroSection({
                                     <Link
                                         href="/"
                                         aria-label="home"
-                                        className="flex items-center space-x-2">
+                                        className="flex items-center space-x-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2">
                                         <Logo />
                                     </Link>
 
                                     <button
                                         onClick={() => setMenuState(!menuState)}
                                         aria-label={menuState == true ? 'Close Menu' : 'Open Menu'}
-                                        className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
+                                        aria-expanded={menuState}
+                                        className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a]">
                                         <Menu className="group-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
                                         <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
                                     </button>
@@ -76,7 +77,7 @@ export function HeroSection({
                                                 <li key={index}>
                                                     <Link
                                                         href={item.href}
-                                                        className="text-muted-foreground hover:text-accent-foreground block duration-150">
+                                                        className="text-muted-foreground hover:text-accent-foreground block duration-150 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a]">
                                                         <span>{item.name}</span>
                                                     </Link>
                                                 </li>
@@ -87,13 +88,13 @@ export function HeroSection({
                                     <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit lg:border-l lg:pl-6">
                                         <Link
                                             href={loginHref}
-                                            className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                                            className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2">
                                             Login
                                         </Link>
 
                                         <Link
                                             href={ctaHref}
-                                            className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-[#c8f04a] text-[#141A12] text-sm font-semibold hover:bg-[#bde63d] transition-colors">
+                                            className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-[#c8f04a] text-[#141A12] text-sm font-semibold hover:bg-[#bde63d] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2">
                                             Get Started
                                         </Link>
                                     </div>
@@ -111,7 +112,7 @@ export function HeroSection({
                             <div className="relative z-10 mx-auto max-w-xl text-center lg:ml-0 lg:w-1/2 lg:text-left">
                                 <Link
                                     href={bannerHref}
-                                    className="rounded-lg mx-auto flex w-fit items-center gap-2 border border-border/80 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm p-1 pr-3 lg:ml-0 shadow-xs">
+                                    className="rounded-lg mx-auto flex w-fit items-center gap-2 border border-border/80 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm p-1 pr-3 lg:ml-0 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2">
                                     <span className="bg-[#c8f04a] text-[#141A12] rounded-[calc(var(--radius)-0.25rem)] px-2 py-0.5 text-xs font-semibold">{bannerBadge}</span>
                                     <span className="text-sm font-medium text-foreground">{bannerText}</span>
                                     <span className="bg-border block h-4 w-px"></span>
@@ -125,17 +126,17 @@ export function HeroSection({
                                 <p className="mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed">{description}</p>
 
                                 <div>
-                                    <div className="mx-auto my-8 max-w-sm lg:my-10 lg:ml-0 lg:mr-auto flex flex-col sm:flex-row gap-3">
+                                                      <div className="mx-auto my-8 max-w-sm lg:my-10 lg:ml-0 lg:mr-auto flex flex-col sm:flex-row gap-3 relative z-20">
                                         <Link
                                             href={ctaHref}
-                                            className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-[0.85rem] bg-[#c8f04a] text-[#141A12] text-sm font-semibold hover:bg-[#bde63d] transition-colors shadow-sm"
+                                            className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-[0.85rem] bg-[#c8f04a] text-[#141A12] text-sm font-semibold hover:bg-[#bde63d] transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2"
                                         >
                                             {ctaText}
                                             <ArrowRight className="size-4" />
                                         </Link>
                                         <Link
                                             href="/menu?restaurantId=50094dc1-dd94-41a6-a29a-d4ab223d3717"
-                                            className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-[0.85rem] border border-border bg-background/60 text-foreground text-sm font-medium hover:bg-muted/60 transition-colors backdrop-blur-sm"
+                                            className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-[0.85rem] border border-border bg-background/60 text-foreground text-sm font-medium hover:bg-muted/60 transition-colors backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b6d11] dark:focus-visible:ring-[#c8f04a] focus-visible:ring-offset-2"
                                         >
                                             {language === "my" ? "နမူနာကြည့်ရန်" : "View demo"}
                                         </Link>
@@ -152,30 +153,34 @@ export function HeroSection({
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute inset-0 -mx-4 rounded-3xl p-3 lg:col-span-3 pointer-events-none">
-                            <div aria-hidden className="absolute z-[1] inset-0 bg-gradient-to-r from-background from-45% via-background/80 to-transparent" />
-                            <div className="relative h-full overflow-hidden rounded-2xl">
-                                <img
-                                    className="hidden dark:block object-cover w-full h-full opacity-60"
-                                    src={imageDark}
-                                    alt="restaurant digital menu preview"
-                                    width={2796}
-                                    height={2008}
-                                />
-                                <img
-                                    className="dark:hidden object-cover w-full h-full opacity-35"
-                                    src={imageLight}
-                                    alt="restaurant digital menu preview"
-                                    width={2796}
-                                    height={2008}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </main>
-        </>
-    )
+                              <div className="relative isolate min-h-[480px] mt-12 flex items-center justify-center">
+        {/* Grey circle background */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[420px] sm:h-[420px] rounded-full -z-10 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 bg-gradient-to-r from-background from-45% via-background/80 to-transparent" />
+        </div>
+        {/* Phone mock‑up images */}
+        <div className="relative h-full overflow-hidden rounded-2xl">
+          <img
+            className="hidden dark:block object-cover w-full h-full opacity-60"
+            src={imageDark}
+            alt=""
+            width={2796}
+            height={2008}
+          />
+          <img
+            className="dark:hidden object-cover w-full h-full opacity-35"
+            src={imageLight}
+            alt=""
+            width={2796}
+            height={2008}
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</>
+)
 }
 
 const Logo = ({ className }: { className?: string }) => {
