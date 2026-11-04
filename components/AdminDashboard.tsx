@@ -723,6 +723,12 @@ export const AdminDashboard: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
 
+    if (!restaurantId) {
+      toast.error("Restaurant data is still loading. Please wait and try again.");
+      setSubmitting(false);
+      return;
+    }
+
     let updatedLogo = logoUrl;
 
     if (logoFile) {
@@ -1080,6 +1086,11 @@ export const AdminDashboard: React.FC = () => {
 
       let imageUrl: string | null = null;
       let newlyUploadedImageUrl: string | null = null;
+
+      if (imageFile && !restaurantId) {
+        setFormError("Restaurant data is still loading. Please wait and try again.");
+        return;
+      }
 
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
@@ -1871,7 +1882,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || loading || !restaurantId}
                     className="inline-flex items-center justify-center gap-2 bg-[#1b2414] text-[#c8f04a] px-6 py-3 rounded-xl text-xs font-bold hover:bg-black disabled:opacity-50 transition-all shadow-xs min-h-[44px]"
                   >
                     {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
