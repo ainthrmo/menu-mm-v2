@@ -727,7 +727,7 @@ export const AdminDashboard: React.FC = () => {
 
     if (logoFile) {
       const fileExt = logoFile.name.split(".").pop();
-      const fileName = `logo-${Date.now()}.${fileExt}`;
+      const fileName = `${restaurantId}/logo-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("menu-images")
@@ -1083,7 +1083,7 @@ export const AdminDashboard: React.FC = () => {
 
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const fileName = `${restaurantId}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("menu-images")
