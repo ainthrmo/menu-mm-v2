@@ -54,6 +54,7 @@ import {
   toggleDishAvailabilityWithLegacyBridge,
   deleteDishWithLegacyBridge,
   syncCategoryTranslation,
+  safeDeleteMenuImage,
 } from "@/lib/services/menu-service";
 import { TableManagementSection } from "@/components/TableManagementSection";
 import { QrStudioSection } from "@/components/QrStudioSection";
@@ -1078,6 +1079,7 @@ export const AdminDashboard: React.FC = () => {
       }
 
       let imageUrl: string | null = null;
+      let newlyUploadedImageUrl: string | null = null;
 
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
@@ -1099,6 +1101,7 @@ export const AdminDashboard: React.FC = () => {
 
         if (publicUrlData?.publicUrl) {
           imageUrl = publicUrlData.publicUrl;
+          newlyUploadedImageUrl = publicUrlData.publicUrl;
         }
       } else if (imagePreview && editingItem) {
         // Preserving existing image on edit
@@ -1109,6 +1112,10 @@ export const AdminDashboard: React.FC = () => {
       }
 
       if (!targetCategoryId) {
+        // Clean up newly uploaded image if category selection fails
+        if (newlyUploadedImageUrl) {
+          await safeDeleteMenuImage(supabase, newlyUploadedImageUrl, { skipReferenceCheck: true });
+        }
         throw new Error("Please select a valid category.");
       }
 
@@ -1126,12 +1133,40 @@ export const AdminDashboard: React.FC = () => {
       };
 
       if (editingItem) {
-        const data = await updateDishWithLegacyBridge(supabase, editingItem.id, dishInput);
+        const previousImageUrl = editingItem.image || null;
+        let data: AdminMenuItem;
+        try {
+          data = await updateDishWithLegacyBridge(supabase, editingItem.id, dishInput);
+        } catch (dbError) {
+          // If DB update fails, clean up the newly uploaded image and retain the old image
+          if (newlyUploadedImageUrl) {
+            await safeDeleteMenuImage(supabase, newlyUploadedImageUrl, { skipReferenceCheck: true });
+          }
+          throw dbError;
+        }
+
         setMenuItems(menuItems.map((i) => (i.id === editingItem.id ? data : i)));
         setIsDishModalOpen(false);
         toast.success(`Updated "${newItemNameMm.trim()}"`);
+
+        // If the image was replaced or removed, safely clean up old Storage object
+        if (previousImageUrl && previousImageUrl !== imageUrl) {
+          await safeDeleteMenuImage(supabase, previousImageUrl, {
+            excludedLegacyId: editingItem.id,
+          });
+        }
       } else {
-        const data = await createDishWithLegacyBridge(supabase, dishInput);
+        let data: AdminMenuItem;
+        try {
+          data = await createDishWithLegacyBridge(supabase, dishInput);
+        } catch (dbError) {
+          // If creation fails, clean up the newly uploaded image
+          if (newlyUploadedImageUrl) {
+            await safeDeleteMenuImage(supabase, newlyUploadedImageUrl, { skipReferenceCheck: true });
+          }
+          throw dbError;
+        }
+
         setMenuItems([data, ...menuItems]);
         setIsDishModalOpen(false);
         toast.success(`Added "${newItemNameMm.trim()}" to menu`);
@@ -1186,6 +1221,13 @@ export const AdminDashboard: React.FC = () => {
         } else {
           setMenuItems(menuItems.filter((i) => i.id !== id));
           toast.success("Dish deleted");
+
+          // Clean up Storage image if present
+          if (targetItem?.image) {
+            await safeDeleteMenuImage(supabase, targetItem.image, {
+              excludedLegacyId: id,
+            });
+          }
         }
       },
     });
