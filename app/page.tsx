@@ -246,28 +246,28 @@ export default function LandingPage() {
               className="text-center max-w-[880px] mx-auto"
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-[-0.03em] text-[#121410] leading-[1.12]">
-                Your menu,{" "}
+                Send us your menu.{" "}
                 <span className="bg-[#C6F24E] text-[#121410] px-2.5 py-0.5 rounded-[6px] inline-block">
-                  always up to date.
+                  We’ll make it digital.
                 </span>
               </h1>
               <p className="mt-5 text-base sm:text-lg text-[#55584D] max-w-[620px] mx-auto leading-relaxed">
-                A digital menu for your restaurant or café. Update dishes and prices from one place.
+                Just send your paper menu or PDF. We’ll set it up for you. Once you approve, your customers can scan the QR and view it instantly.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                <Link
-                  href="/menu?demo=true"
-                  className="w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-[10px] bg-[#121410] text-white font-semibold text-sm hover:bg-[#232720] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#121410] focus-visible:ring-offset-2 shadow-xs active:scale-[0.98]"
-                >
-                  Explore the live demo
-                </Link>
                 <a
                   href="#contact"
+                  className="w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-[10px] bg-[#121410] text-white font-semibold text-sm hover:bg-[#232720] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#121410] focus-visible:ring-offset-2 shadow-xs active:scale-[0.98]"
+                >
+                  Send Menu Files
+                </a>
+                <Link
+                  href="/menu?demo=true"
                   className="w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-[10px] bg-white text-[#121410] border-2 border-[#121410] font-semibold text-sm hover:bg-[#F3F3EF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#121410] focus-visible:ring-offset-2 active:scale-[0.98]"
                 >
-                  Contact MOSSQR
-                </a>
+                  View Live Demo
+                </Link>
               </div>
             </motion.div>
 
