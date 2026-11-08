@@ -266,7 +266,7 @@ export default async function AdminOverviewContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0F1410]">
       <SuperAdminDashboard
         initialRestaurants={restaurants}
         initialLeads={leads}

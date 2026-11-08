@@ -39,6 +39,8 @@ import {
   Mail,
   Facebook,
   Bell,
+  MoreHorizontal,
+  RotateCcw,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -148,6 +150,9 @@ export const AdminDashboard: React.FC = () => {
   // Social & Contact State (Consolidated to generic socialLink + socialPhone)
   const [socialLink, setSocialLink] = useState("");
   const [socialPhone, setSocialPhone] = useState("");
+
+  // Customer Menu Theme Selection ("text" = Editorial default for new restaurants, "moss" = Classic photo-based)
+  const [themeType, setThemeType] = useState<"moss" | "text">("text");
 
   // Modals state
   const [isDishModalOpen, setIsDishModalOpen] = useState(false);
@@ -310,6 +315,10 @@ export const AdminDashboard: React.FC = () => {
         setWifiName(profileData.wifi_name || "");
         setWifiPassword(profileData.wifi_password || "");
 
+        // Customer Menu Theme Selection — load saved value; fall back to "text" (Editorial) for new restaurants
+        const savedTheme = (profileData as any).theme_type;
+        setThemeType(savedTheme === "moss" ? "moss" : "text");
+
         // Priority fallback migration for generic social link: Facebook > Instagram > TikTok > Messenger
         const primarySocial =
           profileData.social_facebook ||
@@ -375,7 +384,13 @@ export const AdminDashboard: React.FC = () => {
 
   const menuUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/menu${restaurantId ? `?restaurantId=${restaurantId}` : ""}`
+      ? `${window.location.origin}/menu${
+          restaurantId
+            ? `?restaurantId=${restaurantId}${themeType === "text" ? "&theme=text" : ""}`
+            : themeType === "text"
+            ? "?theme=text"
+            : ""
+        }`
       : "";
 
   useEffect(() => {
@@ -756,22 +771,36 @@ export const AdminDashboard: React.FC = () => {
     }
 
     const trimmedSocial = socialLink.trim() || null;
-    const { error } = await supabase
-      .from("store_profile")
-      .update({
-        store_name: storeName,
-        logo_url: updatedLogo,
-        wifi_name: wifiName.trim() || null,
-        wifi_password: wifiPassword.trim() || null,
-        show_wifi: Boolean(wifiPassword.trim()),
-        social_facebook: trimmedSocial,
-        social_instagram: trimmedSocial,
-        social_tiktok: trimmedSocial,
-        social_messenger: trimmedSocial,
-        social_phone: socialPhone.trim() || null,
-        updated_at: new Date().toISOString(),
-      })
+    const profileUpdatePayload: Record<string, any> = {
+      store_name: storeName,
+      logo_url: updatedLogo,
+      wifi_name: wifiName.trim() || null,
+      wifi_password: wifiPassword.trim() || null,
+      show_wifi: Boolean(wifiPassword.trim()),
+      social_facebook: trimmedSocial,
+      social_instagram: trimmedSocial,
+      social_tiktok: trimmedSocial,
+      social_messenger: trimmedSocial,
+      social_phone: socialPhone.trim() || null,
+      theme_type: themeType,
+      updated_at: new Date().toISOString(),
+    };
+
+    let { error } = await (supabase
+      .from("store_profile") as any)
+      .update(profileUpdatePayload)
       .eq("restaurant_id", restaurantId);
+
+    // Graceful fallback if theme_type column has not been added yet in active database
+    if (error && error.message?.includes("theme_type")) {
+      console.warn("store_profile.theme_type column not found in live DB. Retrying update without theme_type.");
+      delete profileUpdatePayload.theme_type;
+      const retryResult = await (supabase
+        .from("store_profile") as any)
+        .update(profileUpdatePayload)
+        .eq("restaurant_id", restaurantId);
+      error = retryResult.error;
+    }
 
     if (restaurantId) {
       const { error: restaurantNameError } = await supabase
@@ -820,6 +849,7 @@ export const AdminDashboard: React.FC = () => {
         social_tiktok: trimmedSocial,
         social_messenger: trimmedSocial,
         social_phone: socialPhone.trim() || null,
+        theme_type: themeType,
       }));
       toast.success("Store settings updated successfully!");
     }
@@ -1264,33 +1294,33 @@ export const AdminDashboard: React.FC = () => {
           isSidebarCollapsed ? "md:w-[72px]" : "md:w-64"
         }`}
       >
-        <div className={`space-y-6 overflow-hidden ${isSidebarCollapsed ? "p-3.5" : "p-5"}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div className={`flex items-center gap-3 min-w-0 ${isSidebarCollapsed ? "md:justify-center md:w-full" : ""}`}>
+        <div className={`overflow-hidden ${isSidebarCollapsed ? "p-3.5 space-y-6" : "p-3 sm:p-5 md:space-y-6"}`}>
+          <div className="flex items-center justify-between gap-2.5 sm:gap-3">
+            <div className={`flex items-center gap-2.5 sm:gap-3 min-w-0 ${isSidebarCollapsed ? "md:justify-center md:w-full" : ""}`}>
               {logoUrl ? (
                 <img
                   src={getImageUrl(logoUrl)}
                   alt={storeName ? `${storeName} logo` : "Restaurant logo"}
-                  className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-2xl bg-[#1b2414] text-[#c8f04a] flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#1b2414] text-[#c8f04a] flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs shrink-0">
                   {storeName.charAt(0)}
                 </div>
               )}
               <div className={`min-w-0 flex-1 ${isSidebarCollapsed ? "md:hidden" : ""}`}>
-                <h1 className="text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
-                <p className="text-[11px] text-[#57604f] font-medium truncate">Moss QR Admin</p>
+                <h1 className="text-xs sm:text-sm font-bold text-[#1e2417] tracking-tight truncate">{storeName}</h1>
+                <p className="text-[10px] sm:text-[11px] text-[#57604f] font-medium truncate">Moss QR Admin</p>
               </div>
             </div>
             <button
               onClick={() => setActiveSection("settings")}
-              className={`md:hidden p-2 rounded-xl border border-[#1e2417]/10 transition-colors ${
+              className={`md:hidden p-1.5 sm:p-2 rounded-xl border border-[#1e2417]/10 transition-colors shrink-0 ${
                 activeSection === "settings" ? "bg-[#1b2414] text-[#c8f04a]" : "bg-white hover:bg-[#f6f2e8] text-[#1e2417]"
               }`}
               title="Store Settings"
             >
-              <Edit3 className="w-4 h-4" />
+              <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
@@ -1415,82 +1445,84 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full pb-28 md:pb-8">
+      <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-8 space-y-3.5 sm:space-y-4 md:space-y-6 max-w-5xl mx-auto w-full pb-24 md:pb-8">
         {activeSection === "menu" ? (
           <>
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#c8f04a] text-[#1b2414] border border-[#c8f04a]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#1b2414]" /> Published Menu
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#c8f04a] text-[#1b2414] border border-[#c8f04a]">
+                  <CheckCircle2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#1b2414]" /> Published Menu
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#1b2414]/10 text-[#1b2414] border border-[#1b2414]/20 uppercase">
+                <span className="inline-flex items-center px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#1b2414]/10 text-[#1b2414] border border-[#1b2414]/20 uppercase">
                   {storePlan} Plan
                 </span>
               </div>
-              <span className="text-xs text-[#57604f] font-medium hidden sm:inline">
+              <span className="text-[11px] sm:text-xs text-[#57604f] font-medium hidden sm:inline">
                 Limit: <strong className="text-[#1e2417] font-bold">{menuItems.length}</strong> / {plan.max_menu_items >= 2000000000 ? 'Unlimited' : plan.max_menu_items} items
               </span>
             </div>
           
             {/* Stat Cards with Modern SaaS Hierarchy */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4">
-              <div className="bg-white border border-[#1e2417]/10 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-[#57604f]">Total Dishes</p>
-                  <p className="text-2xl font-black text-[#1e2417] mt-1">{menuItems.length}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4">
+              <div className="bg-white border border-[#1e2417]/10 p-2.5 sm:p-4 md:p-4.5 rounded-xl sm:rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium text-[#57604f] truncate">Total Dishes</p>
+                  <p className="text-base sm:text-2xl font-black text-[#1e2417] mt-0.5 sm:mt-1">{menuItems.length}</p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-[#f6f2e8] flex items-center justify-center text-[#1b2414]">
-                  <UtensilsCrossed className="w-5 h-5" />
-                </div>
-              </div>
-
-              <div className="bg-white border border-[#1e2417]/10 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-[#57604f]">Categories</p>
-                  <p className="text-2xl font-black text-[#1e2417] mt-1">{categories.length}</p>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-[#f6f2e8] flex items-center justify-center text-[#1b2414]">
-                  <Tag className="w-5 h-5" />
+                <div className="hidden min-[360px]:flex h-7 w-7 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-[#f6f2e8] items-center justify-center text-[#1b2414] shrink-0">
+                  <UtensilsCrossed className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 bg-white border border-[#1b2414]/15 p-4.5 rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between bg-gradient-to-br from-white to-[#f6f2e8]/60">
-                <div>
-                  <p className="text-xs font-medium text-[#1b2414]">Live On Menu</p>
-                  <p className="text-2xl font-black text-[#1b2414] mt-1">{availableCount} <span className="text-xs font-normal text-[#57604f]">items</span></p>
+              <div className="bg-white border border-[#1e2417]/10 p-2.5 sm:p-4 md:p-4.5 rounded-xl sm:rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium text-[#57604f] truncate">Categories</p>
+                  <p className="text-base sm:text-2xl font-black text-[#1e2417] mt-0.5 sm:mt-1">{categories.length}</p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-[#c8f04a]/40 flex items-center justify-center text-[#1b2414]">
-                  <EyeIcon className="w-5 h-5" />
+                <div className="hidden min-[360px]:flex h-7 w-7 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-[#f6f2e8] items-center justify-center text-[#1b2414] shrink-0">
+                  <Tag className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#1b2414]/15 p-2.5 sm:p-4 md:p-4.5 rounded-xl sm:rounded-2xl shadow-2xs hover:shadow-xs transition-shadow flex items-center justify-between bg-gradient-to-br from-white to-[#f6f2e8]/60">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium text-[#1b2414] truncate">Live On Menu</p>
+                  <p className="text-base sm:text-2xl font-black text-[#1b2414] mt-0.5 sm:mt-1">
+                    {availableCount} <span className="text-[10px] sm:text-xs font-normal text-[#57604f] hidden min-[400px]:inline">items</span>
+                  </p>
+                </div>
+                <div className="hidden min-[360px]:flex h-7 w-7 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-[#c8f04a]/40 items-center justify-center text-[#1b2414] shrink-0">
+                  <EyeIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
               </div>
             </div>
 
             {/* Controls & Filter Bar */}
-            <div className="bg-white border border-[#1e2417]/10 p-3.5 sm:p-4 rounded-3xl space-y-3.5 shadow-2xs">
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="bg-white border border-[#1e2417]/10 p-2.5 sm:p-3.5 md:p-4 rounded-2xl sm:rounded-3xl space-y-2.5 sm:space-y-3.5 shadow-2xs">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center justify-between">
+                <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                   <div className="relative flex-1 sm:w-60 md:w-68">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57604f]" />
+                    <Search className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#57604f]" />
                     <input
                       type="text"
                       placeholder="Search dishes or drinks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#f6f2e8]/40 border border-[#1e2417]/15 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-[#1e2417] focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414] transition-all placeholder:text-[#57604f]"
+                      className="w-full bg-[#f6f2e8]/40 border border-[#1e2417]/15 rounded-xl sm:rounded-2xl pl-9 sm:pl-10 pr-3.5 sm:pr-4 py-2 sm:py-2.5 text-xs font-medium text-[#1e2417] focus:outline-none focus:ring-2 focus:ring-[#1b2414]/20 focus:border-[#1b2414] transition-all placeholder:text-[#57604f]"
                     />
                   </div>
                   <button
                     onClick={handleOpenAddDishModal}
-                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-[#1b2414] text-[#c8f04a] px-3.5 py-2.5 rounded-2xl text-xs font-bold hover:bg-black active:scale-95 transition-all shrink-0 shadow-xs min-h-[42px]"
+                    className="sm:hidden inline-flex items-center justify-center gap-1.5 bg-[#1b2414] text-[#c8f04a] px-3 py-2 rounded-xl text-xs font-bold hover:bg-black active:scale-95 transition-all shrink-0 shadow-xs min-h-[38px]"
                   >
                     <Plus className="w-4 h-4" /> Add Dish
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 flex-1 min-w-0 scrollbar-hide">
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-0.5 sm:pb-0 flex-1 min-w-0 scrollbar-hide">
                   <button
                     onClick={() => setSelectedCategoryFilter("All")}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all min-h-[34px] sm:min-h-[36px] ${
                       selectedCategoryFilter === "All"
                         ? "bg-[#1b2414] text-[#c8f04a] shadow-2xs"
                         : "bg-[#f6f2e8] text-[#57604f] hover:text-[#1e2417] hover:bg-[#efe9da]"
@@ -1504,7 +1536,7 @@ export const AdminDashboard: React.FC = () => {
                       <button
                         key={cat.id}
                         onClick={() => setSelectedCategoryFilter(cat.name)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
+                        className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all min-h-[34px] sm:min-h-[36px] ${
                           selectedCategoryFilter === cat.name
                             ? "bg-[#1b2414] text-[#c8f04a] shadow-2xs"
                             : "bg-[#f6f2e8] text-[#57604f] hover:text-[#1e2417] hover:bg-[#efe9da]"
@@ -1514,6 +1546,15 @@ export const AdminDashboard: React.FC = () => {
                       </button>
                     );
                   })}
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold whitespace-nowrap bg-white border border-[#1e2417]/15 text-[#57604f] hover:text-[#1e2417] hover:bg-[#efe9da] hover:border-[#1e2417]/30 transition-all min-h-[34px] sm:min-h-[36px] shrink-0"
+                    title="Manage categories (edit names, reorder, delete)"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-[#57604f]" />
+                    <span>Manage Categories</span>
+                  </button>
                 </div>
 
                 <button
@@ -1530,37 +1571,86 @@ export const AdminDashboard: React.FC = () => {
                 <Loader2 className="w-5 h-5 animate-spin text-[#1b2414]" /> Loading menu items...
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="py-20 text-center bg-white border border-dashed border-[#1e2417]/15 rounded-3xl p-8 space-y-4 shadow-2xs">
+              <div className="py-16 sm:py-20 text-center bg-white border border-dashed border-[#1e2417]/15 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xs">
                 <div className="w-14 h-14 rounded-2xl bg-[#f6f2e8] text-[#1b2414] flex items-center justify-center mx-auto">
-                  <UtensilsCrossed className="w-7 h-7" />
+                  {menuItems.length === 0 ? (
+                    <UtensilsCrossed className="w-7 h-7" />
+                  ) : (
+                    <Search className="w-7 h-7" />
+                  )}
                 </div>
-                <div className="space-y-1 max-w-sm mx-auto">
-                  <p className="text-base font-bold text-[#1e2417]">No dishes match your filter</p>
-                  <p className="text-xs text-[#57604f] leading-relaxed">
-                    {searchQuery ? `No results found for "${searchQuery}". Try a different keyword or reset filters.` : "Get started by adding your first food item or drink to the digital menu."}
-                  </p>
-                </div>
-                <button
-                  onClick={handleOpenAddDishModal}
-                  className="inline-flex items-center gap-2 bg-[#1b2414] text-[#c8f04a] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-xs"
-                >
-                  <Plus className="w-4 h-4" /> Create New Dish
-                </button>
+
+                {menuItems.length === 0 ? (
+                  <>
+                    <div className="space-y-1 max-w-sm mx-auto">
+                      <p className="text-base font-bold text-[#1e2417]">Your menu is empty</p>
+                      <p className="text-xs text-[#57604f] leading-relaxed">
+                        Get started by adding your first food item or drink to your digital menu.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleOpenAddDishModal}
+                      className="inline-flex items-center gap-2 bg-[#1b2414] text-[#c8f04a] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-xs min-h-[40px]"
+                    >
+                      <Plus className="w-4 h-4" /> Create New Dish
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-1.5 max-w-sm mx-auto">
+                      <p className="text-base font-bold text-[#1e2417]">No dishes match your filter</p>
+                      <p className="text-xs text-[#57604f] leading-relaxed">
+                        {searchQuery && selectedCategoryFilter !== "All" ? (
+                          <>
+                            No items found matching <strong className="text-[#1e2417]">"{searchQuery}"</strong> in the{" "}
+                            <strong className="text-[#1e2417]">{selectedCategoryFilter}</strong> category.
+                          </>
+                        ) : searchQuery ? (
+                          <>
+                            No results found for <strong className="text-[#1e2417]">"{searchQuery}"</strong>. Try a different keyword or clear your search.
+                          </>
+                        ) : (
+                          <>
+                            No dishes found in the <strong className="text-[#1e2417]">{selectedCategoryFilter}</strong> category.
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedCategoryFilter("All");
+                        }}
+                        className="inline-flex items-center justify-center gap-2 bg-[#1b2414] text-[#c8f04a] px-4.5 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-xs min-h-[40px]"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Clear Search & Filters
+                      </button>
+                      <button
+                        onClick={handleOpenAddDishModal}
+                        className="inline-flex items-center justify-center gap-1.5 bg-[#f6f2e8] text-[#1e2417] border border-[#1e2417]/15 px-4 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#efe9da] transition-all min-h-[40px]"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add New Dish
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3.5">
                 {filteredItems.map((item) => (
                   <article
                     key={item.id}
-                    className={`bg-white border rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between transition-all group ${
+                    className={`bg-white border rounded-xl sm:rounded-2xl p-2 sm:p-3.5 flex flex-col justify-between transition-all group ${
                       item.is_available
                         ? "border-[#1e2417]/10 shadow-2xs hover:shadow-xs hover:border-[#1e2417]/25"
                         : "border-[#1e2417]/10 opacity-60 bg-[#f6f2e8]/30"
                     }`}
                   >
-                    <div className="flex gap-3">
-                      {/* Thumbnail: w-16 (4rem) on mobile, w-20 (5rem) on sm+ — explicit fixed dimensions prevent overflow */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      {/* Thumbnail: Subtly reduced aspect ratio on mobile (5/4 vs 4/3), fixed square on sm+ desktop */}
+                      <div className="relative w-full aspect-[5/4] sm:aspect-auto sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden bg-[#f6f2e8] shrink-0 border border-[#1e2417]/10">
                         {item.image && item.image.trim() ? (
                           <img
                             src={getImageUrl(item.image)}
@@ -1570,12 +1660,12 @@ export const AdminDashboard: React.FC = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-[#57604f] text-[10px] font-medium p-1 text-center bg-[#f6f2e8]/50">
-                            <UtensilsCrossed className="w-5 h-5 mb-0.5 text-[#57604f]/60" />
+                            <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 text-[#57604f]/60" />
                             No photo
                           </div>
                         )}
                         {item.is_popular && (
-                          <span className="absolute top-1 left-1 bg-[#c8f04a] text-[#1b2414] text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                          <span className="absolute top-1 left-1 bg-[#c8f04a] text-[#1b2414] text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider">
                             Popular
                           </span>
                         )}
@@ -1584,35 +1674,42 @@ export const AdminDashboard: React.FC = () => {
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-bold text-[#1b2414] bg-[#f6f2e8] px-2 py-0.5 rounded-md truncate max-w-[120px]">
+                            <span className="text-[9px] sm:text-[10px] font-bold text-[#1b2414] bg-[#f6f2e8] px-1.5 sm:px-2 py-0.5 rounded-md truncate max-w-full sm:max-w-[120px]">
                               {item.category}
                             </span>
                           </div>
-                          <h3 className="font-bold text-sm text-[#1e2417] leading-snug line-clamp-1">
+                          <h3 className="font-bold text-xs sm:text-sm text-[#1e2417] leading-tight sm:leading-snug line-clamp-2 sm:line-clamp-1">
                             {item.name_mm || item.name}
                           </h3>
                           {item.name && item.name_mm && item.name !== item.name_mm && (
-                            <p className="text-xs text-[#57604f] truncate font-medium">
+                            <p className="text-[10px] sm:text-xs text-[#57604f] truncate font-medium mt-0.5">
                               {item.name}
                             </p>
                           )}
                         </div>
+                        <div className="mt-1 sm:mt-1.5">
+                          <span className="text-xs sm:text-xs font-black sm:font-bold text-[#1b2414]">
+                            {typeof item.price === "number" && !isNaN(item.price)
+                              ? formatMMK(item.price)
+                              : "—"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Action buttons: Edit | Show/Hide | Delete — always visible on mobile and desktop */}
-                    <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-[#1e2417]/8">
+                    {/* Action buttons: Edit | Show/Hide | Delete — compact touch-friendly buttons on mobile, full text on sm+ */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-[#1e2417]/8">
                       <button
                         onClick={() => handleOpenEditDishModal(item)}
-                        className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-[#f6f2e8] text-[#1e2417] hover:bg-[#efe9da] hover:text-[#1b2414] transition-colors min-h-[32px]"
+                        className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 sm:py-1.5 px-1 sm:px-2 rounded-lg text-[10px] sm:text-[11px] font-semibold bg-[#f6f2e8] text-[#1e2417] hover:bg-[#efe9da] hover:text-[#1b2414] transition-colors min-h-[36px] sm:min-h-[32px]"
                         title="Edit dish"
                       >
                         <Edit3 className="w-3.5 h-3.5 shrink-0" />
-                        <span>Edit</span>
+                        <span className="hidden min-[400px]:inline sm:inline">Edit</span>
                       </button>
                       <button
                         onClick={() => toggleAvailability(item.id, item.is_available)}
-                        className={`flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-colors min-h-[32px] ${
+                        className={`flex-1 inline-flex items-center justify-center gap-1 py-1.5 sm:py-1.5 px-1 sm:px-2 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-colors min-h-[36px] sm:min-h-[32px] ${
                           item.is_available
                             ? "bg-[#f6f2e8] text-[#57604f] hover:bg-amber-50 hover:text-amber-700"
                             : "bg-[#f6f2e8] text-[#57604f] hover:bg-emerald-50 hover:text-emerald-700"
@@ -1620,14 +1717,20 @@ export const AdminDashboard: React.FC = () => {
                         title={item.is_available ? "Hide from menu" : "Show on menu"}
                       >
                         {item.is_available ? (
-                          <><EyeOff className="w-3.5 h-3.5 shrink-0" /><span>Hide</span></>
+                          <>
+                            <EyeOff className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden min-[400px]:inline sm:inline">Hide</span>
+                          </>
                         ) : (
-                          <><Eye className="w-3.5 h-3.5 shrink-0" /><span>Show</span></>
+                          <>
+                            <Eye className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden min-[400px]:inline sm:inline">Show</span>
+                          </>
                         )}
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
-                        className="inline-flex items-center justify-center p-1.5 rounded-lg text-[#57604f] hover:bg-rose-50 hover:text-rose-600 transition-colors min-h-[32px] min-w-[32px]"
+                        className="inline-flex items-center justify-center p-1 sm:p-1.5 rounded-lg text-[#57604f] hover:bg-rose-50 hover:text-rose-600 transition-colors min-h-[36px] min-w-[34px] sm:min-h-[32px] sm:min-w-[32px] shrink-0"
                         title="Delete dish"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1805,6 +1908,114 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
 
+                {/* Customer Menu Theme Selection */}
+                <div className="space-y-3 pt-4 border-t border-[#1e2417]/10">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1e2417] mb-0.5">
+                      Customer Menu Theme
+                    </label>
+                    <p className="text-[11px] text-[#57604f]">
+                      Choose the visual design your diners experience when scanning your QR code.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Theme Option 1: Classic (photo-based) */}
+                    <button
+                      type="button"
+                      onClick={() => setThemeType("moss")}
+                      className={`relative text-left p-4 rounded-2xl border-2 transition-all flex flex-col justify-between ${
+                        themeType === "moss"
+                          ? "border-[#1b2414] bg-[#f6f2e8]/40 shadow-xs"
+                          : "border-[#1e2417]/10 bg-white hover:border-[#1e2417]/30"
+                      }`}
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-[#1e2417]">
+                            Classic
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#57604f] leading-relaxed">
+                          Photo-based menu, your dishes front and centre.
+                        </p>
+                      </div>
+
+                      <div className="mt-3.5 pt-2 border-t border-[#1e2417]/10 flex items-center justify-between text-[11px]">
+                        {restaurantId ? (
+                          <a
+                            href={`${typeof window !== "undefined" ? window.location.origin : ""}/menu?restaurantId=${restaurantId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[#1b2414] font-semibold underline underline-offset-2 hover:opacity-70 transition-opacity"
+                          >
+                            Preview →
+                          </a>
+                        ) : (
+                          <span className="text-[#57604f] font-medium">Photo-based</span>
+                        )}
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                            themeType === "moss"
+                              ? "border-[#1b2414] bg-[#1b2414] text-[#c8f04a]"
+                              : "border-[#1e2417]/20 bg-white"
+                          }`}
+                        >
+                          {themeType === "moss" && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Theme Option 2: Editorial (text-only) */}
+                    <button
+                      type="button"
+                      onClick={() => setThemeType("text")}
+                      className={`relative text-left p-4 rounded-2xl border-2 transition-all flex flex-col justify-between ${
+                        themeType === "text"
+                          ? "border-[#1b2414] bg-[#F5F7F4] shadow-xs"
+                          : "border-[#1e2417]/10 bg-white hover:border-[#1e2417]/30"
+                      }`}
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-[#1e2417] font-serif">
+                            Editorial
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#57604f] leading-relaxed">
+                          Elegant text-only menu, no photos needed.
+                        </p>
+                      </div>
+
+                      <div className="mt-3.5 pt-2 border-t border-[#1e2417]/10 flex items-center justify-between text-[11px]">
+                        {restaurantId ? (
+                          <a
+                            href={`${typeof window !== "undefined" ? window.location.origin : ""}/menu?restaurantId=${restaurantId}&theme=text`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[#8C7A4B] font-semibold underline underline-offset-2 hover:opacity-70 transition-opacity font-serif italic"
+                          >
+                            Preview →
+                          </a>
+                        ) : (
+                          <span className="text-[#8C7A4B] font-serif italic">Text-only</span>
+                        )}
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                            themeType === "text"
+                              ? "border-[#1b2414] bg-[#1b2414] text-[#c8f04a]"
+                              : "border-[#1e2417]/20 bg-white"
+                          }`}
+                        >
+                          {themeType === "text" && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Core Store Info: WiFi Credentials */}
                 <div className="space-y-3 pt-2">
                   <div>
@@ -1899,78 +2110,74 @@ export const AdminDashboard: React.FC = () => {
           className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#1e2417]/10 pb-safe"
           aria-label="Dashboard navigation"
         >
-          <div className="flex items-center justify-around px-2 py-2">
+          <div className="grid grid-cols-4 items-center px-2 py-2">
             <button
-              onClick={() => setActiveSection("menu")}
-              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl min-w-[60px] min-h-[52px] transition-colors ${
+              onClick={() => {
+                setIsMobileSettingsOpen(false);
+                setActiveSection("menu");
+              }}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl min-h-[48px] transition-colors ${
                 activeSection === "menu" ? "text-[#1b2414] font-bold" : "text-[#57604f] font-medium"
               }`}
             >
-              <LayoutDashboard className="w-5 h-5" />
-              <span className="text-[10px] font-semibold">Menu</span>
+              <LayoutDashboard className="w-5 h-5 shrink-0" />
+              <span className="text-[11px] font-semibold tracking-tight">Menu</span>
             </button>
-            <button
-              onClick={() => setActiveSection("tables")}
-              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
-                activeSection === "tables" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-              }`}
-            >
-              <UtensilsCrossed className="w-5 h-5" />
-              <span className="text-[10px] font-semibold">Tables</span>
-            </button>
-            <button
-              onClick={() => setActiveSection("requests")}
-              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
-                activeSection === "requests" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-              }`}
-            >
-              <Bell className="w-5 h-5" />
-              <span className="text-[10px] font-semibold">Requests</span>
-            </button>
-            <button
-              onClick={() => setActiveSection("qr")}
-              className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-xl min-w-[54px] min-h-[52px] transition-colors ${
-                activeSection === "qr" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-              }`}
-            >
-              <QrCode className="w-5 h-5" />
-              <span className="text-[10px] font-semibold">QR Studio</span>
-            </button>
-          <button
-            onClick={() => setActiveSection("analytics")}
-            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              activeSection === "analytics" ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-            }`}
-          >
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">Insights</span>
-          </button>
-          <button
-            onClick={() => setIsMobileSettingsOpen(true)}
-            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl min-w-[72px] min-h-[52px] transition-colors ${
-              isMobileSettingsOpen ? "text-[#1b2414] font-bold" : "text-[#57604f]"
-            }`}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">Settings</span>
-          </button>
-        </div>
-      </nav>
 
-      {/* Mobile Settings Modal / Page */}
+            <button
+              onClick={() => {
+                setIsMobileSettingsOpen(false);
+                setActiveSection("tables");
+              }}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl min-h-[48px] transition-colors ${
+                activeSection === "tables" ? "text-[#1b2414] font-bold" : "text-[#57604f] font-medium"
+              }`}
+            >
+              <UtensilsCrossed className="w-5 h-5 shrink-0" />
+              <span className="text-[11px] font-semibold tracking-tight">Tables</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsMobileSettingsOpen(false);
+                setActiveSection("requests");
+              }}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl min-h-[48px] transition-colors ${
+                activeSection === "requests" ? "text-[#1b2414] font-bold" : "text-[#57604f] font-medium"
+              }`}
+            >
+              <Bell className="w-5 h-5 shrink-0" />
+              <span className="text-[11px] font-semibold tracking-tight">Requests</span>
+            </button>
+
+            <button
+              onClick={() => setIsMobileSettingsOpen((prev) => !prev)}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl min-h-[48px] transition-colors ${
+                isMobileSettingsOpen || ["qr", "analytics", "settings"].includes(activeSection)
+                  ? "text-[#1b2414] font-bold"
+                  : "text-[#57604f] font-medium"
+              }`}
+            >
+              <MoreHorizontal className="w-5 h-5 shrink-0" />
+              <span className="text-[11px] font-semibold tracking-tight">More</span>
+            </button>
+          </div>
+        </nav>
+
+      {/* Mobile More Options Modal / Bottom Sheet */}
       {isMobileSettingsOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           onClick={() => setIsMobileSettingsOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#1e2417]/10 p-6 space-y-5 shadow-xl my-0 sm:my-8 max-h-[85vh] overflow-y-auto"
+            className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#1e2417]/10 p-5 sm:p-6 space-y-4 sm:space-y-5 shadow-xl my-0 sm:my-8 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#1e2417]/10 pb-3">
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-[#1b2414]" />
-                <h2 className="text-base font-bold text-[#1e2417]">Account & Settings</h2>
+                <MoreHorizontal className="w-5 h-5 text-[#1b2414]" />
+                <h2 className="text-base font-bold text-[#1e2417]">More Options</h2>
               </div>
               <button
                 onClick={() => setIsMobileSettingsOpen(false)}
@@ -2026,39 +2233,26 @@ export const AdminDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Account Options */}
-            <div className="space-y-2 pt-2 border-t border-[#1e2417]/10">
-              <p className="text-[10px] font-bold tracking-wider uppercase text-[#57604f] px-1 mb-1">Account Options</p>
-              
-              <button
-                onClick={() => {
-                  setIsMobileSettingsOpen(false);
-                  setActiveSection("settings");
-                }}
-                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Store className="w-4 h-4 text-[#57604f]" />
-                  <div>
-                    <p className="text-xs font-bold text-[#1e2417]">Edit Restaurant Profile</p>
-                    <p className="text-[11px] text-[#57604f]">Logo, store name, social & contact links</p>
-                  </div>
-                </div>
-                <Edit3 className="w-4 h-4 text-[#57604f]" />
-              </button>
+            {/* Tools & Features */}
+            <div className="space-y-2 pt-1 border-t border-[#1e2417]/10">
+              <p className="text-[10px] font-bold tracking-wider uppercase text-[#57604f] px-1 mb-1">Tools & Features</p>
 
               <button
                 onClick={() => {
                   setIsMobileSettingsOpen(false);
-                  setIsCategoryModalOpen(true);
+                  setActiveSection("qr");
                 }}
-                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
+                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-colors text-left ${
+                  activeSection === "qr"
+                    ? "bg-[#1b2414] text-[#c8f04a] border-[#1b2414]"
+                    : "bg-white border-[#1e2417]/10 hover:bg-[#f6f2e8] text-[#1e2417]"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <FolderPlus className="w-4 h-4 text-[#57604f]" />
+                  <QrCode className={`w-4 h-4 ${activeSection === "qr" ? "text-[#c8f04a]" : "text-[#57604f]"}`} />
                   <div>
-                    <p className="text-xs font-bold text-[#1e2417]">Manage Categories</p>
-                    <p className="text-[11px] text-[#57604f]">Add or remove menu categories</p>
+                    <p className={`text-xs font-bold ${activeSection === "qr" ? "text-[#c8f04a]" : "text-[#1e2417]"}`}>QR Studio</p>
+                    <p className={`text-[11px] ${activeSection === "qr" ? "text-white/80" : "text-[#57604f]"}`}>Generate & download table QR codes</p>
                   </div>
                 </div>
               </button>
@@ -2068,13 +2262,59 @@ export const AdminDashboard: React.FC = () => {
                   setIsMobileSettingsOpen(false);
                   setActiveSection("analytics");
                 }}
-                className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
+                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-colors text-left ${
+                  activeSection === "analytics"
+                    ? "bg-[#1b2414] text-[#c8f04a] border-[#1b2414]"
+                    : "bg-white border-[#1e2417]/10 hover:bg-[#f6f2e8] text-[#1e2417]"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <BarChart3 className="w-4 h-4 text-[#57604f]" />
+                  <BarChart3 className={`w-4 h-4 ${activeSection === "analytics" ? "text-[#c8f04a]" : "text-[#57604f]"}`} />
                   <div>
-                    <p className="text-xs font-bold text-[#1e2417]">Sales Insights</p>
-                    <p className="text-[11px] text-[#57604f]">View sales analytics & metrics</p>
+                    <p className={`text-xs font-bold ${activeSection === "analytics" ? "text-[#c8f04a]" : "text-[#1e2417]"}`}>Sales Insights</p>
+                    <p className={`text-[11px] ${activeSection === "analytics" ? "text-white/80" : "text-[#57604f]"}`}>View sales analytics & metrics</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Management */}
+            <div className="space-y-2 pt-2 border-t border-[#1e2417]/10">
+              <p className="text-[10px] font-bold tracking-wider uppercase text-[#57604f] px-1 mb-1">Management</p>
+
+              <button
+                onClick={() => {
+                  setIsMobileSettingsOpen(false);
+                  setActiveSection("settings");
+                }}
+                className={`flex items-center justify-between w-full p-3 rounded-xl border transition-colors text-left ${
+                  activeSection === "settings"
+                    ? "bg-[#1b2414] text-[#c8f04a] border-[#1b2414]"
+                    : "bg-white border-[#1e2417]/10 hover:bg-[#f6f2e8] text-[#1e2417]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Store className={`w-4 h-4 ${activeSection === "settings" ? "text-[#c8f04a]" : "text-[#57604f]"}`} />
+                  <div>
+                    <p className={`text-xs font-bold ${activeSection === "settings" ? "text-[#c8f04a]" : "text-[#1e2417]"}`}>Store Settings</p>
+                    <p className={`text-[11px] ${activeSection === "settings" ? "text-white/80" : "text-[#57604f]"}`}>Logo, store name, social & contact links</p>
+                  </div>
+                </div>
+                <Edit3 className={`w-4 h-4 ${activeSection === "settings" ? "text-[#c8f04a]" : "text-[#57604f]"}`} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileSettingsOpen(false);
+                  setIsCategoryModalOpen(true);
+                }}
+                className="flex items-center justify-between w-full p-3 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <FolderPlus className="w-4 h-4 text-[#57604f]" />
+                  <div>
+                    <p className="text-xs font-bold text-[#1e2417]">Manage Categories</p>
+                    <p className="text-[11px] text-[#57604f]">Add, edit names, reorder, or delete</p>
                   </div>
                 </div>
               </button>
@@ -2084,7 +2324,7 @@ export const AdminDashboard: React.FC = () => {
                   href={menuUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between w-full p-3.5 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
+                  className="flex items-center justify-between w-full p-3 rounded-xl border border-[#1e2417]/10 bg-white hover:bg-[#f6f2e8] text-left transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <ExternalLink className="w-4 h-4 text-[#57604f]" />
@@ -2097,8 +2337,8 @@ export const AdminDashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Sign Out */}
-            <div className="pt-3 border-t border-[#1e2417]/10">
+            {/* Account / Sign Out */}
+            <div className="pt-2 border-t border-[#1e2417]/10">
               <button
                 onClick={handleLogout}
                 className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"

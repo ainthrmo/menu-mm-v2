@@ -254,4 +254,53 @@
   .animate-qr-stand {
     animation: qrStandFloat 5s ease-in-out infinite;
   }
+
+  /* Scoped typography adjustments when Myanmar language is active on the landing page */
+  .landing-mm h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem) !important;
+    line-height: 1.35 !important;
+    letter-spacing: normal !important;
+  }
+
+  .landing-mm h2 {
+    font-size: clamp(1.4rem, 3vw, 2rem) !important;
+    line-height: 1.4 !important;
+    letter-spacing: normal !important;
+  }
+
+  .landing-mm h3 {
+    font-size: 1.1rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .landing-mm h4 {
+    font-size: 0.95rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .landing-mm p,
+  .landing-mm label,
+  .landing-mm button,
+  .landing-mm a,
+  .landing-mm input,
+  .landing-mm select,
+  .landing-mm textarea {
+    line-height: 1.6;
+  }
+
+  .landing-mm .text-xs {
+    font-size: 0.75rem !important;
+  }
+
+  .landing-mm .text-sm {
+    font-size: 0.85rem !important;
+  }
+
+  .landing-mm .text-base {
+    font-size: 0.95rem !important;
+  }
+
+  .landing-mm .text-lg {
+    font-size: 1.05rem !important;
+  }
 }

@@ -191,38 +191,526 @@ export default function SuperAdminDashboard({ initialRestaurants, initialLeads, 
 
   return (
     <div className="space-y-8">
-      {actionSuccessMessage && <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl bg-emerald-950 border border-emerald-500/30 px-4 py-3 text-xs font-bold text-emerald-300 shadow-2xl"><CheckCircle2 className="h-4 w-4 text-emerald-400" /><span>{actionSuccessMessage}</span></div>}
-      {actionErrorMessage && <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl bg-rose-950 border border-rose-500/30 px-4 py-3 text-xs font-bold text-rose-300 shadow-2xl"><AlertCircle className="h-4 w-4 text-rose-400" /><span>{actionErrorMessage}</span></div>}
+      {actionSuccessMessage && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl bg-[#142318] border border-emerald-500/30 px-4 py-3 text-xs font-bold text-emerald-300 shadow-2xl">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <span>{actionSuccessMessage}</span>
+        </div>
+      )}
+      {actionErrorMessage && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl bg-rose-950/90 border border-rose-500/30 px-4 py-3 text-xs font-bold text-rose-300 shadow-2xl">
+          <AlertCircle className="h-4 w-4 text-rose-400" />
+          <span>{actionErrorMessage}</span>
+        </div>
+      )}
 
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Platform Overview</h1><p className="text-xs text-neutral-400 mt-1">Real-time multi-tenant monitoring, subscription control, and lead conversions.</p></div>
-        <button type="button" onClick={handleRefresh} disabled={isUpdating} className="inline-flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold text-neutral-300 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"><RefreshCw className={`h-3.5 w-3.5 ${isUpdating ? "animate-spin text-[#CDF22B]" : ""}`} /><span>Refresh Data</span></button>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#F4F6F1] tracking-tight">Platform Overview</h1>
+          <p className="text-xs text-[#8C988E] mt-1">Real-time multi-tenant monitoring, subscription control, and lead conversions.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isUpdating}
+          className="inline-flex items-center gap-2 rounded-2xl bg-[#141C16] border border-[#2A362D] px-4 py-2.5 text-xs font-bold text-[#C5CEC7] hover:bg-[#1C261F] hover:text-white transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isUpdating ? "animate-spin text-[#C8F55A]" : ""}`} />
+          <span>Refresh Data</span>
+        </button>
       </div>
 
+      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-3xl bg-[#15151A] border border-white/10 p-5 shadow-sm space-y-3"><div className="flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Active Restaurants</span><div className="h-9 w-9 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><Store className="h-4 w-4" /></div></div><div className="flex items-baseline justify-between"><span className="text-3xl font-black text-white tracking-tight">{stats.totalActiveRestaurants}</span><span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1"><TrendingUp className="h-3 w-3" />Live Tenants</span></div></div>
-        <div className="rounded-3xl bg-[#15151A] border border-white/10 p-5 shadow-sm space-y-3"><div className="flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Pro & Business</span><div className="h-9 w-9 rounded-2xl bg-[#CDF22B]/10 border border-[#CDF22B]/20 flex items-center justify-center text-[#CDF22B]"><Crown className="h-4 w-4" /></div></div><div className="flex items-baseline justify-between"><span className="text-3xl font-black text-[#CDF22B] tracking-tight">{stats.proTierCount}</span><span className="text-[11px] font-bold text-neutral-400">{stats.totalActiveRestaurants > 0 ? `${Math.round((stats.proTierCount / stats.totalActiveRestaurants) * 100)}% conversion` : "0%"}</span></div></div>
-        <div className="rounded-3xl bg-[#15151A] border border-white/10 p-5 shadow-sm space-y-3"><div className="flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Pending Leads</span><div className="h-9 w-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400"><Users className="h-4 w-4" /></div></div><div className="flex items-baseline justify-between"><span className="text-3xl font-black text-amber-400 tracking-tight">{stats.pendingLeadsCount}</span><span className="text-[11px] font-semibold text-neutral-400">Awaiting Onboarding</span></div></div>
-        <div className="rounded-3xl bg-[#15151A] border border-white/10 p-5 shadow-sm space-y-3"><div className="flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Total Menu Scans</span><div className="h-9 w-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><Eye className="h-4 w-4" /></div></div><div className="flex items-baseline justify-between"><span className="text-3xl font-black text-white tracking-tight">{stats.totalScans.toLocaleString()}</span><span className="text-[11px] font-semibold text-blue-400 flex items-center gap-1"><QrCode className="h-3 w-3" />Customer Views</span></div></div>
+        <div className="rounded-3xl bg-[#141C16] border border-[#2A362D] p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#8C988E]">Active Restaurants</span>
+            <div className="h-9 w-9 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Store className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-3xl font-black text-[#F4F6F1] tracking-tight">{stats.totalActiveRestaurants}</span>
+            <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />Live Tenants
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-[#141C16] border border-[#2A362D] p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#8C988E]">Pro & Business</span>
+            <div className="h-9 w-9 rounded-2xl bg-[#C8F55A]/10 border border-[#C8F55A]/25 flex items-center justify-center text-[#C8F55A]">
+              <Crown className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-3xl font-black text-[#C8F55A] tracking-tight">{stats.proTierCount}</span>
+            <span className="text-[11px] font-bold text-[#8C988E]">
+              {stats.totalActiveRestaurants > 0 ? `${Math.round((stats.proTierCount / stats.totalActiveRestaurants) * 100)}% conversion` : "0%"}
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-[#141C16] border border-[#2A362D] p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#8C988E]">Pending Leads</span>
+            <div className="h-9 w-9 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
+              <Users className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-3xl font-black text-amber-400 tracking-tight">{stats.pendingLeadsCount}</span>
+            <span className="text-[11px] font-semibold text-[#8C988E]">Awaiting Onboarding</span>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-[#141C16] border border-[#2A362D] p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#8C988E]">Total Menu Scans</span>
+            <div className="h-9 w-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <Eye className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-3xl font-black text-[#F4F6F1] tracking-tight">{stats.totalScans.toLocaleString()}</span>
+            <span className="text-[11px] font-semibold text-blue-400 flex items-center gap-1">
+              <QrCode className="h-3 w-3" />Customer Views
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 border-b border-white/10 pb-4"><button type="button" onClick={() => setActiveTab("restaurants")} className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-black transition-all ${activeTab === "restaurants" ? "bg-[#CDF22B] text-black shadow-md" : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 border border-white/10"}`}><Store className="h-4 w-4" /><span>Restaurants ({restaurants.length})</span></button><button type="button" onClick={() => setActiveTab("leads")} className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-black transition-all ${activeTab === "leads" ? "bg-[#CDF22B] text-black shadow-md" : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 border border-white/10"}`}><Users className="h-4 w-4" /><span>Pending Leads ({leads.filter((l) => l.status === "pending").length})</span></button></div>
+      {/* Tabs */}
+      <div className="flex items-center gap-3 border-b border-[#2A362D] pb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab("restaurants")}
+          className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-black transition-all ${
+            activeTab === "restaurants"
+              ? "bg-[#C8F55A] text-[#0F1410] shadow-md"
+              : "bg-[#141C16] text-[#8C988E] hover:text-[#F4F6F1] hover:bg-[#1C261F] border border-[#2A362D]"
+          }`}
+        >
+          <Store className="h-4 w-4" />
+          <span>Restaurants ({restaurants.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("leads")}
+          className={`flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-black transition-all ${
+            activeTab === "leads"
+              ? "bg-[#C8F55A] text-[#0F1410] shadow-md"
+              : "bg-[#141C16] text-[#8C988E] hover:text-[#F4F6F1] hover:bg-[#1C261F] border border-[#2A362D]"
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          <span>Pending Leads ({leads.filter((l) => l.status === "pending").length})</span>
+        </button>
+      </div>
 
-      {activeTab === "restaurants" && <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"><div className="relative flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" /><input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search restaurants by name or ID..." className="h-11 w-full rounded-2xl border border-white/10 bg-[#15151A] pl-10 pr-4 text-xs font-medium text-white placeholder:text-neutral-500 outline-none focus:border-[#CDF22B] transition-all" /></div><div className="flex items-center gap-2"><select value={planFilter} onChange={(e: any) => setPlanFilter(e.target.value)} className="h-11 rounded-2xl border border-white/10 bg-[#15151A] px-3.5 text-xs font-bold text-neutral-300 outline-none focus:border-[#CDF22B]"><option value="all">All Plans</option><option value="starter">Starter</option><option value="pro">Pro</option><option value="business">Business</option><option value="free">Free</option></select><select value={statusFilter} onChange={(e: any) => setStatusFilter(e.target.value)} className="h-11 rounded-2xl border border-white/10 bg-[#15151A] px-3.5 text-xs font-bold text-neutral-300 outline-none focus:border-[#CDF22B]"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="disabled">Disabled</option></select></div></div>
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#15151A]"><div className="overflow-x-auto"><table className="w-full text-left"><thead className="border-b border-white/10 bg-white/[0.02]"><tr><th className="py-3.5 px-5 text-[10px] font-black uppercase tracking-wider text-neutral-500">Restaurant</th><th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-neutral-500">Plan</th><th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-neutral-500">Dishes</th><th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-neutral-500">Scans</th><th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-neutral-500">Status</th><th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-neutral-500">Created</th><th className="py-3.5 px-5 text-right text-[10px] font-black uppercase tracking-wider text-neutral-500">Actions</th></tr></thead><tbody className="divide-y divide-white/5">
-          {filteredRestaurants.length === 0 ? <tr><td colSpan={7} className="py-16 text-center text-neutral-500 text-sm font-medium">No restaurants matched your criteria.</td></tr> : filteredRestaurants.map((restaurant) => {
-            const isActive = restaurant.status === "active";
-            const isPending = restaurant.status === "pending";
-            const isPro = restaurant.plan_id === "pro" || restaurant.plan_id === "business";
-            return <tr key={restaurant.id} className="hover:bg-white/[0.02] transition-colors"><td className="py-4 px-5"><div className="space-y-0.5"><div className="flex items-center gap-2"><span className="font-bold text-white text-sm">{restaurant.name}</span><Link href={`/menu?restaurantId=${restaurant.id}`} target="_blank" className="text-neutral-500 hover:text-[#CDF22B] transition-colors" title="View Customer Menu"><ExternalLink className="h-3 w-3" /></Link></div><span className="text-[10px] font-mono text-neutral-500 block truncate max-w-[200px]">{restaurant.id}</span></div></td><td className="py-4 px-4"><span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isPro ? "bg-[#CDF22B]/10 text-[#CDF22B] border border-[#CDF22B]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>{isPro && <Crown className="h-2.5 w-2.5" />}{restaurant.plan_name}</span></td><td className="py-4 px-4"><div className="flex items-center gap-1.5 font-bold text-neutral-300"><UtensilsCrossed className="h-3.5 w-3.5 text-neutral-500" /><span>{restaurant.dish_count}</span></div></td><td className="py-4 px-4"><div className="flex items-center gap-1.5 font-bold text-neutral-300"><Eye className="h-3.5 w-3.5 text-blue-400" /><span>{restaurant.scan_count.toLocaleString()}</span></div></td><td className="py-4 px-4"><span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${isActive ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : isPending ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"}`}><span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-400 animate-pulse" : isPending ? "bg-amber-400" : "bg-rose-400"}`} />{restaurant.status}</span></td><td className="py-4 px-4 text-neutral-400 text-[11px] font-medium">{new Date(restaurant.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</td><td className="py-4 px-5 text-right"><div className="flex items-center justify-end gap-1.5">{!isPending && <button type="button" onClick={() => { setEditingPlanRestaurant(restaurant); setNewPlanSelection(restaurant.plan_id); }} className="flex h-8 items-center gap-1 rounded-xl bg-white/5 border border-white/10 px-2.5 text-[11px] font-bold text-neutral-300 hover:bg-white/10 hover:text-white transition-all" title="Change subscription tier"><Edit2 className="h-3 w-3 text-[#CDF22B]" /><span className="hidden sm:inline">Plan</span></button>}{isPending ? <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-[11px] font-bold text-amber-300"><Clock className="h-3 w-3" />Awaiting approval</span> : <button type="button" onClick={() => handleToggleStatus(restaurant)} className={`flex h-8 items-center gap-1 rounded-xl border px-2.5 text-[11px] font-bold transition-all ${isActive ? "bg-rose-500/10 border-rose-500/20 text-rose-300 hover:bg-rose-500/20" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20"}`} title={isActive ? "Disable Restaurant" : "Enable Restaurant"}><Power className="h-3 w-3" /><span className="hidden sm:inline">{isActive ? "Disable" : "Enable"}</span></button>}{!isPending && <button type="button" onClick={() => handleDeleteRestaurant(restaurant)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-neutral-500 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all" title="Delete restaurant"><Trash2 className="h-3 w-3" /></button>}</div></td></tr>;
-          })}
-        </tbody></table></div></div>
-      </div>}
+      {/* Tab 1: Restaurants Table */}
+      {activeTab === "restaurants" && (
+        <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A6458]" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search restaurants by name or ID..."
+                className="h-11 w-full rounded-2xl border border-[#2A362D] bg-[#141C16] pl-10 pr-4 text-xs font-medium text-[#F4F6F1] placeholder:text-[#5A6458] outline-none focus:border-[#C8F55A] transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={planFilter}
+                onChange={(e: any) => setPlanFilter(e.target.value)}
+                className="h-11 rounded-2xl border border-[#2A362D] bg-[#141C16] px-3.5 text-xs font-bold text-[#C5CEC7] outline-none focus:border-[#C8F55A]"
+              >
+                <option value="all">All Plans</option>
+                <option value="starter">Starter</option>
+                <option value="pro">Pro</option>
+                <option value="business">Business</option>
+                <option value="free">Free</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e: any) => setStatusFilter(e.target.value)}
+                className="h-11 rounded-2xl border border-[#2A362D] bg-[#141C16] px-3.5 text-xs font-bold text-[#C5CEC7] outline-none focus:border-[#C8F55A]"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+          </div>
 
-      {activeTab === "leads" && <div className="space-y-4"><div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"><div className="relative flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" /><input type="search" value={leadSearchQuery} onChange={(e) => setLeadSearchQuery(e.target.value)} placeholder="Search leads by restaurant name, contact, phone, or city..." className="h-11 w-full rounded-2xl border border-white/10 bg-[#15151A] pl-10 pr-4 text-xs font-medium text-white placeholder:text-neutral-500 outline-none focus:border-[#CDF22B] transition-all" /></div><select value={leadStatusFilter} onChange={(e: any) => setLeadStatusFilter(e.target.value)} className="h-11 rounded-2xl border border-white/10 bg-[#15151A] px-3.5 text-xs font-bold text-neutral-300 outline-none focus:border-[#CDF22B]"><option value="all">All Lead Statuses</option><option value="pending">Pending</option><option value="onboarded">Onboarded</option><option value="rejected">Rejected</option></select></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{filteredLeads.length === 0 ? <div className="col-span-full py-16 text-center rounded-3xl bg-[#15151A] border border-white/10 text-neutral-500 font-medium">No leads matched your criteria.</div> : filteredLeads.map((lead) => { const isPending = lead.status === "pending"; const isOnboarded = lead.status === "onboarded"; return <div key={lead.id} className="rounded-3xl bg-[#15151A] border border-white/10 p-5 shadow-md flex flex-col justify-between space-y-4"><div className="space-y-3"><div className="flex items-start justify-between gap-2"><div><h3 className="text-base font-black text-white leading-tight">{lead.restaurant_name}</h3><span className="text-xs font-bold text-neutral-400 block mt-0.5">Contact: {lead.contact_name}</span></div><span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isPending ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : isOnboarded ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-white/5 text-neutral-500 border border-white/10"}`}>{lead.status}</span></div><div className="space-y-1.5 pt-2 border-t border-white/5 text-xs text-neutral-300"><div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#CDF22B]" /><a href={`tel:${lead.phone}`} className="hover:underline font-semibold">{lead.phone}</a></div>{lead.city && <div className="flex items-center gap-2 text-neutral-400"><MapPin className="h-3.5 w-3.5 text-neutral-500" /><span>{lead.city}</span></div>}<div className="flex items-center gap-2 text-neutral-500 text-[11px]"><Calendar className="h-3.5 w-3.5" /><span>Submitted: {new Date(lead.submitted_at).toLocaleDateString()}</span></div>{lead.notes && <p className="mt-2 text-xs text-neutral-400 italic bg-white/[0.02] p-2.5 rounded-xl border border-white/5">&quot;{lead.notes}&quot;</p>}</div></div><div className="pt-3 border-t border-white/5">{isPending ? <button type="button" onClick={() => handleOnboardLead(lead)} disabled={isUpdating} className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#CDF22B] py-3 text-xs font-black text-black hover:bg-[#bce022] active:scale-[0.98] transition-all shadow-md disabled:opacity-50"><UserPlus className="h-3.5 w-3.5" /><span>Onboard as Pro Restaurant</span></button> : isOnboarded ? <div className="flex items-center justify-between text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2.5 rounded-2xl"><span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /><span>Converted & Active</span></span>{lead.onboarded_restaurant_id && <Link href={`/menu?restaurantId=${lead.onboarded_restaurant_id}`} target="_blank" className="hover:underline flex items-center gap-1 text-[11px]"><span>View</span><ArrowUpRight className="h-3 w-3" /></Link>}</div> : <span className="text-xs text-neutral-500 font-medium">No actions available</span>}</div></div>; })}</div></div>}
+          <div className="overflow-hidden rounded-3xl border border-[#2A362D] bg-[#141C16]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="border-b border-[#2A362D] bg-white/[0.02]">
+                  <tr>
+                    <th className="py-3.5 px-5 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Restaurant</th>
+                    <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Plan</th>
+                    <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Dishes</th>
+                    <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Scans</th>
+                    <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Status</th>
+                    <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Created</th>
+                    <th className="py-3.5 px-5 text-right text-[10px] font-black uppercase tracking-wider text-[#8C988E]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2A362D]/60">
+                  {filteredRestaurants.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-16 text-center text-[#8C988E] text-sm font-medium">
+                        No restaurants matched your criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRestaurants.map((restaurant) => {
+                      const isActive = restaurant.status === "active";
+                      const isPending = restaurant.status === "pending";
+                      const isPro = restaurant.plan_id === "pro" || restaurant.plan_id === "business";
 
-      {editingPlanRestaurant && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setEditingPlanRestaurant(null)}><div className="w-full max-w-md rounded-3xl bg-[#18181D] border border-white/15 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}><div className="flex items-start justify-between gap-3"><div><span className="text-[10px] font-black uppercase tracking-widest text-[#CDF22B]">Manage Subscription</span><h3 className="text-lg font-black text-white">{editingPlanRestaurant.name}</h3></div><button type="button" onClick={() => setEditingPlanRestaurant(null)} className="p-1 text-neutral-500 hover:text-white"><XCircle className="h-5 w-5" /></button></div><div className="space-y-3"><label className="text-xs font-bold text-neutral-300">Select Subscription Tier:</label><div className="grid grid-cols-1 gap-2.5">{[{ id: "starter", name: "Starter", desc: "Up to 50 dishes", price: "69,000 MMK/year" }, { id: "pro", name: "Pro", desc: "Up to 100 dishes", price: "125,000 MMK/year" }, { id: "business", name: "Business", desc: "Unlimited dishes", price: "165,000 MMK/month" }].map((plan) => <button key={plan.id} type="button" onClick={() => setNewPlanSelection(plan.id)} className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all ${newPlanSelection === plan.id ? "bg-[#CDF22B]/10 border-[#CDF22B] text-white shadow-sm" : "bg-white/5 border-white/10 text-neutral-400 hover:border-white/20 hover:text-neutral-200"}`}><div><div className="flex items-center gap-2"><span className="font-black text-sm text-white">{plan.name}</span>{plan.id === "pro" && <span className="rounded bg-[#CDF22B] px-1.5 py-0.2 text-[8px] font-black uppercase text-black">POPULAR</span>}</div><p className="text-[11px] text-neutral-400 mt-0.5">{plan.desc}</p></div><div className="text-right shrink-0"><span className="text-xs font-black text-[#CDF22B] block">{plan.price}</span></div></button>)}</div></div><div className="flex items-center gap-3 pt-3 border-t border-white/10"><button type="button" onClick={() => setEditingPlanRestaurant(null)} className="flex-1 rounded-2xl border border-white/10 py-3 text-xs font-bold text-neutral-400 hover:bg-white/5 hover:text-white">Cancel</button><button type="button" onClick={handleSavePlan} disabled={isUpdating} className="flex-1 rounded-2xl bg-[#CDF22B] py-3 text-xs font-black text-black hover:bg-[#bce022] active:scale-[0.98] transition-all disabled:opacity-50">Save Changes</button></div></div></div>}
+                      return (
+                        <tr key={restaurant.id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="py-4 px-5">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-[#F4F6F1] text-sm">{restaurant.name}</span>
+                                <Link
+                                  href={`/menu?restaurantId=${restaurant.id}`}
+                                  target="_blank"
+                                  className="text-[#8C988E] hover:text-[#C8F55A] transition-colors"
+                                  title="View Customer Menu"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Link>
+                              </div>
+                              <span className="text-[10px] font-mono text-[#5A6458] block truncate max-w-[200px]">
+                                {restaurant.id}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                isPro
+                                  ? "bg-[#C8F55A]/10 text-[#C8F55A] border border-[#C8F55A]/30"
+                                  : "bg-[#1C261F] text-[#8C988E] border border-[#2A362D]"
+                              }`}
+                            >
+                              {isPro && <Crown className="h-2.5 w-2.5" />}
+                              {restaurant.plan_name}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-1.5 font-bold text-[#C5CEC7]">
+                              <UtensilsCrossed className="h-3.5 w-3.5 text-[#5A6458]" />
+                              <span>{restaurant.dish_count}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-1.5 font-bold text-[#C5CEC7]">
+                              <Eye className="h-3.5 w-3.5 text-blue-400" />
+                              <span>{restaurant.scan_count.toLocaleString()}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                isActive
+                                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                  : isPending
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                  : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              }`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  isActive ? "bg-emerald-400 animate-pulse" : isPending ? "bg-amber-400" : "bg-rose-400"
+                                }`}
+                              />
+                              {restaurant.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-[#8C988E] text-[11px] font-medium">
+                            {new Date(restaurant.created_at).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {!isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingPlanRestaurant(restaurant);
+                                    setNewPlanSelection(restaurant.plan_id);
+                                  }}
+                                  className="flex h-8 items-center gap-1 rounded-xl bg-[#1C261F] border border-[#2A362D] px-2.5 text-[11px] font-bold text-[#C5CEC7] hover:bg-[#253229] hover:text-white transition-all"
+                                  title="Change subscription tier"
+                                >
+                                  <Edit2 className="h-3 w-3 text-[#C8F55A]" />
+                                  <span className="hidden sm:inline">Plan</span>
+                                </button>
+                              )}
+                              {isPending ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-[11px] font-bold text-amber-300">
+                                  <Clock className="h-3 w-3" />Awaiting approval
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleStatus(restaurant)}
+                                  className={`flex h-8 items-center gap-1 rounded-xl border px-2.5 text-[11px] font-bold transition-all ${
+                                    isActive
+                                      ? "bg-rose-500/10 border-rose-500/20 text-rose-300 hover:bg-rose-500/20"
+                                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20"
+                                  }`}
+                                  title={isActive ? "Disable Restaurant" : "Enable Restaurant"}
+                                >
+                                  <Power className="h-3 w-3" />
+                                  <span className="hidden sm:inline">{isActive ? "Disable" : "Enable"}</span>
+                                </button>
+                              )}
+                              {!isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRestaurant(restaurant)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#1C261F] border border-[#2A362D] text-[#8C988E] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-400 transition-all"
+                                  title="Delete restaurant"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Leads Management */}
+      {activeTab === "leads" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A6458]" />
+              <input
+                type="search"
+                value={leadSearchQuery}
+                onChange={(e) => setLeadSearchQuery(e.target.value)}
+                placeholder="Search leads by restaurant name, contact, phone, or city..."
+                className="h-11 w-full rounded-2xl border border-[#2A362D] bg-[#141C16] pl-10 pr-4 text-xs font-medium text-[#F4F6F1] placeholder:text-[#5A6458] outline-none focus:border-[#C8F55A] transition-all"
+              />
+            </div>
+            <select
+              value={leadStatusFilter}
+              onChange={(e: any) => setLeadStatusFilter(e.target.value)}
+              className="h-11 rounded-2xl border border-[#2A362D] bg-[#141C16] px-3.5 text-xs font-bold text-[#C5CEC7] outline-none focus:border-[#C8F55A]"
+            >
+              <option value="all">All Lead Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="onboarded">Onboarded</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredLeads.length === 0 ? (
+              <div className="col-span-full py-16 text-center rounded-3xl bg-[#141C16] border border-[#2A362D] text-[#8C988E] font-medium">
+                No leads matched your criteria.
+              </div>
+            ) : (
+              filteredLeads.map((lead) => {
+                const isPending = lead.status === "pending";
+                const isOnboarded = lead.status === "onboarded";
+
+                return (
+                  <div
+                    key={lead.id}
+                    className="rounded-3xl bg-[#141C16] border border-[#2A362D] p-5 shadow-md flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-base font-black text-[#F4F6F1] leading-tight">{lead.restaurant_name}</h3>
+                          <span className="text-xs font-bold text-[#8C988E] block mt-0.5">Contact: {lead.contact_name}</span>
+                        </div>
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            isPending
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : isOnboarded
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : "bg-[#1C261F] text-[#8C988E] border border-[#2A362D]"
+                          }`}
+                        >
+                          {lead.status}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 pt-2 border-t border-[#2A362D]/60 text-xs text-[#C5CEC7]">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-3.5 w-3.5 text-[#C8F55A]" />
+                          <a href={`tel:${lead.phone}`} className="hover:underline font-semibold">
+                            {lead.phone}
+                          </a>
+                        </div>
+                        {lead.city && (
+                          <div className="flex items-center gap-2 text-[#8C988E]">
+                            <MapPin className="h-3.5 w-3.5 text-[#5A6458]" />
+                            <span>{lead.city}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-[#5A6458] text-[11px]">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>Submitted: {new Date(lead.submitted_at).toLocaleDateString()}</span>
+                        </div>
+                        {lead.notes && (
+                          <p className="mt-2 text-xs text-[#8C988E] italic bg-white/[0.02] p-2.5 rounded-xl border border-[#2A362D]/60">
+                            &quot;{lead.notes}&quot;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#2A362D]/60">
+                      {isPending ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOnboardLead(lead)}
+                          disabled={isUpdating}
+                          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C8F55A] py-3 text-xs font-black text-[#0F1410] hover:bg-[#b5e048] active:scale-[0.98] transition-all shadow-md disabled:opacity-50"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>Onboard as Pro Restaurant</span>
+                        </button>
+                      ) : isOnboarded ? (
+                        <div className="flex items-center justify-between text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2.5 rounded-2xl">
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Converted & Active</span>
+                          </span>
+                          {lead.onboarded_restaurant_id && (
+                            <Link
+                              href={`/menu?restaurantId=${lead.onboarded_restaurant_id}`}
+                              target="_blank"
+                              className="hover:underline flex items-center gap-1 text-[11px]"
+                            >
+                              <span>View</span>
+                              <ArrowUpRight className="h-3 w-3" />
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#5A6458] font-medium">No actions available</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Plan Edit Modal */}
+      {editingPlanRestaurant && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          onClick={() => setEditingPlanRestaurant(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-[#141C16] border border-[#2A362D] p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#C8F55A]">
+                  Manage Subscription
+                </span>
+                <h3 className="text-lg font-black text-[#F4F6F1]">{editingPlanRestaurant.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingPlanRestaurant(null)}
+                className="p-1 text-[#8C988E] hover:text-white"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-[#C5CEC7]">Select Subscription Tier:</label>
+              <div className="grid grid-cols-1 gap-2.5">
+                {[
+                  { id: "starter", name: "Starter", desc: "Up to 50 dishes", price: "69,000 MMK/year" },
+                  { id: "pro", name: "Pro", desc: "Up to 100 dishes", price: "125,000 MMK/year" },
+                  { id: "business", name: "Business", desc: "Unlimited dishes", price: "165,000 MMK/month" },
+                ].map((plan) => (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => setNewPlanSelection(plan.id)}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all ${
+                      newPlanSelection === plan.id
+                        ? "bg-[#C8F55A]/10 border-[#C8F55A] text-white shadow-sm"
+                        : "bg-[#1C261F] border-[#2A362D] text-[#8C988E] hover:border-[#3D4C40] hover:text-white"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm text-[#F4F6F1]">{plan.name}</span>
+                        {plan.id === "pro" && (
+                          <span className="rounded bg-[#C8F55A] px-1.5 py-0.2 text-[8px] font-black uppercase text-[#0F1410]">
+                            POPULAR
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#8C988E] mt-0.5">{plan.desc}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-black text-[#C8F55A] block">{plan.price}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3 border-t border-[#2A362D]">
+              <button
+                type="button"
+                onClick={() => setEditingPlanRestaurant(null)}
+                className="flex-1 rounded-2xl border border-[#2A362D] py-3 text-xs font-bold text-[#8C988E] hover:bg-[#1C261F] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePlan}
+                disabled={isUpdating}
+                className="flex-1 rounded-2xl bg-[#C8F55A] py-3 text-xs font-black text-[#0F1410] hover:bg-[#b5e048] active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

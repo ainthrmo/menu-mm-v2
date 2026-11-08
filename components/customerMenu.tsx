@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   MapPin,
   Wifi,
+  FileText,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMMK } from "@/lib/utils";
@@ -33,6 +34,7 @@ import {
 } from "@/lib/demo-menu-data";
 import { useTableContext } from "@/components/TableContext";
 import { ServiceActionBar } from "@/components/ServiceActionBar";
+import MossTextTheme from "@/components/MossTextTheme";
 
 /* ===========================================================
    TYPES & INTERFACES
@@ -136,6 +138,13 @@ export default function CustomerMenu({
   const [plan, setPlan] = useState<Plan>(DEFAULT_FREE_PLAN);
   const [loading, setLoading] = useState(true);
 
+  // PDF menu mode
+  const [menuMode, setMenuMode] = useState<"digital" | "pdf">("digital");
+  const [menuPdfPath, setMenuPdfPath] = useState<string | null>(null);
+
+  // Digital Theme ("moss" = default photo-based, "text" = Botanical Archive editorial)
+  const [digitalTheme, setDigitalTheme] = useState<"moss" | "text">("moss");
+
   // Cart
   const [cart, setCart] = useState<{ [id: string]: CartItem }>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -161,10 +170,15 @@ export default function CustomerMenu({
         let targetRestaurantId: string | null = null;
         let isDemoMode = false;
 
+        let requestedTheme: "moss" | "text" = "moss";
         if (typeof window !== "undefined") {
           const urlParams = new URLSearchParams(window.location.search);
           targetRestaurantId = urlParams.get("restaurantId");
           isDemoMode = urlParams.get("demo") === "true" || targetRestaurantId === "demo";
+          const themeParam = urlParams.get("theme");
+          if (themeParam === "text") {
+            requestedTheme = "text";
+          }
         }
 
         if (!targetRestaurantId && !isDemoMode) {
@@ -182,6 +196,7 @@ export default function CustomerMenu({
           setStoreProfile(DEMO_STORE_PROFILE);
           setCategories(DEMO_CATEGORIES);
           setMenuItems(DEMO_MENU_ITEMS);
+          setDigitalTheme(requestedTheme);
           if (typeof window !== "undefined") {
             const savedCart = sessionStorage.getItem("menu_cart_demo");
             if (savedCart) {
@@ -211,14 +226,36 @@ export default function CustomerMenu({
           { data: profileData },
           { data: catData },
           { data: menuData },
+          { data: restaurantData },
         ] = await Promise.all([
           getRestaurantSubscription(supabase, targetRestaurantId),
           supabase.from("store_profile").select("*").eq("restaurant_id", targetRestaurantId).maybeSingle(),
           supabase.from("categories").select("*").eq("restaurant_id", targetRestaurantId).order("sort_order", { ascending: true, nullsFirst: false }).order("name"),
           supabase.from("menu_items").select("*").eq("restaurant_id", targetRestaurantId),
+          // Fetch PDF mode fields; gracefully ignore if columns don't exist yet
+          supabase.from("restaurants").select("menu_mode, menu_pdf_path").eq("id", targetRestaurantId).maybeSingle(),
         ]);
 
         setPlan(currentPlan);
+
+        // Handle PDF menu mode (graceful: if columns don't exist, restaurantData is null)
+        const rawMode = (restaurantData as any)?.menu_mode;
+        const rawPath = (restaurantData as any)?.menu_pdf_path;
+        if (rawMode === "pdf" && rawPath) {
+          setMenuMode("pdf");
+          setMenuPdfPath(rawPath);
+        } else {
+          setMenuMode("digital");
+          setMenuPdfPath(null);
+        }
+
+        // Theme selection: explicitly from URL (?theme=text), or store profile setting if present
+        const profileTheme = (profileData as any)?.theme_type;
+        if (requestedTheme === "text" || profileTheme === "text") {
+          setDigitalTheme("text");
+        } else {
+          setDigitalTheme("moss");
+        }
 
         if (profileData) {
           setStoreProfile(profileData);
@@ -422,6 +459,87 @@ export default function CustomerMenu({
           </p>
         </div>
       </div>
+    );
+  }
+
+  /* ── PDF Mode Render ───────────────────────────────────────────── */
+  if (!loading && menuMode === "pdf" && menuPdfPath && currentRestaurantId !== "demo") {
+    // Build the proxied public URL for the PDF
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      "https://nkaunvzoebkuzktrmaft.supabase.co";
+    const rawPdfUrl = `${supabaseUrl}/storage/v1/object/public/menu-pdfs/${menuPdfPath}`;
+    // Route through proxy for Myanmar ISP compatibility
+    const pdfUrl = rawPdfUrl.includes(".supabase.co/")
+      ? rawPdfUrl.replace(
+          /https:\/\/[^/]+\.supabase\.co\//,
+          "/supabase-proxy/"
+        )
+      : rawPdfUrl;
+
+    return (
+      <div className="min-h-screen bg-[#F8F7F4] flex flex-col">
+        {/* Minimal header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-[#EAE8E3] px-4 py-3 flex items-center gap-3 shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#111111] text-sm font-black text-white">
+            {(storeProfile?.store_name || restaurantName).charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-black text-[#111111] truncate leading-tight">
+              {storeProfile?.store_name || restaurantName}
+            </h1>
+            <p className="text-[11px] text-[#737373] font-medium">PDF Menu</p>
+          </div>
+        </header>
+
+        {/* PDF viewer — fills remaining height */}
+        <div className="flex-1 flex flex-col">
+          <iframe
+            src={pdfUrl}
+            title={`${restaurantName} Menu`}
+            className="w-full flex-1"
+            style={{ border: "none", minHeight: "calc(100vh - 61px)" }}
+          />
+        </div>
+
+        {/* Fallback link in case iframe is blocked */}
+        <div className="bg-white border-t border-[#EAE8E3] p-3 text-center">
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#111111] underline underline-offset-2 hover:text-[#444444]"
+          >
+            Open PDF in new tab
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Loading state ────────────────────────────────────────────── */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8F7F4] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-7 w-7 animate-spin text-[#111111]" />
+          <p className="text-xs font-medium text-[#737373]">Loading menu…</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── MOSS Text Theme Render (Botanical Archive) ─────────────────── */
+  if (digitalTheme === "text") {
+    return (
+      <MossTextTheme
+        categories={categories}
+        menuItems={menuItems}
+        storeProfile={storeProfile}
+        restaurantName={restaurantName}
+        activeLanguage={langMode}
+        onLanguageChange={(newLang) => setLangMode(newLang)}
+      />
     );
   }
 

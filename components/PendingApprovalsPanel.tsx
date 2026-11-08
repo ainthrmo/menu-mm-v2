@@ -45,17 +45,17 @@ export default function PendingApprovalsPanel({
   if (restaurants.length === 0) return null;
 
   return (
-    <section className="rounded-3xl bg-[#15151A] border border-amber-500/20 p-5 shadow-sm space-y-4">
+    <section className="rounded-3xl bg-[#141C16] border border-amber-500/25 p-5 shadow-sm space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-amber-400" />
-            <h2 className="text-base font-black text-white">Pending Approvals</h2>
-            <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-black text-amber-400">
+            <h2 className="text-base font-black text-[#F4F6F1]">Pending Approvals</h2>
+            <span className="rounded-full bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 text-[10px] font-black text-amber-400">
               {restaurants.length}
             </span>
           </div>
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-[#8C988E]">
             Review new restaurants before giving them dashboard access.
           </p>
         </div>
@@ -65,15 +65,15 @@ export default function PendingApprovalsPanel({
         {restaurants.map((restaurant) => (
           <div
             key={restaurant.id}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#2A362D] bg-[#1C261F] px-4 py-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-9 w-9 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+              <div className="h-9 w-9 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center">
                 <Store className="h-4 w-4 text-amber-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white truncate">{restaurant.name}</p>
-                <p className="text-[10px] text-neutral-500">
+                <p className="text-sm font-bold text-[#F4F6F1] truncate">{restaurant.name}</p>
+                <p className="text-[10px] text-[#8C988E]">
                   Signed up {new Date(restaurant.created_at).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -87,7 +87,7 @@ export default function PendingApprovalsPanel({
               type="button"
               onClick={() => handleApprove(restaurant)}
               disabled={approvingId === restaurant.id}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#CDF22B] px-4 py-2.5 text-xs font-black text-black hover:bg-[#bce022] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C8F55A] px-4 py-2.5 text-xs font-black text-[#0F1410] hover:bg-[#b5e048] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
               {approvingId === restaurant.id ? "Approving..." : "Approve"}
